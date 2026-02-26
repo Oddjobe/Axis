@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { ShieldAlert, Newspaper, Video, BookOpen, Lightbulb } from "lucide-react"
+import { ShieldAlert, Newspaper, Video, BookOpen, Lightbulb, Globe } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
 // Brand SVG Icons
@@ -199,9 +199,35 @@ export default function FrictionEngine({ mode, filterCountry }: { mode: "SOVEREI
                 )}
 
                 {activeTab === "NEWS" && (
-                    <div className="space-y-4">
+                    <div className="space-y-4 cursor-default">
+                        {/* Top Story Feature Card */}
+                        <a
+                            href="#"
+                            onClick={(e) => e.preventDefault()}
+                            className="block p-4 border border-cobalt/50 bg-gradient-to-br from-cobalt/10 to-transparent rounded-lg shadow-[0_0_20px_rgba(37,99,235,0.15)] group transition-all hover:bg-cobalt/20 relative overflow-hidden"
+                        >
+                            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                <Globe className="w-24 h-24" />
+                            </div>
+                            <div className="flex items-center gap-2 mb-3 relative z-10">
+                                <span className="w-2 h-2 rounded-full bg-cobalt animate-pulse shadow-[0_0_10px_rgba(37,99,235,0.8)]" />
+                                <span className="text-[10px] font-mono text-cobalt font-bold tracking-widest">TOP STORY</span>
+                            </div>
+                            <h2 className="text-lg font-bold text-foreground group-hover:text-white transition-colors leading-tight mb-2 relative z-10 w-[85%]">
+                                {filterCountry ? `${filterCountry.toUpperCase()}: Strategic Resource Agreements Restructure Regional Supply Chains` : "PAPSS processes over $2.8B in intra-African payments since launch."}
+                            </h2>
+                            <p className="text-xs text-slate-light font-mono line-clamp-2 mb-4 relative z-10">
+                                {filterCountry ? `New diplomatic and economic shifts in ${filterCountry} are creating significant shockwaves across the regional resource market, driving sovereignty indexes higher.` : "The Pan-African Payment and Settlement System is accelerating AfCFTA by eliminating dollar dependency in cross-border trade."}
+                            </p>
+                            <div className="flex justify-between items-center text-[10px] font-mono border-t border-cobalt/20 pt-3 relative z-10">
+                                <span className="flex items-center gap-1.5 text-cobalt"><AfDBIcon /> MARKET INTELLIGENCE</span>
+                                <span className="bg-cobalt/20 text-cobalt px-2 py-0.5 rounded">JUST NOW</span>
+                            </div>
+                        </a>
+
+                        <div className="text-[10px] font-mono text-slate-light border-b border-border pb-1 mt-6 mb-2">LATEST REPORTS</div>
+
                         {[
-                            { title: "PAPSS processes over $2.8B in intra-African payments since launch.", source: "African Business", time: "RECENT", iso: "PAN-AFRICA", url: "https://african.business/", Icon: AfDBIcon, color: "text-green-500" },
                             { title: "DRC mandates domestic cobalt processing, banning raw ore exports.", source: "Mining Weekly", time: "RECENT", iso: "COD", url: "https://www.miningweekly.com/page/africa", Icon: MiningIcon, color: "text-orange-500" },
                             { title: "Kenya's M-PESA processes $314B annually, transforming digital finance.", source: "Al Jazeera Africa", time: "RECENT", iso: "KEN", url: "https://www.aljazeera.com/economy", Icon: AlJazeeraIcon, color: "text-amber-500" },
                             { title: "Ghana's gold refinery PMMC increases local beneficiation by 40%.", source: "Reuters Africa", time: "RECENT", iso: "GHA", url: "https://www.reuters.com/world/africa/", Icon: ReutersIcon, color: "text-cobalt" },

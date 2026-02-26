@@ -19,15 +19,21 @@ export default function AfcftaMatrix({ selectedCode, onSelectCode }: AfcftaMatri
     const sortedAndFilteredData = useMemo(() => {
         let result = ALL_SOVEREIGN_DATA;
 
-        if (searchQuery) {
-            result = result.filter(c =>
-                c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                c.country.toLowerCase().includes(searchQuery.toLowerCase())
-            );
-        }
+        // If a country is selected (e.g. from the map), filter to only show that country
+        if (selectedCode) {
+            result = result.filter(c => c.country === selectedCode);
+        } else {
+            // Otherwise apply normal search and status filters
+            if (searchQuery) {
+                result = result.filter(c =>
+                    c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    c.country.toLowerCase().includes(searchQuery.toLowerCase())
+                );
+            }
 
-        if (filterStatus !== "ALL") {
-            result = result.filter(c => c.status === filterStatus);
+            if (filterStatus !== "ALL") {
+                result = result.filter(c => c.status === filterStatus);
+            }
         }
 
         return [...result].sort((a, b) => {
@@ -36,7 +42,7 @@ export default function AfcftaMatrix({ selectedCode, onSelectCode }: AfcftaMatri
             if (sortBy === "wealth") return b.resourceWealth - a.resourceWealth;
             return 0;
         });
-    }, [searchQuery, sortBy, filterStatus]);
+    }, [searchQuery, sortBy, filterStatus, selectedCode]);
 
     const getScoreColor = (score: number) => {
         if (score >= 75) return "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.8)]";
