@@ -104,9 +104,11 @@ export default function FrictionEngine({ mode, filterCountry }: { mode: "SOVEREI
     }, []);
 
     const filteredAlerts = alerts.filter(a => {
+        const cat = a.category ? a.category.toUpperCase() : "";
         const modeMatch = mode === "SOVEREIGNTY"
-            ? a.category === "SOVEREIGNTY RISK"
-            : a.category === "OUTSIDE INFLUENCE" || a.category === "WESTERN RISK" as string;
+            ? cat.includes("SOVEREIGNTY") || cat.includes("RISK")
+            : cat.includes("OUTSIDE") || cat.includes("FOREIGN") || cat.includes("WESTERN") || cat.includes("INFLUENCE");
+
         if (!filterCountry) return modeMatch;
         return modeMatch && (
             a.title.toLowerCase().includes(filterCountry.toLowerCase()) ||
@@ -228,11 +230,12 @@ export default function FrictionEngine({ mode, filterCountry }: { mode: "SOVEREI
                         <div className="text-[10px] font-mono text-slate-light border-b border-border pb-1 mt-6 mb-2">LATEST REPORTS</div>
 
                         {[
-                            { title: "DRC mandates domestic cobalt processing, banning raw ore exports.", source: "Mining Weekly", time: "RECENT", iso: "COD", url: "https://www.miningweekly.com/page/africa", Icon: MiningIcon, color: "text-orange-500" },
+                            { title: "Zambia finalizes $3B debt restructuring with international bondholders.", source: "Reuters Africa", time: "RECENT", iso: "ZMB", url: "https://www.reuters.com/world/africa/", Icon: ReutersIcon, color: "text-cobalt" },
+                            { title: "DRC and Zambia sign historic agreement for regional electric battery value chain.", source: "Mining Weekly", time: "RECENT", iso: "COD", url: "https://www.miningweekly.com/page/africa", Icon: MiningIcon, color: "text-orange-500" },
                             { title: "Kenya's M-PESA processes $314B annually, transforming digital finance.", source: "Al Jazeera Africa", time: "RECENT", iso: "KEN", url: "https://www.aljazeera.com/economy", Icon: AlJazeeraIcon, color: "text-amber-500" },
-                            { title: "Ghana's gold refinery PMMC increases local beneficiation by 40%.", source: "Reuters Africa", time: "RECENT", iso: "GHA", url: "https://www.reuters.com/world/africa/", Icon: ReutersIcon, color: "text-cobalt" },
-                            { title: "African Development Bank approves $1.3B for continental rail network.", source: "AfDB News", time: "RECENT", iso: "PAN-AFRICA", url: "https://www.afdb.org/en/news-and-events", Icon: AfDBIcon, color: "text-green-500" },
-                            { title: "Nigeria's Dangote Refinery reaches 500K bpd, reducing import dependency.", source: "Bloomberg Africa", time: "RECENT", iso: "NGA", url: "https://www.bloomberg.com/africa", Icon: BloombergIcon, color: "text-purple-500" }
+                            { title: "Nigeria's Dangote Refinery begins petrol production, reducing import dependency.", source: "Bloomberg Africa", time: "RECENT", iso: "NGA", url: "https://www.bloomberg.com/africa", Icon: BloombergIcon, color: "text-purple-500" },
+                            { title: "African Development Bank approves $1.3B for continental rail infrastructure.", source: "AfDB News", time: "RECENT", iso: "PAN-AFRICA", url: "https://www.afdb.org/en/news-and-events", Icon: AfDBIcon, color: "text-green-500" },
+                            { title: "Ghana's domestic gold purchase program stabilizes currency reserves.", source: "African Business", time: "RECENT", iso: "GHA", url: "https://african.business/", Icon: ReutersIcon, color: "text-cobalt" }
                         ].map((news, idx) => (
                             <a
                                 key={idx}
@@ -303,11 +306,12 @@ export default function FrictionEngine({ mode, filterCountry }: { mode: "SOVEREI
                             EXTERNAL OSINT MEDIA SOURCES
                         </div>
                         {[
-                            { name: "The New Africa Channel", handle: "@TheNewAfricaChannel", focus: "Geopolitics & Infrastructure", url: "https://www.youtube.com/@TheNewAfricaChannel" },
-                            { name: "SABC News", handle: "@sabcnews", focus: "South Africa & Continental Politics", url: "https://www.youtube.com/@sabcnews" },
-                            { name: "African Diaspora News", handle: "@AfricanDiasporaNewsChannel", focus: "Global African Affairs", url: "https://www.youtube.com/@AfricanDiasporaNewsChannel" },
-                            { name: "Newzroom Afrika", handle: "@Newzroom405", focus: "Live African News Coverage", url: "https://www.youtube.com/@Newzroom405" },
-                            { name: "Wode Maya", handle: "@Wodemaya", focus: "Pan-African Enterprise", url: "https://www.youtube.com/@Wodemaya" }
+                            { name: "SABC News", handle: "@sabcnews", focus: "South Africa & Continental Politics", url: "https://www.youtube.com/c/sabcnews" },
+                            { name: "Channels Television", handle: "@channelsweb", focus: "Nigeria & West Africa", url: "https://www.youtube.com/c/channelsweb" },
+                            { name: "Citizen TV Kenya", handle: "@citizentv", focus: "East African Geopolitics", url: "https://www.youtube.com/c/citizentv" },
+                            { name: "Al Jazeera English (Africa)", handle: "@aljazeera", focus: "Global coverage of Africa", url: "https://www.youtube.com/user/AlJazeeraEnglish" },
+                            { name: "Wode Maya", handle: "@Wodemaya", focus: "Pan-African Enterprise", url: "https://www.youtube.com/c/WODEMAYA" },
+                            { name: "African Diaspora News", handle: "@AfricanDiasporaNewsChannel", focus: "Global African Affairs", url: "https://www.youtube.com/c/AfricanDiasporaNewsChannel" }
                         ].map((channel, idx) => (
                             <a
                                 key={idx}
