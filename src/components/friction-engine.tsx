@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { ShieldAlert, Newspaper, Video, BookOpen, Lightbulb } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
 
 // Brand SVG Icons
 const YouTubeIcon = () => (
@@ -165,26 +166,34 @@ export default function FrictionEngine({ mode, filterCountry }: { mode: "SOVEREI
                                 <span className="text-xs font-mono">NO ACTIVE {mode} ALERTS DETECTED.</span>
                             </div>
                         ) : (
-                            filteredAlerts.map((alert, idx) => (
-                                <div key={idx} className="p-3 border border-orange-500/20 bg-orange-500/5 rounded-md transition-all hover:bg-orange-500/10">
-                                    <div className="text-[10px] font-mono text-orange-400 mb-1 flex justify-between">
-                                        <span>{alert.title}</span>
-                                        <span className="opacity-70">{alert.timeAgo}</span>
-                                    </div>
-                                    <p className="text-sm text-foreground/90">{alert.summary}</p>
-                                    <div className="mt-3 flex gap-2">
-                                        <span className={`text-[10px] px-2 py-0.5 bg-background border rounded font-bold ${alert.severity === "HIGH" ? "border-red-500/50 text-red-500" :
-                                            alert.severity === "MEDIUM" ? "border-orange-500/50 text-orange-500" :
-                                                "border-yellow-500/50 text-yellow-500"
-                                            }`}>
-                                            {alert.severity} SEVERITY
-                                        </span>
-                                        <span className="text-[10px] px-2 py-0.5 bg-background border border-border rounded opacity-80">
-                                            {alert.isoCode}
-                                        </span>
-                                    </div>
-                                </div>
-                            ))
+                            <AnimatePresence>
+                                {filteredAlerts.map((alert, idx) => (
+                                    <motion.div
+                                        key={`${alert.title}-${idx}`}
+                                        initial={{ opacity: 0, x: 20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: idx * 0.1, duration: 0.3 }}
+                                        className="p-3 border border-orange-500/20 bg-orange-500/5 rounded-md transition-all hover:bg-orange-500/10 hover:shadow-[0_0_15px_rgba(249,115,22,0.1)] cursor-default"
+                                    >
+                                        <div className="text-[10px] font-mono text-orange-400 mb-1 flex justify-between">
+                                            <span>{alert.title}</span>
+                                            <span className="opacity-70">{alert.timeAgo}</span>
+                                        </div>
+                                        <p className="text-sm text-foreground/90">{alert.summary}</p>
+                                        <div className="mt-3 flex gap-2">
+                                            <span className={`text-[10px] px-2 py-0.5 bg-background border rounded font-bold ${alert.severity === "HIGH" ? "border-red-500/50 text-red-500 shadow-[0_0_8px_rgba(239,68,68,0.3)]" :
+                                                alert.severity === "MEDIUM" ? "border-orange-500/50 text-orange-500" :
+                                                    "border-yellow-500/50 text-yellow-500"
+                                                }`}>
+                                                {alert.severity} SEVERITY
+                                            </span>
+                                            <span className="text-[10px] px-2 py-0.5 bg-background border border-border rounded opacity-80">
+                                                {alert.isoCode}
+                                            </span>
+                                        </div>
+                                    </motion.div>
+                                ))}
+                            </AnimatePresence>
                         )}
                     </>
                 )}
