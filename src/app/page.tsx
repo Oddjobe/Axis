@@ -12,7 +12,7 @@ import { ALL_SOVEREIGN_DATA } from "@/lib/mock-data";
 const TOTAL_POPULATION = 1_444; // ~1.44 billion
 
 export default function Home() {
-  const [mode, setMode] = useState<"SOVEREIGNTY" | "WESTERN RISK">("SOVEREIGNTY");
+  const [mode, setMode] = useState<"SOVEREIGNTY" | "OUTSIDE INFLUENCE">("SOVEREIGNTY");
   const [selectedCode, setSelectedCode] = useState<string | null>(null);
   const [missionOpen, setMissionOpen] = useState(false);
 
@@ -44,7 +44,7 @@ export default function Home() {
           <div className="flex items-center gap-2 px-3 py-1.5 bg-background border border-border rounded-lg text-xs font-mono">
             <Users className="w-3.5 h-3.5 text-green-500" />
             <span className="text-slate-light">
-              {selectedCountry ? selectedCountry.name.toUpperCase() : "CONTINENTAL"}
+              {selectedCountry ? selectedCountry.name.toUpperCase() : "POPULATION"}
             </span>
             <span className="font-bold text-green-500 ml-1">{displayPop}</span>
           </div>
@@ -66,10 +66,10 @@ export default function Home() {
               SOVEREIGNTY
             </button>
             <button
-              onClick={() => setMode("WESTERN RISK")}
-              className={`px-4 py-1 text-xs font-bold rounded-full transition-all ${mode === "WESTERN RISK" ? "bg-orange-500 text-white shadow-[0_0_10px_rgba(249,115,22,0.5)]" : "text-slate-light hover:text-foreground"}`}
+              onClick={() => setMode("OUTSIDE INFLUENCE")}
+              className={`px-4 py-1 text-xs font-bold rounded-full transition-all ${mode === "OUTSIDE INFLUENCE" ? "bg-orange-500 text-white shadow-[0_0_10px_rgba(249,115,22,0.5)]" : "text-slate-light hover:text-foreground"}`}
             >
-              WESTERN RISK
+              OUTSIDE INFLUENCE
             </button>
           </div>
 

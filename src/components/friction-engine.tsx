@@ -7,12 +7,12 @@ interface Article {
     title: string
     summary: string
     severity: "HIGH" | "MEDIUM" | "LOW"
-    category: "SOVEREIGNTY RISK" | "WESTERN RISK"
+    category: "SOVEREIGNTY RISK" | "OUTSIDE INFLUENCE"
     isoCode: string
     timeAgo: string
 }
 
-export default function FrictionEngine({ mode, filterCountry }: { mode: "SOVEREIGNTY" | "WESTERN RISK"; filterCountry: string | null }) {
+export default function FrictionEngine({ mode, filterCountry }: { mode: "SOVEREIGNTY" | "OUTSIDE INFLUENCE"; filterCountry: string | null }) {
     const [alerts, setAlerts] = useState<Article[]>([])
     const [loading, setLoading] = useState(true)
     const [activeTab, setActiveTab] = useState<"ALERTS" | "NEWS" | "MEDIA">("ALERTS")
@@ -35,7 +35,9 @@ export default function FrictionEngine({ mode, filterCountry }: { mode: "SOVEREI
     }, []);
 
     const filteredAlerts = alerts.filter(a => {
-        const modeMatch = a.category === mode;
+        const modeMatch = mode === "SOVEREIGNTY"
+            ? a.category === "SOVEREIGNTY RISK"
+            : a.category === "OUTSIDE INFLUENCE" || a.category === "WESTERN RISK" as string;
         if (!filterCountry) return modeMatch;
         return modeMatch && (
             a.title.toLowerCase().includes(filterCountry.toLowerCase()) ||
@@ -116,13 +118,21 @@ export default function FrictionEngine({ mode, filterCountry }: { mode: "SOVEREI
                 {activeTab === "NEWS" && (
                     <div className="space-y-4">
                         {[
-                            { title: "Pan-African Payment System (PAPSS) processing volumes double.", source: "AfCFTA Monitor", time: "1HR AGO", iso: "PAN-AFRICA" },
-                            { title: "Mali and Niger formulate new strategic energy alliance.", source: "Regional Desk", time: "3HRS AGO", iso: "NW-AFRICA" },
-                            { title: "New cobalt refinery breaks ground, increasing local beneficiation.", source: "Mining Weekly", time: "4HRS AGO", iso: "COD" },
-                            { title: "Port expansion deal finalized outside historical framework.", source: "Geo-Intel", time: "6HRS AGO", iso: "TZA" }
+                            { title: "PAPSS processes over $2.8B in intra-African payments since launch.", source: "African Business", time: "RECENT", iso: "PAN-AFRICA", url: "https://african.business/" },
+                            { title: "DRC mandates domestic cobalt processing, banning raw ore exports.", source: "Mining Weekly", time: "RECENT", iso: "COD", url: "https://www.miningweekly.com/page/africa" },
+                            { title: "Kenya's M-PESA processes $314B annually, transforming digital finance.", source: "Al Jazeera Africa", time: "RECENT", iso: "KEN", url: "https://www.aljazeera.com/economy" },
+                            { title: "Ghana's gold refinery PMMC increases local beneficiation by 40%.", source: "Reuters Africa", time: "RECENT", iso: "GHA", url: "https://www.reuters.com/world/africa/" },
+                            { title: "African Development Bank approves $1.3B for continental rail network.", source: "AfDB News", time: "RECENT", iso: "PAN-AFRICA", url: "https://www.afdb.org/en/news-and-events" },
+                            { title: "Nigeria's Dangote Refinery reaches 500K bpd, reducing import dependency.", source: "Bloomberg Africa", time: "RECENT", iso: "NGA", url: "https://www.bloomberg.com/africa" }
                         ].map((news, idx) => (
-                            <div key={idx} className="p-3 border border-border/50 bg-background/30 rounded-md transition-all hover:bg-background/80">
-                                <h3 className="text-sm font-bold mb-1 leading-tight text-foreground/90">{news.title}</h3>
+                            <a
+                                key={idx}
+                                href={news.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="block p-3 border border-border/50 bg-background/30 rounded-md transition-all hover:bg-background/80 hover:border-cobalt/40 group cursor-pointer"
+                            >
+                                <h3 className="text-sm font-bold mb-1 leading-tight text-foreground/90 group-hover:text-cobalt transition-colors">{news.title}</h3>
                                 <div className="flex justify-between items-center text-[10px] font-mono text-slate-light mt-2">
                                     <span className="text-cobalt">{news.source}</span>
                                     <span>{news.time}</span>
@@ -130,7 +140,7 @@ export default function FrictionEngine({ mode, filterCountry }: { mode: "SOVEREI
                                 <div className="mt-2 text-[9px] px-1.5 py-0.5 bg-border/30 rounded border border-border/50 inline-block font-mono bg-white/5 dark:bg-black/20">
                                     TAG: {news.iso}
                                 </div>
-                            </div>
+                            </a>
                         ))}
                     </div>
                 )}
