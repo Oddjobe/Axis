@@ -118,7 +118,38 @@ const generateMockData = (): CountryData[] => {
             status: status,
             population: `${(POP_MAP[nation.c] || (1 + (index * 5.3) % 40)).toFixed(1)}M`,
             resourceWealth: resourceData.score,
-            keyResources: resourceData.resources
+            keyResources: resourceData.resources,
+            infrastructureControl: Math.floor(Math.min(100, Math.max(10, baseScore + ((index % 5) * 4) - 8))),
+            policyIndependence: Math.floor(Math.min(100, Math.max(10, baseScore - ((index % 4) * 3) + 5))),
+            currencyStability: Math.floor(Math.min(100, Math.max(10, baseScore + ((index % 6) * 3) - 10))),
+            keyInitiatives: highlightPatterns[index % highlightPatterns.length].map((h, i) => ({
+                title: h,
+                details: `Accelerating ${h.toLowerCase()} implementation, tracking ${(index % 5 + 1) * 5}% ahead of target.`
+            })),
+            exportsData: resourceData.resources.map((res, i) => ({
+                resource: res,
+                volume: `${((1 + (index % 3)) * (i + 1) * 1.4).toFixed(1)}M Tons`,
+                destination: ["Asia Pacific", "EU / Americas", "Intra-Africa", "Middle East"][i % 4],
+                value: `$${((baseScore / 10) * 0.8 * (3 - i)).toFixed(1)}B`,
+                status: i % 3 === 2 ? "RESTRICTED EXPORT" : "ON TRACK"
+            })),
+            frictionVectors: [
+                {
+                    title: "IMF CONDITIONALITY PRESSURE",
+                    severity: baseScore < 50 ? "HIGH" : "LOW",
+                    details: "Pending loan disbursement delayed due to refusal to privatize state assets."
+                },
+                {
+                    title: "UNAUTHORIZED LEASES",
+                    severity: index % 2 === 0 ? "MEDIUM" : "LOW",
+                    details: "Reviewing legacy contracts signed prior to sovereign wealth mandate."
+                },
+                {
+                    title: "SUPPLY CHAIN BOTTLENECKS",
+                    severity: "LOW",
+                    details: "Port infrastructure congestion at primary export terminal causing delays."
+                }
+            ].slice(0, (index % 3) + 1)
         };
     }).sort((a, b) => a.name.localeCompare(b.name));
 };

@@ -13,6 +13,12 @@ export interface CountryData {
     population: string;
     resourceWealth: number;       // 0-100 natural resource endowment score
     keyResources: string[];       // Top 2-3 resources
+    infrastructureControl: number;
+    policyIndependence: number;
+    currencyStability: number;
+    keyInitiatives: { title: string, details: string }[];
+    exportsData: { resource: string, volume: string, destination: string, value: string, status: string }[];
+    frictionVectors: { title: string, severity: string, details: string }[];
 }
 
 export interface CountryDossierProps {
@@ -102,9 +108,9 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
                                             <span className="text-sm font-mono text-slate-light mb-2">/ 100</span>
                                         </div>
                                         <div className="space-y-3 font-mono text-xs">
-                                            <div className="flex justify-between"><span>Infrastructure Control</span> <span className="text-green-500">88/100</span></div>
-                                            <div className="flex justify-between"><span>Policy Independence</span> <span className="text-yellow-500">65/100</span></div>
-                                            <div className="flex justify-between"><span>Currency Stability</span> <span className="text-red-500">42/100</span></div>
+                                            <div className="flex justify-between"><span>Infrastructure Control</span> <span className={`${countryData.infrastructureControl >= 60 ? 'text-green-500' : countryData.infrastructureControl >= 40 ? 'text-yellow-500' : 'text-red-500'}`}>{countryData.infrastructureControl}/100</span></div>
+                                            <div className="flex justify-between"><span>Policy Independence</span> <span className={`${countryData.policyIndependence >= 60 ? 'text-green-500' : countryData.policyIndependence >= 40 ? 'text-yellow-500' : 'text-red-500'}`}>{countryData.policyIndependence}/100</span></div>
+                                            <div className="flex justify-between"><span>Currency Stability</span> <span className={`${countryData.currencyStability >= 60 ? 'text-green-500' : countryData.currencyStability >= 40 ? 'text-yellow-500' : 'text-red-500'}`}>{countryData.currencyStability}/100</span></div>
                                         </div>
                                     </div>
 
@@ -113,10 +119,10 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
                                             <Cpu className="w-4 h-4" /> KEY INITIATIVES
                                         </h3>
                                         <div className="space-y-3">
-                                            {countryData.highlights.map((h: string, i: number) => (
+                                            {countryData.keyInitiatives.map((init, i: number) => (
                                                 <div key={i} className="flex flex-col border-l-2 border-cobalt pl-3 py-1">
-                                                    <span className="text-sm border flex font-bold">{h}</span>
-                                                    <span className="text-xs text-slate-light font-mono mt-1">Accelerating phase implementation, tracking 15% ahead of AfCFTA targets.</span>
+                                                    <span className="text-sm border flex font-bold border-transparent">{init.title.toUpperCase()}</span>
+                                                    <span className="text-xs text-slate-light font-mono mt-1">{init.details}</span>
                                                 </div>
                                             ))}
                                         </div>
@@ -138,15 +144,11 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
                         {activeTab === "EXPORTS" && (
                             <div className="grid grid-cols-1 gap-4 animate-in fade-in zoom-in-95 duration-500">
                                 <h3 className="text-xs font-bold text-slate-light mb-2 font-mono border-b border-border pb-2">COMMODITY PIPELINE & PARTNERSHIPS</h3>
-                                {[
-                                    { resource: "REFINED COPPER", volume: "2.4M Tons", destination: "Asia Pacific", value: "$18.2B", status: "ON TRACK" },
-                                    { resource: "LITHIUM CONCENTRATE", volume: "180K Tons", destination: "Domestic Processing", value: "$4.1B", status: "RESTRICTED EXPORT" },
-                                    { resource: "COBALT SULPHATE", volume: "55K Tons", destination: "EU / Americas", value: "$2.8B", status: "RENEGOTIATING" },
-                                ].map((row, i) => (
+                                {countryData.exportsData.map((row, i) => (
                                     <div key={i} className="flex items-center justify-between p-4 border border-border/50 bg-background/30 rounded-lg font-mono hover:bg-white/5 transition-colors cursor-default">
                                         <div className="flex flex-col w-1/4">
                                             <span className="text-xs text-slate-light">RESOURCE</span>
-                                            <span className="font-bold text-sm text-cobalt">{row.resource}</span>
+                                            <span className="font-bold text-sm text-cobalt">{row.resource.toUpperCase()}</span>
                                         </div>
                                         <div className="flex flex-col w-1/4">
                                             <span className="text-xs text-slate-light">VOLUME</span>
@@ -170,15 +172,11 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
                                 <h3 className="text-xs font-bold text-red-500 mb-2 font-mono flex items-center gap-2">
                                     <ShieldAlert className="w-4 h-4" /> ACTIVE THREAT VECTORS
                                 </h3>
-                                {[
-                                    { title: "IMF CONDITIONALITY PRESSURE", severty: "HIGH", details: "Pending loan disbursement delayed due to refusal to privatize state energy grid." },
-                                    { title: "UNAUTHORIZED MINING LEASES", severty: "MEDIUM", details: "Reviewing legacy contracts signed prior to 2012 sovereign wealth mandate." },
-                                    { title: "SUPPLY CHAIN BOTTLENECKS", severty: "LOW", details: "Port infrastructure congestion at primary export terminal causing 4-day delays." }
-                                ].map((alert, i) => (
+                                {countryData.frictionVectors.map((alert, i) => (
                                     <div key={i} className="border-l-4 border-red-500 bg-red-500/5 p-4 rounded-r-lg">
                                         <div className="flex justify-between items-start mb-2">
                                             <h4 className="font-bold text-sm tracking-wide">{alert.title}</h4>
-                                            <span className="text-[10px] font-mono px-2 py-1 bg-red-500/20 text-red-500 rounded border border-red-500/30">SEVERITY: {alert.severty}</span>
+                                            <span className="text-[10px] font-mono px-2 py-1 bg-red-500/20 text-red-500 rounded border border-red-500/30">SEVERITY: {alert.severity}</span>
                                         </div>
                                         <p className="text-sm text-slate-light font-mono leading-relaxed">{alert.details}</p>
                                     </div>
