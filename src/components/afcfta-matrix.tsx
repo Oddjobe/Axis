@@ -2,49 +2,10 @@ import { Activity, TrendingUp, Pickaxe } from "lucide-react";
 import { useState } from "react";
 import CountryDossierModal, { CountryData } from "./country-dossier-modal";
 
+import { ALL_SOVEREIGN_DATA } from "@/lib/mock-data";
+
 export default function AfcftaMatrix() {
-    const sovereignData = [
-        {
-            country: "ZAF",
-            name: "South Africa",
-            axisScore: 82,
-            trend: "+1.2%",
-            highlights: ["Battery Metals", "Tech Transfer"],
-            status: "OPTIMAL"
-        },
-        {
-            country: "NGA",
-            name: "Nigeria",
-            axisScore: 76,
-            trend: "+0.8%",
-            highlights: ["Fintech Growth", "Energy Reform"],
-            status: "STABLE"
-        },
-        {
-            country: "COD",
-            name: "DR Congo",
-            axisScore: 45,
-            trend: "-2.1%",
-            highlights: ["Cobalt Export", "Resource Drain"],
-            status: "EXTRACTIVE"
-        },
-        {
-            country: "KEN",
-            name: "Kenya",
-            axisScore: 79,
-            trend: "+3.4%",
-            highlights: ["Green Energy", "Digital Grid"],
-            status: "OPTIMAL"
-        },
-        {
-            country: "ZWE",
-            name: "Zimbabwe",
-            axisScore: 61,
-            trend: "+0.5%",
-            highlights: ["Lithium Ban", "Local Refining"],
-            status: "IMPROVING"
-        }
-    ];
+    const sovereignData = ALL_SOVEREIGN_DATA;
 
     const getScoreColor = (score: number) => {
         if (score >= 75) return "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.8)]";
