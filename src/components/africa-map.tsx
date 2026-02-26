@@ -193,8 +193,8 @@ export default function AfricaMap({ selectedCountryCode, onSelectCountry }: Afri
                 <div
                     style={{
                         position: "fixed",
-                        left: tooltip.x + 224 > window.innerWidth ? tooltip.x - 234 : tooltip.x + 10,
-                        top: tooltip.y + 160 > window.innerHeight ? tooltip.y - 140 : tooltip.y + 10,
+                        left: tooltip.x + 228 > window.innerWidth ? tooltip.x - 228 : tooltip.x + 4,
+                        top: tooltip.y + 150 > window.innerHeight ? tooltip.y - 130 : tooltip.y + 4,
                         zIndex: 1000,
                         pointerEvents: "none"
                     }}

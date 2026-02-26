@@ -118,27 +118,30 @@ export default function FrictionEngine({ mode, filterCountry }: { mode: "SOVEREI
                 {activeTab === "NEWS" && (
                     <div className="space-y-4">
                         {[
-                            { title: "PAPSS processes over $2.8B in intra-African payments since launch.", source: "African Business", time: "RECENT", iso: "PAN-AFRICA", url: "https://african.business/" },
-                            { title: "DRC mandates domestic cobalt processing, banning raw ore exports.", source: "Mining Weekly", time: "RECENT", iso: "COD", url: "https://www.miningweekly.com/page/africa" },
-                            { title: "Kenya's M-PESA processes $314B annually, transforming digital finance.", source: "Al Jazeera Africa", time: "RECENT", iso: "KEN", url: "https://www.aljazeera.com/economy" },
-                            { title: "Ghana's gold refinery PMMC increases local beneficiation by 40%.", source: "Reuters Africa", time: "RECENT", iso: "GHA", url: "https://www.reuters.com/world/africa/" },
-                            { title: "African Development Bank approves $1.3B for continental rail network.", source: "AfDB News", time: "RECENT", iso: "PAN-AFRICA", url: "https://www.afdb.org/en/news-and-events" },
-                            { title: "Nigeria's Dangote Refinery reaches 500K bpd, reducing import dependency.", source: "Bloomberg Africa", time: "RECENT", iso: "NGA", url: "https://www.bloomberg.com/africa" }
+                            { title: "PAPSS processes over $2.8B in intra-African payments since launch.", source: "African Business", time: "RECENT", iso: "PAN-AFRICA", url: "https://african.business/", icon: "💰" },
+                            { title: "DRC mandates domestic cobalt processing, banning raw ore exports.", source: "Mining Weekly", time: "RECENT", iso: "COD", url: "https://www.miningweekly.com/page/africa", icon: "⛏️" },
+                            { title: "Kenya's M-PESA processes $314B annually, transforming digital finance.", source: "Al Jazeera Africa", time: "RECENT", iso: "KEN", url: "https://www.aljazeera.com/economy", icon: "📱" },
+                            { title: "Ghana's gold refinery PMMC increases local beneficiation by 40%.", source: "Reuters Africa", time: "RECENT", iso: "GHA", url: "https://www.reuters.com/world/africa/", icon: "🥇" },
+                            { title: "African Development Bank approves $1.3B for continental rail network.", source: "AfDB News", time: "RECENT", iso: "PAN-AFRICA", url: "https://www.afdb.org/en/news-and-events", icon: "🚄" },
+                            { title: "Nigeria's Dangote Refinery reaches 500K bpd, reducing import dependency.", source: "Bloomberg Africa", time: "RECENT", iso: "NGA", url: "https://www.bloomberg.com/africa", icon: "🛢️" }
                         ].map((news, idx) => (
                             <a
                                 key={idx}
                                 href={news.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="block p-3 border border-border/50 bg-background/30 rounded-md transition-all hover:bg-background/80 hover:border-cobalt/40 group cursor-pointer"
+                                className="flex items-start gap-3 p-3 border border-border/50 bg-background/30 rounded-md transition-all hover:bg-background/80 hover:border-cobalt/40 group cursor-pointer"
                             >
-                                <h3 className="text-sm font-bold mb-1 leading-tight text-foreground/90 group-hover:text-cobalt transition-colors">{news.title}</h3>
-                                <div className="flex justify-between items-center text-[10px] font-mono text-slate-light mt-2">
-                                    <span className="text-cobalt">{news.source}</span>
-                                    <span>{news.time}</span>
-                                </div>
-                                <div className="mt-2 text-[9px] px-1.5 py-0.5 bg-border/30 rounded border border-border/50 inline-block font-mono bg-white/5 dark:bg-black/20">
-                                    TAG: {news.iso}
+                                <span className="text-lg mt-0.5 shrink-0">{news.icon}</span>
+                                <div className="flex-1 min-w-0">
+                                    <h3 className="text-sm font-bold mb-1 leading-tight text-foreground/90 group-hover:text-cobalt transition-colors">{news.title}</h3>
+                                    <div className="flex justify-between items-center text-[10px] font-mono text-slate-light mt-2">
+                                        <span className="text-cobalt">{news.source}</span>
+                                        <span>{news.time}</span>
+                                    </div>
+                                    <div className="mt-2 text-[9px] px-1.5 py-0.5 bg-border/30 rounded border border-border/50 inline-block font-mono bg-white/5 dark:bg-black/20">
+                                        TAG: {news.iso}
+                                    </div>
                                 </div>
                             </a>
                         ))}
@@ -152,27 +155,30 @@ export default function FrictionEngine({ mode, filterCountry }: { mode: "SOVEREI
                             EXTERNAL OSINT MEDIA SOURCES
                         </div>
                         {[
-                            { name: "The New Africa Channel", handle: "@TheNewAfricaChannel", focus: "Geopolitics & Infrastructure", url: "https://www.youtube.com/@TheNewAfricaChannel" },
-                            { name: "SABC News", handle: "@sabcnews", focus: "South Africa & Continental Politics", url: "https://www.youtube.com/@sabcnews" },
-                            { name: "African Diaspora News", handle: "@AfricanDiasporaNewsChannel", focus: "Global African Affairs", url: "https://www.youtube.com/@AfricanDiasporaNewsChannel" },
-                            { name: "Newzroom Afrika", handle: "@Newzroom405", focus: "Live African News Coverage", url: "https://www.youtube.com/@Newzroom405" },
-                            { name: "Wode Maya", handle: "@Wodemaya", focus: "Pan-African Enterprise", url: "https://www.youtube.com/@Wodemaya" }
+                            { name: "The New Africa Channel", handle: "@TheNewAfricaChannel", focus: "Geopolitics & Infrastructure", url: "https://www.youtube.com/@TheNewAfricaChannel", icon: "🌍" },
+                            { name: "SABC News", handle: "@sabcnews", focus: "South Africa & Continental Politics", url: "https://www.youtube.com/@sabcnews", icon: "📡" },
+                            { name: "African Diaspora News", handle: "@AfricanDiasporaNewsChannel", focus: "Global African Affairs", url: "https://www.youtube.com/@AfricanDiasporaNewsChannel", icon: "🗞️" },
+                            { name: "Newzroom Afrika", handle: "@Newzroom405", focus: "Live African News Coverage", url: "https://www.youtube.com/@Newzroom405", icon: "🎙️" },
+                            { name: "Wode Maya", handle: "@Wodemaya", focus: "Pan-African Enterprise", url: "https://www.youtube.com/@Wodemaya", icon: "🚀" }
                         ].map((channel, idx) => (
                             <a
                                 key={idx}
                                 href={channel.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="block p-3 border border-red-500/20 bg-red-500/5 rounded-md transition-all hover:bg-red-500/10 hover:border-red-500/40 group cursor-pointer"
+                                className="flex items-start gap-3 p-3 border border-red-500/20 bg-red-500/5 rounded-md transition-all hover:bg-red-500/10 hover:border-red-500/40 group cursor-pointer"
                             >
-                                <h3 className="text-sm font-bold leading-tight group-hover:text-red-500 transition-colors mb-1">
-                                    {channel.name} <span className="text-xs text-red-500/70 inline-block ml-1 opacity-0 group-hover:opacity-100 transition-opacity">↗</span>
-                                </h3>
-                                <div className="text-[10px] font-mono text-slate-light mb-2">
-                                    {channel.handle}
-                                </div>
-                                <div className="text-[9px] px-1.5 py-0.5 bg-background border border-border/50 rounded font-mono inline-block bg-white/5 dark:bg-black/20">
-                                    FOCUS: {channel.focus.toUpperCase()}
+                                <span className="text-xl mt-0.5 shrink-0">{channel.icon}</span>
+                                <div className="flex-1 min-w-0">
+                                    <h3 className="text-sm font-bold leading-tight group-hover:text-red-500 transition-colors mb-0.5">
+                                        {channel.name} <span className="text-xs text-red-500/70 inline-block ml-1 opacity-0 group-hover:opacity-100 transition-opacity">↗</span>
+                                    </h3>
+                                    <div className="text-[10px] font-mono text-slate-light mb-2">
+                                        {channel.handle}
+                                    </div>
+                                    <div className="text-[9px] px-1.5 py-0.5 bg-background border border-border/50 rounded font-mono inline-block bg-white/5 dark:bg-black/20">
+                                        FOCUS: {channel.focus.toUpperCase()}
+                                    </div>
                                 </div>
                             </a>
                         ))}
