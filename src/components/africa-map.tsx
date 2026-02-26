@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState } from "react"
-import { ComposableMap, Geographies, Geography, ZoomableGroup } from "react-simple-maps"
+import { ComposableMap, Geographies, Geography, ZoomableGroup, Marker } from "react-simple-maps"
 import { useTheme } from "next-themes"
 import { Plus, Minus } from "lucide-react"
 import { ALL_SOVEREIGN_DATA } from "@/lib/mock-data"
@@ -19,7 +19,47 @@ const AFRICAN_COUNTRIES = [
     "266", "270", "288", "324", "624", "404", "426", "430", "434", "450",
     "454", "466", "478", "480", "504", "508", "516", "562", "566", "646",
     "678", "686", "690", "694", "706", "710", "728", "729", "834", "768",
-    "788", "800", "894", "716", "732" // 732 is Western Sahara for mapping completeness
+    "788", "800", "894", "716", "732"
+];
+
+// Major country labels with coordinates
+const COUNTRY_LABELS: { name: string, coordinates: [number, number], size?: string }[] = [
+    { name: "NIGERIA", coordinates: [8, 9.5] },
+    { name: "EGYPT", coordinates: [30, 27] },
+    { name: "SOUTH AFRICA", coordinates: [25, -30] },
+    { name: "KENYA", coordinates: [38, 0] },
+    { name: "DRC", coordinates: [23, -3] },
+    { name: "ETHIOPIA", coordinates: [39, 8.5] },
+    { name: "ALGERIA", coordinates: [3, 28], size: "lg" },
+    { name: "MOROCCO", coordinates: [-6, 32] },
+    { name: "GHANA", coordinates: [-1.5, 7.5] },
+    { name: "TANZANIA", coordinates: [35, -6.5] },
+    { name: "ANGOLA", coordinates: [17.5, -12] },
+    { name: "SUDAN", coordinates: [30, 15] },
+    { name: "LIBYA", coordinates: [17, 27] },
+    { name: "MALI", coordinates: [-2, 17] },
+    { name: "NIGER", coordinates: [9, 17] },
+    { name: "CHAD", coordinates: [18, 13] },
+    { name: "SENEGAL", coordinates: [-15, 14.5] },
+    { name: "MOZAMBIQUE", coordinates: [35, -17] },
+    { name: "ZAMBIA", coordinates: [28, -14] },
+    { name: "ZIMBABWE", coordinates: [30, -20] },
+    { name: "MADAGASCAR", coordinates: [47, -19.5] },
+    { name: "CAMEROON", coordinates: [12, 6] },
+    { name: "SOMALIA", coordinates: [46, 5] },
+    { name: "UGANDA", coordinates: [32, 1.5] },
+    { name: "RWANDA", coordinates: [29.5, -2] },
+    { name: "TUNISIA", coordinates: [9.5, 34] },
+];
+
+// Pulsing alert markers for countries with high activity
+const ALERT_MARKERS: { coordinates: [number, number], severity: "high" | "medium" | "low" }[] = [
+    { coordinates: [25, -3], severity: "high" },     // DRC - cobalt
+    { coordinates: [38, 0.5], severity: "medium" },   // Kenya - BRI
+    { coordinates: [25, -29], severity: "high" },     // South Africa - CBAM
+    { coordinates: [8, 9], severity: "medium" },      // Nigeria - Dangote
+    { coordinates: [-1, 7], severity: "low" },        // Ghana - IMF
+    { coordinates: [30, 0], severity: "low" },        // Rwanda - tech
 ];
 
 const geoUrl = "/world.json";
@@ -43,22 +83,22 @@ export default function AfricaMap({ selectedCountryCode, onSelectCountry }: Afri
         );
     };
 
-    // Theme-aware map colors
-    // Default to dark mode colors since dark is default
+    // Heat map: color by Axis Score
+    const getHeatColor = (score: number, isDark: boolean) => {
+        if (score >= 80) return isDark ? "rgba(34, 197, 94, 0.7)" : "rgba(34, 197, 94, 0.6)";   // Green
+        if (score >= 65) return isDark ? "rgba(34, 197, 94, 0.4)" : "rgba(34, 197, 94, 0.35)";  // Light green
+        if (score >= 55) return isDark ? "rgba(234, 179, 8, 0.4)" : "rgba(234, 179, 8, 0.35)";  // Yellow
+        if (score >= 45) return isDark ? "rgba(249, 115, 22, 0.4)" : "rgba(249, 115, 22, 0.35)"; // Orange
+        return isDark ? "rgba(239, 68, 68, 0.4)" : "rgba(239, 68, 68, 0.35)";                    // Red
+    };
+
     const isDark = theme === "dark" || theme === "system" || !theme;
 
     const mapConfig = {
-        // Deep rich earth/green base
-        fill: isDark ? "rgba(10, 35, 20, 0.9)" : "rgba(220, 235, 220, 1)",
-        // Vibrant Gold stroke
         stroke: isDark ? "rgba(241, 181, 4, 0.5)" : "rgba(241, 181, 4, 0.8)",
-        // Pan-African Red on hover
         hover: isDark ? "rgba(227, 18, 11, 0.6)" : "rgba(227, 18, 11, 0.8)",
-        // Vibrant Green active state
         active: isDark ? "rgba(0, 135, 81, 0.9)" : "rgba(0, 135, 81, 1)",
-        // Hover stroke color (Bright yellow/gold)
         hoverStroke: "rgba(255, 215, 0, 1)",
-        // Glow effect
         glowInfo: "rgba(255, 215, 0, 0.5)"
     };
 
@@ -94,10 +134,8 @@ export default function AfricaMap({ selectedCountryCode, onSelectCountry }: Afri
                     <Geographies geography={geoUrl}>
                         {({ geographies }) =>
                             geographies.map((geo) => {
-                                // Determine if this geography is an African country
                                 const isAfrica = AFRICAN_COUNTRIES.includes(geo.id);
 
-                                // Render the rest of the world as a faint wireframe backdrop
                                 if (!isAfrica) {
                                     return (
                                         <Geography
@@ -116,6 +154,7 @@ export default function AfricaMap({ selectedCountryCode, onSelectCountry }: Afri
 
                                 const cData = getCountryData(geo.properties.name);
                                 const isSelected = selectedCountryCode && cData?.country === selectedCountryCode;
+                                const heatFill = cData ? getHeatColor(cData.axisScore, isDark) : (isDark ? "rgba(10, 35, 20, 0.9)" : "rgba(220, 235, 220, 1)");
 
                                 return (
                                     <Geography
@@ -125,7 +164,7 @@ export default function AfricaMap({ selectedCountryCode, onSelectCountry }: Afri
                                         strokeWidth={isSelected ? 1.5 : 0.5}
                                         onClick={() => {
                                             if (isSelected) {
-                                                onSelectCountry(null); // toggle off
+                                                onSelectCountry(null);
                                             } else if (cData) {
                                                 onSelectCountry(cData.country);
                                             }
@@ -145,7 +184,7 @@ export default function AfricaMap({ selectedCountryCode, onSelectCountry }: Afri
                                         }}
                                         style={{
                                             default: {
-                                                fill: isSelected ? mapConfig.active : mapConfig.fill,
+                                                fill: isSelected ? mapConfig.active : heatFill,
                                                 outline: "none",
                                                 transition: "all 250ms",
                                                 filter: isSelected ? `drop-shadow(0px 0px 8px ${mapConfig.glowInfo})` : "none",
@@ -168,8 +207,65 @@ export default function AfricaMap({ selectedCountryCode, onSelectCountry }: Afri
                             })
                         }
                     </Geographies>
+
+                    {/* Animated Alert Markers */}
+                    {ALERT_MARKERS.map((marker, idx) => (
+                        <Marker key={`alert-${idx}`} coordinates={marker.coordinates}>
+                            <circle
+                                r={3}
+                                fill={marker.severity === "high" ? "#ef4444" : marker.severity === "medium" ? "#f59e0b" : "#22c55e"}
+                                opacity={0.9}
+                            />
+                            <circle
+                                r={3}
+                                fill="none"
+                                stroke={marker.severity === "high" ? "#ef4444" : marker.severity === "medium" ? "#f59e0b" : "#22c55e"}
+                                strokeWidth={1}
+                                opacity={0.6}
+                            >
+                                <animate attributeName="r" from="3" to="12" dur="2s" repeatCount="indefinite" />
+                                <animate attributeName="opacity" from="0.6" to="0" dur="2s" repeatCount="indefinite" />
+                            </circle>
+                        </Marker>
+                    ))}
+
+                    {/* Country Labels */}
+                    {COUNTRY_LABELS.map((label, idx) => (
+                        <Marker key={`label-${idx}`} coordinates={label.coordinates}>
+                            <text
+                                textAnchor="middle"
+                                style={{
+                                    fontFamily: "ui-monospace, monospace",
+                                    fontSize: label.size === "lg" ? "6px" : "4.5px",
+                                    fill: isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.3)",
+                                    letterSpacing: "0.5px",
+                                    fontWeight: 600,
+                                    pointerEvents: "none",
+                                    userSelect: "none",
+                                }}
+                            >
+                                {label.name}
+                            </text>
+                        </Marker>
+                    ))}
                 </ZoomableGroup>
             </ComposableMap>
+
+            {/* Heat Map Legend */}
+            <div className="absolute bottom-4 left-4 bg-panel/80 border border-border rounded-lg p-2.5 backdrop-blur-md shadow-lg">
+                <div className="text-[8px] font-mono text-slate-light mb-1.5 tracking-wider">SOVEREIGNTY HEAT MAP</div>
+                <div className="flex items-center gap-1">
+                    <div className="w-4 h-2.5 rounded-sm bg-red-500/50" />
+                    <div className="w-4 h-2.5 rounded-sm bg-orange-500/50" />
+                    <div className="w-4 h-2.5 rounded-sm bg-yellow-500/50" />
+                    <div className="w-4 h-2.5 rounded-sm bg-green-500/30" />
+                    <div className="w-4 h-2.5 rounded-sm bg-green-500/70" />
+                </div>
+                <div className="flex justify-between text-[7px] font-mono text-slate-light mt-0.5">
+                    <span>EXTRACTIVE</span>
+                    <span>OPTIMAL</span>
+                </div>
+            </div>
 
             {/* Zoom Controls */}
             <div className="absolute top-4 right-4 flex flex-col gap-1 bg-panel/80 p-1 border border-border backdrop-blur-md rounded-lg shadow-lg">
@@ -188,7 +284,7 @@ export default function AfricaMap({ selectedCountryCode, onSelectCountry }: Afri
                 </button>
             </div>
 
-            {/* Rich Hover Tooltip */}
+            {/* Rich Hover Tooltip — centered above cursor */}
             {tooltip.show && (
                 <div
                     style={{
@@ -199,7 +295,7 @@ export default function AfricaMap({ selectedCountryCode, onSelectCountry }: Afri
                         pointerEvents: "none",
                         transform: "translateZ(0)"
                     }}
-                    className="w-56 bg-panel/95 border border-border p-3 rounded-lg shadow-[0_0_20px_rgba(0,0,0,0.3)] backdrop-blur-md text-foreground pointer-events-none"
+                    className="w-56 bg-zinc-900 dark:bg-zinc-900 border border-zinc-700 p-3 rounded-lg shadow-[0_0_20px_rgba(0,0,0,0.5)] text-white pointer-events-none"
                 >
                     <div className="flex items-center gap-2 border-b border-border/50 pb-2 mb-2">
                         <span className={`w-2 h-2 rounded-full animate-pulse ${(tooltip.data?.axisScore || 0) > 70 ? 'bg-green-500' : 'bg-red-500'}`} />
