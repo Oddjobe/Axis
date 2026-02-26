@@ -16,6 +16,8 @@ export default function Home() {
   const [selectedCode, setSelectedCode] = useState<string | null>(null);
   const [missionOpen, setMissionOpen] = useState(false);
   const [mobilePanel, setMobilePanel] = useState<"map" | "index" | "intel">("map");
+  const currentYear = new Date().getFullYear();
+  const [timeValue, setTimeValue] = useState(currentYear);
 
   const selectedCountry = selectedCode
     ? ALL_SOVEREIGN_DATA.find(c => c.country === selectedCode) ?? null
@@ -139,6 +141,27 @@ export default function Home() {
                 </div>
               </div>
             )}
+
+            {/* Time Series Slider overlay */}
+            <div className="absolute bottom-20 inset-x-0 flex justify-center px-4 pointer-events-auto">
+              <div className="bg-panel/90 backdrop-blur-md border border-border rounded-xl p-3 shadow-2xl flex flex-col gap-2 w-full max-w-sm">
+                <div className="flex justify-between items-center text-[10px] font-mono font-bold text-slate-light">
+                  <span>2015</span>
+                  <span className="text-cobalt bg-cobalt/10 px-2 py-0.5 rounded border border-cobalt/30">
+                    {timeValue === currentYear ? `CURRENT (${new Date().toLocaleDateString(undefined, { month: 'short', year: 'numeric' })})` : timeValue}
+                  </span>
+                  <span>{currentYear}</span>
+                </div>
+                <input
+                  type="range"
+                  min="2015"
+                  max={currentYear}
+                  value={timeValue}
+                  onChange={(e) => setTimeValue(parseInt(e.target.value))}
+                  className="w-full h-1 bg-border rounded-lg appearance-none cursor-pointer accent-cobalt outline-none"
+                />
+              </div>
+            </div>
           </div>
         </section>
 
