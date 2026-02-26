@@ -5,6 +5,7 @@ import { Activity, Globe } from "lucide-react";
 import AfricaMap from "@/components/africa-map";
 import FrictionEngine from "@/components/friction-engine";
 import AfcftaMatrix from "@/components/afcfta-matrix";
+import ContinentalGoalsTicker from "@/components/continental-goals-ticker";
 
 export default function Home() {
   const [mode, setMode] = useState<"SOVEREIGNTY" | "WESTERN RISK">("SOVEREIGNTY");
@@ -73,15 +74,8 @@ export default function Home() {
         <FrictionEngine mode={mode} />
       </main>
 
-      {/* Bottom Ticker: Commodity Data */}
-      <footer className="h-8 border-t border-border bg-panel flex items-center px-4 overflow-hidden shrink-0 text-xs font-mono">
-        <div className="flex gap-8 whitespace-nowrap animate-pulse">
-          <span className="flex items-center gap-2"><span className="text-slate-light">COBALT (LME)</span> <span className="text-green-500">▲ $28,450/mt</span></span>
-          <span className="flex items-center gap-2"><span className="text-slate-light">COPPER (COMEX)</span> <span className="text-red-500">▼ $3.82/lb</span></span>
-          <span className="flex items-center gap-2"><span className="text-slate-light">BRENT CRUDE</span> <span className="text-green-500">▲ $82.14/bbl</span></span>
-          <span className="flex items-center gap-2 text-cobalt">[SYSTEM STATUS: OPTIMAL]</span>
-        </div>
-      </footer>
+      {/* Bottom Ticker: Top 10 Continental Goals */}
+      <ContinentalGoalsTicker />
     </div>
   );
 }
