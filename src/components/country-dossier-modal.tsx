@@ -129,13 +129,67 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
                                     </div>
                                 </div>
                                 <div className="border border-border rounded-lg bg-[radial-gradient(circle_at_center,rgba(37,99,235,0.1)_0%,transparent_70%)] flex items-center justify-center p-8">
-                                    {/* Abstract Map/Radar visual placeholder */}
+                                    {/* Dynamic Radar visual showing resources & vectors mapped around the rings */}
                                     <div className="relative w-full aspect-square border border-cobalt/20 rounded-full flex items-center justify-center">
-                                        <div className="w-3/4 aspect-square border-2 border-dashed border-cobalt/30 rounded-full animate-[spin_60s_linear_infinite]" />
-                                        <div className="absolute w-1/2 aspect-square border border-cobalt/50 rounded-full" />
-                                        <Hexagon className="absolute w-1/4 h-1/4 text-cobalt animate-pulse" />
-                                        <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-green-500 rounded-full shadow-[0_0_10px_rgba(34,197,94,1)] animate-ping" />
-                                        <div className="absolute bottom-1/3 right-1/4 w-2 h-2 bg-red-500 rounded-full shadow-[0_0_10px_rgba(239,68,68,1)]" />
+                                        <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_center,rgba(37,99,235,0.05)_0%,transparent_100%)]" />
+
+                                        {/* Spinning rings */}
+                                        <div className="absolute w-[85%] aspect-square border border-cobalt/20 rounded-full" />
+                                        <div className="w-[70%] aspect-square border-2 border-dashed border-cobalt/30 rounded-full animate-[spin_120s_linear_infinite]" />
+                                        <div className="absolute w-[45%] aspect-square border border-cobalt/40 rounded-full" />
+
+                                        {/* Core */}
+                                        <div className="relative flex items-center justify-center">
+                                            <Hexagon className="w-16 h-16 text-cobalt stroke-1" />
+                                            <span className="absolute text-[10px] font-bold text-cobalt">{countryData.axisScore}</span>
+                                        </div>
+
+                                        {/* Render Resources on inner ring */}
+                                        {countryData.keyResources.slice(0, 4).map((res, i) => {
+                                            const angle = (i * (360 / Math.max(1, countryData.keyResources.slice(0, 4).length))) * (Math.PI / 180);
+                                            const radius = 22; // percentage
+                                            const top = 50 + radius * Math.sin(angle);
+                                            const left = 50 + radius * Math.cos(angle);
+                                            return (
+                                                <div key={`res-${i}`} className="absolute flex flex-col items-center" style={{ top: `${top}%`, left: `${left}%`, transform: 'translate(-50%, -50%)' }}>
+                                                    <div className="w-2.5 h-2.5 bg-amber-500 rounded border border-amber-300 shadow-[0_0_10px_rgba(245,158,11,0.5)]" />
+                                                    <span className="text-[8px] font-mono mt-1 text-amber-500 whitespace-nowrap bg-background/80 px-1 rounded">{res.toUpperCase()}</span>
+                                                </div>
+                                            );
+                                        })}
+
+                                        {/* Render Initiatives on middle ring */}
+                                        {countryData.keyInitiatives.map((init, i) => {
+                                            const angle = (20 + i * (360 / Math.max(1, countryData.keyInitiatives.length))) * (Math.PI / 180);
+                                            const radius = 35; // percentage
+                                            const top = 50 + radius * Math.sin(angle);
+                                            const left = 50 + radius * Math.cos(angle);
+                                            return (
+                                                <div key={`init-${i}`} className="absolute flex flex-col items-center" style={{ top: `${top}%`, left: `${left}%`, transform: 'translate(-50%, -50%)' }}>
+                                                    <div className="w-2 h-2 bg-green-500 rounded-full shadow-[0_0_10px_rgba(34,197,94,0.8)] animate-pulse" />
+                                                    <span className="text-[7px] font-mono mt-1 text-green-400 whitespace-nowrap bg-background/80 px-1 rounded">{init.title.toUpperCase()}</span>
+                                                </div>
+                                            );
+                                        })}
+
+                                        {/* Render Threat Vectors on outer ring */}
+                                        {countryData.frictionVectors.map((frict, i) => {
+                                            const angle = (45 + i * (360 / Math.max(1, countryData.frictionVectors.length))) * (Math.PI / 180);
+                                            const radius = 42; // percentage
+                                            const top = 50 + radius * Math.sin(angle);
+                                            const left = 50 + radius * Math.cos(angle);
+                                            const clr = frict.severity === "HIGH" ? "red-500" : frict.severity === "MEDIUM" ? "orange-500" : "yellow-500";
+                                            return (
+                                                <div key={`frict-${i}`} className="absolute flex items-center justify-center group" style={{ top: `${top}%`, left: `${left}%`, transform: 'translate(-50%, -50%)' }}>
+                                                    <div className={`w-3 h-3 border-2 border-${clr} rotate-45 flex items-center justify-center bg-background`}>
+                                                        <div className={`w-1 h-1 bg-${clr}`} />
+                                                    </div>
+                                                    <div className={`absolute -bottom-4 text-[7px] text-${clr} font-mono whitespace-nowrap bg-background/80 px-1 rounded border border-${clr}/30`}>
+                                                        {frict.title.substring(0, 15)}..
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             </div>
