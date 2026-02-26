@@ -32,7 +32,7 @@ export default function AfcftaMatrix({ selectedCode, onSelectCode }: AfcftaMatri
     const [legendOpen, setLegendOpen] = useState(false);
 
     return (
-        <aside className="w-80 border-r border-border bg-panel backdrop-blur-sm flex flex-col shrink-0">
+        <aside className="w-full lg:w-80 border-r border-border bg-panel backdrop-blur-sm flex flex-col shrink-0">
             <div className="p-4 border-b border-border">
                 <h2 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
                     <Activity className="w-4 h-4 text-cobalt" />

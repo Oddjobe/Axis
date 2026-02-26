@@ -115,7 +115,7 @@ export default function FrictionEngine({ mode, filterCountry }: { mode: "SOVEREI
     });
 
     return (
-        <aside className="w-96 border-l border-border bg-panel backdrop-blur-sm flex flex-col shrink-0 transition-colors">
+        <aside className="w-full lg:w-96 border-l border-border bg-panel backdrop-blur-sm flex flex-col shrink-0 transition-colors">
 
             {/* Panel Tabs Header */}
             <div className="flex border-b border-border text-xs font-bold tracking-wider pt-2 px-1 gap-0.5">

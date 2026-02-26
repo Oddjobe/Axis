@@ -14,8 +14,35 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AXIS AFRICA | Strategic Intelligence Engine",
-  description: "A high-fidelity, Pan-African strategic intelligence engine designed for officials, investors, and citizens.",
+  title: "AXIS AFRICA | African X-ray Intelligence System",
+  description: "Real-time strategic intelligence platform tracking sovereignty, resource wealth, and outside influence across all 54 African nations.",
+  keywords: ["Africa", "geopolitics", "sovereignty", "intelligence", "AfCFTA", "resources", "OSINT", "strategic analysis"],
+  authors: [{ name: "AXIS AFRICA" }],
+  openGraph: {
+    title: "AXIS AFRICA — African X-ray Intelligence System",
+    description: "Live sovereignty scores, heat-mapped resources, and geopolitical intelligence for all 54 African nations. Open source.",
+    url: "https://axis-mocha.vercel.app",
+    siteName: "AXIS AFRICA",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "AXIS AFRICA Dashboard — Sovereignty heat map of the African continent",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "AXIS AFRICA — African X-ray Intelligence System",
+    description: "Live sovereignty scores, heat-mapped resources, and geopolitical intelligence for all 54 African nations.",
+    images: ["/og-image.png"],
+  },
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({
