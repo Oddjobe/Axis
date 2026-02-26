@@ -81,8 +81,8 @@ export default function AfricaMap({ selectedCountryCode, onSelectCountry }: Afri
             <ComposableMap
                 projection="geoAzimuthalEqualArea"
                 projectionConfig={{
-                    rotate: [-15, -2, 0],   // Center over Africa
-                    scale: 450,            // Zoom in appropriate for the continent
+                    rotate: [-20, 2, 0],
+                    scale: 380,
                 }}
                 style={{ width: "100%", height: "100%" }}
             >
@@ -193,8 +193,8 @@ export default function AfricaMap({ selectedCountryCode, onSelectCountry }: Afri
                 <div
                     style={{
                         position: "fixed",
-                        left: tooltip.x + 10,
-                        top: tooltip.y + 10,
+                        left: tooltip.x + 224 > window.innerWidth ? tooltip.x - 234 : tooltip.x + 10,
+                        top: tooltip.y + 160 > window.innerHeight ? tooltip.y - 140 : tooltip.y + 10,
                         zIndex: 1000,
                         pointerEvents: "none"
                     }}
