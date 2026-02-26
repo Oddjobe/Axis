@@ -1,5 +1,5 @@
-import { Activity, TrendingUp, Pickaxe, ChevronDown, Info } from "lucide-react";
-import { useState } from "react";
+import { Activity, TrendingUp, Pickaxe, ChevronDown, Info, Search, Filter } from "lucide-react";
+import { useState, useMemo } from "react";
 import CountryDossierModal, { CountryData } from "./country-dossier-modal";
 
 import { ALL_SOVEREIGN_DATA } from "@/lib/mock-data";
@@ -10,7 +10,33 @@ interface AfcftaMatrixProps {
 }
 
 export default function AfcftaMatrix({ selectedCode, onSelectCode }: AfcftaMatrixProps) {
-    const sovereignData = ALL_SOVEREIGN_DATA;
+    const [selectedCountry, setSelectedCountry] = useState<CountryData | null>(null);
+    const [legendOpen, setLegendOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [sortBy, setSortBy] = useState<"name" | "score" | "wealth">("name");
+    const [filterStatus, setFilterStatus] = useState<string>("ALL");
+
+    const sortedAndFilteredData = useMemo(() => {
+        let result = ALL_SOVEREIGN_DATA;
+
+        if (searchQuery) {
+            result = result.filter(c =>
+                c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                c.country.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+        }
+
+        if (filterStatus !== "ALL") {
+            result = result.filter(c => c.status === filterStatus);
+        }
+
+        return [...result].sort((a, b) => {
+            if (sortBy === "name") return a.name.localeCompare(b.name);
+            if (sortBy === "score") return b.axisScore - a.axisScore;
+            if (sortBy === "wealth") return b.resourceWealth - a.resourceWealth;
+            return 0;
+        });
+    }, [searchQuery, sortBy, filterStatus]);
 
     const getScoreColor = (score: number) => {
         if (score >= 75) return "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.8)]";
@@ -28,8 +54,7 @@ export default function AfcftaMatrix({ selectedCode, onSelectCode }: AfcftaMatri
         }
     };
 
-    const [selectedCountry, setSelectedCountry] = useState<CountryData | null>(null);
-    const [legendOpen, setLegendOpen] = useState(false);
+
 
     return (
         <aside className="w-full lg:w-80 border-r border-border bg-panel backdrop-blur-sm flex flex-col shrink-0">
@@ -78,8 +103,46 @@ export default function AfcftaMatrix({ selectedCode, onSelectCode }: AfcftaMatri
                 )}
             </div>
 
+            {/* Controls */}
+            <div className="p-3 border-b border-border bg-black/5 dark:bg-white/5 space-y-3">
+                <div className="relative">
+                    <Search className="absolute left-2.5 top-2 w-4 h-4 text-slate-light" />
+                    <input
+                        type="text"
+                        placeholder="SEARCH NATION..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full bg-background border border-border rounded-lg pl-9 pr-3 py-1.5 text-xs font-mono text-foreground focus:outline-none focus:border-cobalt/50 transition-colors"
+                    />
+                </div>
+
+                <div className="flex gap-2">
+                    <select
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value as any)}
+                        className="flex-1 bg-background border border-border rounded-md px-2 py-1 text-xs font-mono text-slate-light focus:outline-none cursor-pointer hover:bg-white/5 transition-colors"
+                    >
+                        <option value="name">SORT: A-Z</option>
+                        <option value="score">SORT: AXIS SCORE</option>
+                        <option value="wealth">SORT: WEALTH</option>
+                    </select>
+
+                    <select
+                        value={filterStatus}
+                        onChange={(e) => setFilterStatus(e.target.value)}
+                        className="flex-1 bg-background border border-border rounded-md px-2 py-1 text-xs font-mono text-slate-light focus:outline-none cursor-pointer hover:bg-white/5 transition-colors"
+                    >
+                        <option value="ALL">ALL STATUS</option>
+                        <option value="OPTIMAL">OPTIMAL</option>
+                        <option value="STABLE">STABLE</option>
+                        <option value="IMPROVING">IMPROVING</option>
+                        <option value="EXTRACTIVE">EXTRACTIVE</option>
+                    </select>
+                </div>
+            </div>
+
             <div className="flex-1 overflow-y-auto p-4 space-y-4 font-mono text-sm">
-                {sovereignData.map((data, i) => (
+                {sortedAndFilteredData.map((data, i) => (
                     <div
                         key={i}
                         onClick={() => {
