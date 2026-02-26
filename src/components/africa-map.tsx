@@ -88,9 +88,22 @@ export default function AfricaMap() {
                                 // Determine if this geography is an African country
                                 const isAfrica = AFRICAN_COUNTRIES.includes(geo.id);
 
-                                // If it's not Africa, we could either hide it or style it faintly.
-                                // For an exclusively African "War Room", hiding the rest looks cleaner.
-                                if (!isAfrica) return null;
+                                // Render the rest of the world as a faint wireframe backdrop
+                                if (!isAfrica) {
+                                    return (
+                                        <Geography
+                                            key={geo.rsmKey}
+                                            geography={geo}
+                                            stroke={isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)"}
+                                            strokeWidth={0.5}
+                                            style={{
+                                                default: { fill: "transparent", outline: "none" },
+                                                hover: { fill: "transparent", outline: "none" },
+                                                pressed: { fill: "transparent", outline: "none" },
+                                            }}
+                                        />
+                                    );
+                                }
 
                                 return (
                                     <Geography
@@ -157,8 +170,8 @@ export default function AfricaMap() {
                 <div
                     style={{
                         position: "fixed",
-                        left: tooltip.x + 20,
-                        top: tooltip.y + 20,
+                        left: tooltip.x + 10,
+                        top: tooltip.y + 10,
                         zIndex: 1000,
                         pointerEvents: "none"
                     }}

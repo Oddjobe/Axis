@@ -1,7 +1,5 @@
 "use client"
 
-import { motion } from "framer-motion"
-
 const GOALS = [
     { id: "01", title: "AFCFTA INTEGRATION", value: "FREE TRADE AGREEMENT", status: "ACCELERATING" },
     { id: "02", title: "RESOURCE BENEFICIATION", value: "OWNING LOCAL MINERALS", status: "DOWNSTREAM REFINING" },
@@ -17,7 +15,7 @@ const GOALS = [
 
 export default function ContinentalGoalsTicker() {
     return (
-        <footer className="h-10 border-t border-border bg-panel flex items-center overflow-hidden shrink-0 font-mono relative">
+        <footer className="h-10 border-t border-border bg-panel flex items-center overflow-hidden shrink-0 font-mono relative group transition-all">
             {/* Fixed Title Box on the Left */}
             <div className="absolute left-0 top-0 bottom-0 bg-cobalt text-white text-[10px] font-bold px-4 flex items-center z-10 shadow-[5px_0_15px_rgba(0,0,0,0.5)] whitespace-nowrap">
                 TOP 10 CONTINENTAL GOALS //
@@ -25,14 +23,12 @@ export default function ContinentalGoalsTicker() {
 
             {/* Infinite Scrolling Marquee */}
             <div className="flex w-full overflow-hidden relative">
-                <motion.div
-                    className="flex items-center whitespace-nowrap pl-48"
-                    animate={{ x: ["0%", "-50%"] }}
-                    transition={{ ease: "linear", duration: 40, repeat: Infinity }}
+                <div
+                    className="flex w-max items-center whitespace-nowrap pl-48 animate-ticker group-hover:[animation-play-state:paused] transition-all"
                 >
                     {/* We render the list twice for seamless looping */}
                     {[...GOALS, ...GOALS].map((goal, idx) => (
-                        <div key={idx} className="flex items-center mx-6 gap-3 text-[10px]">
+                        <div key={idx} className="flex items-center mx-6 gap-3 text-[10px] group-hover:text-[11px] transition-all duration-300">
                             <span className="text-slate-light/60">[{goal.id}]</span>
                             <span className="font-bold text-foreground tracking-wider">{goal.title}</span>
                             <span className="text-cobalt opacity-50">{"///"}</span>
@@ -41,7 +37,7 @@ export default function ContinentalGoalsTicker() {
                             <span className="text-green-500 font-bold">{goal.status}</span>
                         </div>
                     ))}
-                </motion.div>
+                </div>
             </div>
         </footer>
     );
