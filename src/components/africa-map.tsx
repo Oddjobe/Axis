@@ -26,7 +26,7 @@ const AFRICAN_COUNTRIES = [
 const COUNTRY_LABELS: { name: string, coordinates: [number, number], size?: string }[] = [
     { name: "NIGERIA", coordinates: [8, 9.5] },
     { name: "EGYPT", coordinates: [30, 27] },
-    { name: "SOUTH AFRICA", coordinates: [25, -30] },
+    { name: "S. AFRICA", coordinates: [25, -30] },
     { name: "KENYA", coordinates: [38, 0] },
     { name: "DRC", coordinates: [23, -3] },
     { name: "ETHIOPIA", coordinates: [39, 8.5] },
@@ -36,7 +36,7 @@ const COUNTRY_LABELS: { name: string, coordinates: [number, number], size?: stri
     { name: "TANZANIA", coordinates: [35, -6.5] },
     { name: "ANGOLA", coordinates: [17.5, -12] },
     { name: "SUDAN", coordinates: [30, 15] },
-    { name: "LIBYA", coordinates: [17, 27] },
+    { name: "LIBYA", coordinates: [17, 27], size: "lg" },
     { name: "MALI", coordinates: [-2, 17] },
     { name: "NIGER", coordinates: [9, 17] },
     { name: "CHAD", coordinates: [18, 13] },
@@ -50,17 +50,43 @@ const COUNTRY_LABELS: { name: string, coordinates: [number, number], size?: stri
     { name: "UGANDA", coordinates: [32, 1.5] },
     { name: "RWANDA", coordinates: [29.5, -2] },
     { name: "TUNISIA", coordinates: [9.5, 34] },
+    { name: "NAMIBIA", coordinates: [17, -22] },
+    { name: "BOTSWANA", coordinates: [24, -22.5] },
+    { name: "MAURITANIA", coordinates: [-10, 20] },
+    { name: "GABON", coordinates: [11.5, -0.5] },
+    { name: "CONGO", coordinates: [15, -4] },
+    { name: "GUINEA", coordinates: [-11, 10.5] },
+    { name: "BENIN", coordinates: [2.3, 9.5] },
+    { name: "TOGO", coordinates: [1.1, 8.5] },
+    { name: "S. LEONE", coordinates: [-11.5, 8.5] },
+    { name: "LIBERIA", coordinates: [-9.5, 6.5] },
+    { name: "CÔTE D'IV.", coordinates: [-5.5, 7.5] },
+    { name: "BURKINA F.", coordinates: [-1.5, 12.5] },
+    { name: "S. SUDAN", coordinates: [31, 7] },
+    { name: "ERITREA", coordinates: [39, 15] },
+    { name: "C.A.R.", coordinates: [20, 6.5] },
+    { name: "ESWATINI", coordinates: [31.5, -26.5] },
+    { name: "LESOTHO", coordinates: [28.5, -29.5] },
+    { name: "MALAWI", coordinates: [34, -13.5] },
+    { name: "BURUNDI", coordinates: [29.5, -3.5] },
+    { name: "DJIBOUTI", coordinates: [43, 11.5] },
+    { name: "EQ. GUINEA", coordinates: [10, 2] },
+    { name: "GAMBIA", coordinates: [-15, 13.5] },
+    { name: "G-BISSAU", coordinates: [-14.5, 12.2] },
+    { name: "COMOROS", coordinates: [44, -12] },
+    { name: "CABO VERDE", coordinates: [-24, 16] },
 ];
 
-// Pulsing alert markers for countries with high activity
-const ALERT_MARKERS: { coordinates: [number, number], severity: "high" | "medium" | "low" }[] = [
-    { coordinates: [25, -3], severity: "high" },     // DRC - cobalt
-    { coordinates: [38, 0.5], severity: "medium" },   // Kenya - BRI
-    { coordinates: [25, -29], severity: "high" },     // South Africa - CBAM
-    { coordinates: [8, 9], severity: "medium" },      // Nigeria - Dangote
-    { coordinates: [-1, 7], severity: "low" },        // Ghana - IMF
-    { coordinates: [30, 0], severity: "low" },        // Rwanda - tech
-];
+// Build a coordinate lookup from labels
+const LABEL_COORDS: Record<string, [number, number]> = {};
+COUNTRY_LABELS.forEach(l => { LABEL_COORDS[l.name] = l.coordinates; });
+
+// Map axis score to severity for pulsing dots
+const getSeverity = (score: number): "high" | "medium" | "low" => {
+    if (score <= 50) return "high";
+    if (score <= 65) return "medium";
+    return "low";
+};
 
 const geoUrl = "/world.json";
 
@@ -208,26 +234,26 @@ export default function AfricaMap({ selectedCountryCode, onSelectCountry }: Afri
                         }
                     </Geographies>
 
-                    {/* Animated Alert Markers */}
-                    {ALERT_MARKERS.map((marker, idx) => (
-                        <Marker key={`alert-${idx}`} coordinates={marker.coordinates}>
-                            <circle
-                                r={3}
-                                fill={marker.severity === "high" ? "#ef4444" : marker.severity === "medium" ? "#f59e0b" : "#22c55e"}
-                                opacity={0.9}
-                            />
-                            <circle
-                                r={3}
-                                fill="none"
-                                stroke={marker.severity === "high" ? "#ef4444" : marker.severity === "medium" ? "#f59e0b" : "#22c55e"}
-                                strokeWidth={1}
-                                opacity={0.6}
-                            >
-                                <animate attributeName="r" from="3" to="12" dur="2s" repeatCount="indefinite" />
-                                <animate attributeName="opacity" from="0.6" to="0" dur="2s" repeatCount="indefinite" />
-                            </circle>
-                        </Marker>
-                    ))}
+                    {/* Animated Alert Markers — one per country */}
+                    {COUNTRY_LABELS.map((label, idx) => {
+                        const countryData = ALL_SOVEREIGN_DATA.find(d =>
+                            d.name.toUpperCase().startsWith(label.name.split(".")[0].split(" ")[0]) ||
+                            label.name.includes(d.country) ||
+                            d.name.toUpperCase() === label.name
+                        );
+                        if (!countryData) return null;
+                        const severity = getSeverity(countryData.axisScore);
+                        const color = severity === "high" ? "#ef4444" : severity === "medium" ? "#f59e0b" : "#22c55e";
+                        return (
+                            <Marker key={`alert-${idx}`} coordinates={label.coordinates}>
+                                <circle r={2} fill={color} opacity={0.9} />
+                                <circle r={2} fill="none" stroke={color} strokeWidth={0.8} opacity={0.5}>
+                                    <animate attributeName="r" from="2" to="8" dur="2.5s" repeatCount="indefinite" />
+                                    <animate attributeName="opacity" from="0.5" to="0" dur="2.5s" repeatCount="indefinite" />
+                                </circle>
+                            </Marker>
+                        );
+                    })}
 
                     {/* Country Labels */}
                     {COUNTRY_LABELS.map((label, idx) => (
@@ -290,29 +316,38 @@ export default function AfricaMap({ selectedCountryCode, onSelectCountry }: Afri
                     style={{
                         position: "fixed",
                         left: Math.max(8, Math.min(tooltip.x - 112, window.innerWidth - 232)),
-                        top: Math.max(4, tooltip.y - 120),
+                        top: Math.max(4, tooltip.y - 180),
                         zIndex: 1000,
                         pointerEvents: "none",
                         transform: "translateZ(0)"
                     }}
                     className="w-56 bg-zinc-900 dark:bg-zinc-900 border border-zinc-700 p-3 rounded-lg shadow-[0_0_20px_rgba(0,0,0,0.5)] text-white pointer-events-none"
                 >
-                    <div className="flex items-center gap-2 border-b border-border/50 pb-2 mb-2">
+                    <div className="flex items-center gap-2 border-b border-zinc-700 pb-2 mb-2">
                         <span className={`w-2 h-2 rounded-full animate-pulse ${(tooltip.data?.axisScore || 0) > 70 ? 'bg-green-500' : 'bg-red-500'}`} />
                         <h4 className="text-sm font-bold tracking-wider uppercase">{tooltip.content}</h4>
                     </div>
 
                     <div className="space-y-2 font-mono text-[10px]">
                         <div className="flex justify-between items-center">
-                            <span className="text-slate-light">SOVEREIGNTY SCORE</span>
+                            <span className="text-zinc-400">SOVEREIGNTY SCORE</span>
                             <span className={`font-bold ${(tooltip.data?.axisScore || 0) > 70 ? 'text-green-500' : 'text-red-500'}`}>{tooltip.data?.axisScore}/100</span>
                         </div>
                         <div className="flex justify-between items-center">
-                            <span className="text-slate-light">KEY INITIATIVE</span>
-                            <span className="text-cobalt font-bold max-w-32 truncate text-right">{tooltip.data?.highlights[0]}</span>
+                            <span className="text-zinc-400">RESOURCE WEALTH</span>
+                            <span className="font-bold text-amber-500">{tooltip.data?.resourceWealth}/100</span>
+                        </div>
+                        <div className="flex flex-wrap gap-1">
+                            {tooltip.data?.keyResources.slice(0, 3).map((r, i) => (
+                                <span key={i} className="text-[8px] px-1 py-0.5 bg-amber-500/15 border border-amber-500/30 rounded text-amber-400">{r}</span>
+                            ))}
                         </div>
                         <div className="flex justify-between items-center">
-                            <span className="text-slate-light">FDI TREND (QOQ)</span>
+                            <span className="text-zinc-400">KEY INITIATIVE</span>
+                            <span className="text-blue-400 font-bold max-w-32 truncate text-right">{tooltip.data?.highlights[0]}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                            <span className="text-zinc-400">FDI TREND (QOQ)</span>
                             <span className={`${(tooltip.data?.trend || "").startsWith('+') ? 'text-green-500' : 'text-orange-500'}`}>
                                 {tooltip.data?.trend}
                             </span>

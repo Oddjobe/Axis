@@ -111,14 +111,33 @@ export default function AfcftaMatrix({ selectedCode, onSelectCode }: AfcftaMatri
                             <span>AXIS SCORE</span>
                             <span>{data.axisScore}/100</span>
                         </div>
-                        <div className="h-1.5 bg-border rounded-full overflow-hidden mb-3">
+                        <div className="h-1.5 bg-border rounded-full overflow-hidden mb-2">
                             <div
                                 className={`h-full transition-all duration-1000 ${getScoreColor(data.axisScore)}`}
                                 style={{ width: `${data.axisScore}%` }}
                             ></div>
                         </div>
 
-                        <div className="flex gap-2">
+                        <div className="flex justify-between items-center text-[10px] mb-1">
+                            <span>RESOURCE WEALTH</span>
+                            <span>{data.resourceWealth}/100</span>
+                        </div>
+                        <div className="h-1.5 bg-border rounded-full overflow-hidden mb-2">
+                            <div
+                                className="h-full transition-all duration-1000 bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]"
+                                style={{ width: `${data.resourceWealth}%` }}
+                            ></div>
+                        </div>
+
+                        <div className="flex flex-wrap gap-1 mb-1">
+                            {data.keyResources.slice(0, 3).map((res, idx) => (
+                                <span key={idx} className="text-[8px] px-1.5 py-0.5 bg-amber-500/10 border border-amber-500/30 rounded text-amber-500">
+                                    {res.toUpperCase()}
+                                </span>
+                            ))}
+                        </div>
+
+                        <div className="flex gap-2 mt-2">
                             {data.highlights.map((highlight, idx) => (
                                 <span key={idx} className="text-[9px] px-1.5 py-0.5 bg-white/5 dark:bg-black/20 border border-border/50 rounded flex items-center gap-1 text-slate-light">
                                     {idx === 0 ? <Pickaxe className="w-2.5 h-2.5" /> : <TrendingUp className="w-2.5 h-2.5" />}

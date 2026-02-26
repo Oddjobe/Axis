@@ -28,9 +28,66 @@ const POP_MAP: Record<string, number> = {
     "COM": 0.8, "CPV": 0.6, "STP": 0.2, "SYC": 0.1
 };
 
+// Resource wealth scores and key resources per country (based on real-world data)
+const RESOURCE_MAP: Record<string, { score: number, resources: string[] }> = {
+    "DZA": { score: 82, resources: ["Oil & Gas", "Phosphates", "Iron Ore"] },
+    "AGO": { score: 88, resources: ["Oil", "Diamonds", "Iron Ore"] },
+    "BEN": { score: 25, resources: ["Cotton", "Gold", "Limestone"] },
+    "BWA": { score: 85, resources: ["Diamonds", "Copper", "Nickel"] },
+    "BFA": { score: 45, resources: ["Gold", "Manganese", "Zinc"] },
+    "BDI": { score: 35, resources: ["Nickel", "Gold", "Rare Earth"] },
+    "CPV": { score: 10, resources: ["Salt", "Pozzolana"] },
+    "CMR": { score: 55, resources: ["Oil", "Bauxite", "Timber"] },
+    "CAF": { score: 60, resources: ["Diamonds", "Gold", "Uranium"] },
+    "TCD": { score: 65, resources: ["Oil", "Uranium", "Gold"] },
+    "COM": { score: 8, resources: ["Ylang-ylang"] },
+    "COD": { score: 97, resources: ["Cobalt", "Copper", "Coltan", "Lithium"] },
+    "COG": { score: 72, resources: ["Oil", "Timber", "Potash"] },
+    "CIV": { score: 50, resources: ["Cocoa", "Gold", "Oil"] },
+    "DJI": { score: 15, resources: ["Salt", "Geothermal"] },
+    "EGY": { score: 70, resources: ["Oil & Gas", "Gold", "Phosphates"] },
+    "GNQ": { score: 78, resources: ["Oil", "Gas", "Timber"] },
+    "ERI": { score: 55, resources: ["Gold", "Copper", "Zinc"] },
+    "SWZ": { score: 28, resources: ["Coal", "Quarry Stone"] },
+    "ETH": { score: 52, resources: ["Gold", "Tantalum", "Gemstones"] },
+    "GAB": { score: 80, resources: ["Oil", "Manganese", "Timber"] },
+    "GMB": { score: 12, resources: ["Fish", "Titanium"] },
+    "GHA": { score: 68, resources: ["Gold", "Oil", "Cocoa", "Bauxite"] },
+    "GIN": { score: 82, resources: ["Bauxite", "Gold", "Diamonds", "Iron Ore"] },
+    "GNB": { score: 18, resources: ["Bauxite", "Phosphates"] },
+    "KEN": { score: 42, resources: ["Soda Ash", "Titanium", "Gold"] },
+    "LSO": { score: 30, resources: ["Diamonds", "Water"] },
+    "LBR": { score: 58, resources: ["Iron Ore", "Diamonds", "Gold"] },
+    "LBY": { score: 90, resources: ["Oil", "Gas", "Gypsum"] },
+    "MDG": { score: 65, resources: ["Nickel", "Cobalt", "Graphite", "Ilmenite"] },
+    "MWI": { score: 30, resources: ["Uranium", "Coal", "Bauxite"] },
+    "MLI": { score: 55, resources: ["Gold", "Phosphates", "Salt"] },
+    "MRT": { score: 60, resources: ["Iron Ore", "Gold", "Oil"] },
+    "MUS": { score: 15, resources: ["Fish"] },
+    "MAR": { score: 72, resources: ["Phosphates", "Cobalt", "Zinc"] },
+    "MOZ": { score: 75, resources: ["Gas", "Coal", "Titanium", "Rubies"] },
+    "NAM": { score: 78, resources: ["Uranium", "Diamonds", "Zinc", "Gold"] },
+    "NER": { score: 55, resources: ["Uranium", "Oil", "Gold"] },
+    "NGA": { score: 92, resources: ["Oil", "Gas", "Tin", "Iron Ore"] },
+    "RWA": { score: 40, resources: ["Tin", "Tantalum", "Tungsten"] },
+    "STP": { score: 12, resources: ["Cocoa", "Oil (offshore)"] },
+    "SEN": { score: 48, resources: ["Phosphates", "Gold", "Oil & Gas"] },
+    "SYC": { score: 8, resources: ["Fish", "Cinnamon"] },
+    "SLE": { score: 62, resources: ["Diamonds", "Rutile", "Bauxite", "Iron Ore"] },
+    "SOM": { score: 45, resources: ["Uranium", "Oil (potential)", "Gas"] },
+    "ZAF": { score: 95, resources: ["Platinum", "Gold", "Chrome", "Manganese", "Coal"] },
+    "SSD": { score: 70, resources: ["Oil", "Gold", "Diamonds"] },
+    "SDN": { score: 65, resources: ["Gold", "Oil", "Chrome"] },
+    "TZA": { score: 68, resources: ["Gold", "Tanzanite", "Diamonds", "Gas"] },
+    "TGO": { score: 32, resources: ["Phosphates", "Limestone"] },
+    "TUN": { score: 45, resources: ["Phosphates", "Oil", "Iron Ore"] },
+    "UGA": { score: 50, resources: ["Oil", "Gold", "Copper"] },
+    "ZMB": { score: 80, resources: ["Copper", "Cobalt", "Emeralds"] },
+    "ZWE": { score: 78, resources: ["Platinum", "Lithium", "Diamonds", "Chrome"] }
+};
+
 const generateMockData = (): CountryData[] => {
     return AFRICAN_NATIONS.map((nation, index) => {
-        // Generate pseudo-random deterministic data based on index
         const baseScore = 40 + ((index * 7) % 55);
         const isPositive = (index % 3) !== 0;
         const trendValue = ((index * 3) % 4) + 0.1;
@@ -50,6 +107,8 @@ const generateMockData = (): CountryData[] => {
             ["Trade Hub", "Port Expansion"]
         ];
 
+        const resourceData = RESOURCE_MAP[nation.c] || { score: 20, resources: ["Undetermined"] };
+
         return {
             country: nation.c,
             name: nation.n,
@@ -57,7 +116,9 @@ const generateMockData = (): CountryData[] => {
             trend: `${isPositive ? '+' : '-'}${trendValue.toFixed(1)}%`,
             highlights: highlightPatterns[index % highlightPatterns.length],
             status: status,
-            population: `${(POP_MAP[nation.c] || (1 + (index * 5.3) % 40)).toFixed(1)}M`
+            population: `${(POP_MAP[nation.c] || (1 + (index * 5.3) % 40)).toFixed(1)}M`,
+            resourceWealth: resourceData.score,
+            keyResources: resourceData.resources
         };
     }).sort((a, b) => a.name.localeCompare(b.name));
 };

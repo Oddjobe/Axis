@@ -35,7 +35,7 @@ export default function Home() {
           </h1>
           <div className="h-6 w-px bg-border mx-2" />
           <span className="text-xs font-mono text-slate-light dark:text-zinc-400 tracking-wider">
-            PAN-AFRICAN INTELLIGENCE PLATFORM // V1.0
+            AFRICAN X-RAY INTELLIGENCE SYSTEM · V1.0
           </span>
         </div>
 

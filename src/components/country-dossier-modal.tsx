@@ -11,6 +11,8 @@ export interface CountryData {
     highlights: string[];
     status: string;
     population: string;
+    resourceWealth: number;       // 0-100 natural resource endowment score
+    keyResources: string[];       // Top 2-3 resources
 }
 
 export interface CountryDossierProps {
