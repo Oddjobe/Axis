@@ -35,9 +35,9 @@ export default function ContinentalGoalsTicker() {
                         <div key={idx} className="flex items-center mx-6 gap-3 text-[10px]">
                             <span className="text-slate-light/60">[{goal.id}]</span>
                             <span className="font-bold text-foreground tracking-wider">{goal.title}</span>
-                            <span className="text-cobalt opacity-50">///</span>
+                            <span className="text-cobalt opacity-50">{"///"}</span>
                             <span className="text-foreground/80">{goal.value}</span>
-                            <span className="text-cobalt opacity-50">///</span>
+                            <span className="text-cobalt opacity-50">{"///"}</span>
                             <span className="text-green-500 font-bold">{goal.status}</span>
                         </div>
                     ))}

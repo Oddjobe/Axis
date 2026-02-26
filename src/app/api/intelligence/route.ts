@@ -2,7 +2,7 @@ import FirecrawlApp from "@mendable/firecrawl-js";
 import { NextResponse } from "next/server";
 
 const app = new FirecrawlApp({ apiKey: process.env.FIRECRAWL_API_KEY });
-let cachedData: any = null;
+let cachedData: unknown = null;
 let lastFetch: number = 0;
 
 export async function GET() {
@@ -12,6 +12,7 @@ export async function GET() {
     }
 
     try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const response = await (app as any).v1.scrapeUrl("https://www.aljazeera.com/africa/", {
             formats: ["extract"],
             extract: {

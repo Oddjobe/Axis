@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react";
-import { Activity, Globe } from "lucide-react";
+import { Globe } from "lucide-react";
 import AfricaMap from "@/components/africa-map";
 import FrictionEngine from "@/components/friction-engine";
 import AfcftaMatrix from "@/components/afcfta-matrix";

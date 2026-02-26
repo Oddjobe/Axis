@@ -19,7 +19,7 @@ const geoUrl = "/world.json";
 
 export default function AfricaMap() {
     const { theme } = useTheme();
-    const [tooltip, setTooltip] = useState({ show: false, content: "", data: null as any, x: 0, y: 0 });
+    const [tooltip, setTooltip] = useState({ show: false, content: "", data: null as { riskScore: number, resourceKey: string, fdiTrend: string } | null, x: 0, y: 0 });
     const [position, setPosition] = useState({ coordinates: [0, 0], zoom: 1.2 });
 
     // Mock Intelligence Data for Map Tooltips
@@ -63,7 +63,7 @@ export default function AfricaMap() {
         setPosition((pos) => ({ ...pos, zoom: pos.zoom / 1.5 }));
     }
 
-    function handleMoveEnd(position: any) {
+    function handleMoveEnd(position: { coordinates: [number, number], zoom: number }) {
         setPosition(position);
     }
 
@@ -165,14 +165,14 @@ export default function AfricaMap() {
                     className="w-56 bg-panel/95 border border-border p-3 rounded-lg shadow-[0_0_20px_rgba(0,0,0,0.3)] backdrop-blur-md text-foreground pointer-events-none"
                 >
                     <div className="flex items-center gap-2 border-b border-border/50 pb-2 mb-2">
-                        <span className={`w-2 h-2 rounded-full animate-pulse ${tooltip.data?.riskScore > 70 ? 'bg-green-500' : 'bg-red-500'}`} />
+                        <span className={`w-2 h-2 rounded-full animate-pulse ${(tooltip.data?.riskScore || 0) > 70 ? 'bg-green-500' : 'bg-red-500'}`} />
                         <h4 className="text-sm font-bold tracking-wider uppercase">{tooltip.content}</h4>
                     </div>
 
                     <div className="space-y-2 font-mono text-[10px]">
                         <div className="flex justify-between items-center">
                             <span className="text-slate-light">SOVEREIGNTY SCORE</span>
-                            <span className={`font-bold ${tooltip.data?.riskScore > 70 ? 'text-green-500' : 'text-red-500'}`}>{tooltip.data?.riskScore}/100</span>
+                            <span className={`font-bold ${(tooltip.data?.riskScore || 0) > 70 ? 'text-green-500' : 'text-red-500'}`}>{tooltip.data?.riskScore}/100</span>
                         </div>
                         <div className="flex justify-between items-center">
                             <span className="text-slate-light">KEY RESOURCE</span>
@@ -180,7 +180,7 @@ export default function AfricaMap() {
                         </div>
                         <div className="flex justify-between items-center">
                             <span className="text-slate-light">FDI TREND (QOQ)</span>
-                            <span className={`${tooltip.data?.fdiTrend.startsWith('+') ? 'text-green-500' : 'text-orange-500'}`}>
+                            <span className={`${(tooltip.data?.fdiTrend || "").startsWith('+') ? 'text-green-500' : 'text-orange-500'}`}>
                                 {tooltip.data?.fdiTrend}
                             </span>
                         </div>

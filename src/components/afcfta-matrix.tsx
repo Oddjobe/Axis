@@ -1,4 +1,4 @@
-import { Activity, TrendingUp, Pickaxe, Zap } from "lucide-react";
+import { Activity, TrendingUp, Pickaxe } from "lucide-react";
 
 export default function AfcftaMatrix() {
     const sovereignData = [

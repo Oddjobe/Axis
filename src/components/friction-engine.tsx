@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { ShieldAlert, Loader2, Newspaper, Video } from "lucide-react"
+import { ShieldAlert, Newspaper, Video } from "lucide-react"
 
 interface Article {
     title: string
