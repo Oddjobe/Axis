@@ -1,4 +1,4 @@
-import { Activity, TrendingUp, Pickaxe } from "lucide-react";
+import { Activity, TrendingUp, Pickaxe, ChevronDown, Info } from "lucide-react";
 import { useState } from "react";
 import CountryDossierModal, { CountryData } from "./country-dossier-modal";
 
@@ -29,6 +29,7 @@ export default function AfcftaMatrix({ selectedCode, onSelectCode }: AfcftaMatri
     };
 
     const [selectedCountry, setSelectedCountry] = useState<CountryData | null>(null);
+    const [legendOpen, setLegendOpen] = useState(false);
 
     return (
         <aside className="w-80 border-r border-border bg-panel backdrop-blur-sm flex flex-col shrink-0">
@@ -40,6 +41,41 @@ export default function AfcftaMatrix({ selectedCode, onSelectCode }: AfcftaMatri
                 <p className="text-[10px] text-slate-light mt-1 font-mono">
                     AGGREGATING RESOURCE BENEFICIATION
                 </p>
+            </div>
+
+            {/* Collapsible Legend */}
+            <div className="border-b border-border">
+                <button
+                    onClick={() => setLegendOpen(!legendOpen)}
+                    className="w-full flex items-center justify-between px-4 py-2 text-[10px] font-mono text-cobalt hover:bg-background/50 transition-colors"
+                >
+                    <span className="flex items-center gap-1.5"><Info className="w-3 h-3" /> HOW TO READ THIS INDEX</span>
+                    <ChevronDown className={`w-3 h-3 transition-transform ${legendOpen ? 'rotate-180' : ''}`} />
+                </button>
+                {legendOpen && (
+                    <div className="px-4 pb-3 space-y-3 text-[9px] font-mono animate-in fade-in slide-in-from-top-2 duration-300">
+                        <div>
+                            <span className="text-foreground font-bold">AXIS SCORE</span>
+                            <p className="text-slate-light mt-0.5 leading-relaxed">Composite 0–100 metric measuring a nation's control over its own resources, policy independence, infrastructure ownership, and financial sovereignty.</p>
+                        </div>
+                        <div className="space-y-1">
+                            <span className="text-foreground font-bold">STATUS TAGS</span>
+                            <div className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-green-500" /> <span className="text-green-500">OPTIMAL</span> <span className="text-slate-light">— Score 75+. Strong sovereignty trajectory.</span></div>
+                            <div className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-blue-500" /> <span className="text-cobalt">STABLE</span> <span className="text-slate-light">— Consistent metrics, no major risks.</span></div>
+                            <div className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-yellow-500" /> <span className="text-yellow-500">IMPROVING</span> <span className="text-slate-light">— Positive reform trend underway.</span></div>
+                            <div className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-red-500" /> <span className="text-red-500">EXTRACTIVE</span> <span className="text-slate-light">— Score ≤50. Resources leaving without value capture.</span></div>
+                        </div>
+                        <div>
+                            <span className="text-foreground font-bold">HIGHLIGHT TAGS</span>
+                            <div className="flex items-center gap-2 mt-0.5"><Pickaxe className="w-2.5 h-2.5 text-slate-light" /> <span className="text-slate-light">Primary strategic resource or sector.</span></div>
+                            <div className="flex items-center gap-2"><TrendingUp className="w-2.5 h-2.5 text-slate-light" /> <span className="text-slate-light">Key growth initiative or policy direction.</span></div>
+                        </div>
+                        <div>
+                            <span className="text-foreground font-bold">TREND %</span>
+                            <p className="text-slate-light mt-0.5"><span className="text-green-500">+</span> Quarter-over-quarter sovereignty improvement. <span className="text-red-500">−</span> Declining score.</p>
+                        </div>
+                    </div>
+                )}
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-4 font-mono text-sm">
