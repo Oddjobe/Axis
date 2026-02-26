@@ -94,7 +94,7 @@ const geoUrl = "/world.json";
 export default function AfricaMap({ selectedCountryCode, onSelectCountry, timeValue }: AfricaMapProps) {
     const { theme } = useTheme();
     const [tooltip, setTooltip] = useState({ show: false, content: "", data: null as CountryData | null, x: 0, y: 0 });
-    const [position, setPosition] = useState({ coordinates: [0, 0], zoom: 1.2 });
+    const [position, setPosition] = useState({ coordinates: [0, 0], zoom: 1 });
 
     const getCountryData = (geoName: string) => {
         return ALL_SOVEREIGN_DATA.find(c =>
@@ -160,8 +160,8 @@ export default function AfricaMap({ selectedCountryCode, onSelectCountry, timeVa
             <ComposableMap
                 projection="geoAzimuthalEqualArea"
                 projectionConfig={{
-                    rotate: [-20, 2, 0],
-                    scale: 380,
+                    rotate: [-17, -3, 0],
+                    scale: 350,
                 }}
                 style={{ width: "100%", height: "100%" }}
             >

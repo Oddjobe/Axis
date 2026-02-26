@@ -120,7 +120,7 @@ export default function Home() {
           <div className="w-full h-full border border-border/30 rounded-xl flex items-center justify-center relative overflow-hidden backdrop-blur-sm shadow-[0_0_30px_rgba(37,99,235,0.05)]">
             <div className="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f005_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f005_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:24px_24px]"></div>
 
-            <AfricaMap selectedCountryCode={selectedCode} onSelectCountry={setSelectedCode} />
+            <AfricaMap selectedCountryCode={selectedCode} onSelectCountry={setSelectedCode} timeValue={timeValue} />
 
             {/* Selected Country Banner */}
             {selectedCountry && (
