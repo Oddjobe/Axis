@@ -10,6 +10,7 @@ import type { CountryData } from "@/components/country-dossier-modal"
 interface AfricaMapProps {
     selectedCountryCode: string | null;
     onSelectCountry: (code: string | null) => void;
+    timeValue?: number;
 }
 
 // List of ISO 3166-1 numeric codes for African countries matching the TopoJSON
@@ -90,7 +91,7 @@ const getSeverity = (score: number): "high" | "medium" | "low" => {
 
 const geoUrl = "/world.json";
 
-export default function AfricaMap({ selectedCountryCode, onSelectCountry }: AfricaMapProps) {
+export default function AfricaMap({ selectedCountryCode, onSelectCountry, timeValue }: AfricaMapProps) {
     const { theme } = useTheme();
     const [tooltip, setTooltip] = useState({ show: false, content: "", data: null as CountryData | null, x: 0, y: 0 });
     const [position, setPosition] = useState({ coordinates: [0, 0], zoom: 1.2 });
@@ -110,7 +111,19 @@ export default function AfricaMap({ selectedCountryCode, onSelectCountry }: Afri
     };
 
     // Heat map: color by Axis Score
-    const getHeatColor = (score: number, isDark: boolean) => {
+    const getHeatColor = (baseScore: number, isDark: boolean, country?: CountryData) => {
+        let score = baseScore;
+
+        // Adjust score based on timeValue if provided
+        if (timeValue && country) {
+            const currentYear = new Date().getFullYear();
+            const yearDiff = currentYear - timeValue;
+            // If the trend is positive '+', it means the score has been going UP, so it was LOWER in the past.
+            const trendMultiplier = country.trend.startsWith('+') ? 1 : -1;
+            // E.g., if trend is +, yearDiff is 5 years, score = 70. 70 - (1 * 5 * 1.8) = 61.
+            score = Math.max(10, Math.min(100, score - (trendMultiplier * yearDiff * 1.8)));
+        }
+
         if (score >= 80) return isDark ? "rgba(34, 197, 94, 0.7)" : "rgba(34, 197, 94, 0.6)";   // Green
         if (score >= 65) return isDark ? "rgba(34, 197, 94, 0.4)" : "rgba(34, 197, 94, 0.35)";  // Light green
         if (score >= 55) return isDark ? "rgba(234, 179, 8, 0.4)" : "rgba(234, 179, 8, 0.35)";  // Yellow
@@ -180,7 +193,7 @@ export default function AfricaMap({ selectedCountryCode, onSelectCountry }: Afri
 
                                 const cData = getCountryData(geo.properties.name);
                                 const isSelected = selectedCountryCode && cData?.country === selectedCountryCode;
-                                const heatFill = cData ? getHeatColor(cData.axisScore, isDark) : (isDark ? "rgba(10, 35, 20, 0.9)" : "rgba(220, 235, 220, 1)");
+                                const heatFill = cData ? getHeatColor(cData.axisScore, isDark, cData) : (isDark ? "rgba(10, 35, 20, 0.9)" : "rgba(220, 235, 220, 1)");
 
                                 return (
                                     <Geography
