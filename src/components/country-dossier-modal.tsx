@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Globe, ShieldAlert, BarChart3, ArrowRight, Activity, Cpu, Hexagon } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 
 export interface CountryData {
     country: string;
@@ -19,10 +20,15 @@ export interface CountryDossierProps {
 
 export default function CountryDossierModal({ isOpen, onClose, countryData }: CountryDossierProps) {
     const [activeTab, setActiveTab] = useState<"STRATEGY" | "EXPORTS" | "FRICTION">("STRATEGY");
+    const [mounted, setMounted] = useState(false);
 
-    if (!isOpen || !countryData) return null;
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
-    return (
+    if (!isOpen || !countryData || !mounted) return null;
+
+    return createPortal(
         <AnimatePresence>
             <motion.div
                 initial={{ opacity: 0 }}
@@ -179,6 +185,7 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
                     </div>
                 </motion.div>
             </motion.div>
-        </AnimatePresence>
+        </AnimatePresence>,
+        document.body
     );
 }

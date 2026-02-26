@@ -127,11 +127,11 @@ export default function FrictionEngine({ mode }: { mode: "SOVEREIGNTY" | "WESTER
                             EXTERNAL OSINT MEDIA SOURCES
                         </div>
                         {[
-                            { name: "Dr. Arikana Chihombori-Quao", handle: "@ArikanaChihomboriQuao", focus: "African Sovereignty & Diaspora", url: "https://www.youtube.com/@ArikanaChihomboriQuao" },
                             { name: "The New Africa Channel", handle: "@TheNewAfricaChannel", focus: "Geopolitics & Infrastructure", url: "https://www.youtube.com/@TheNewAfricaChannel" },
+                            { name: "SABC News", handle: "@sabcnews", focus: "South Africa & Continental Politics", url: "https://www.youtube.com/@sabcnews" },
                             { name: "African Diaspora News", handle: "@AfricanDiasporaNewsChannel", focus: "Global African Affairs", url: "https://www.youtube.com/@AfricanDiasporaNewsChannel" },
-                            { name: "Tayo Aina", handle: "@tayoainafilms", focus: "African Development & Tech", url: "https://www.youtube.com/@tayoainafilms" },
-                            { name: "Wode Maya", handle: "@WODEMAYA", focus: "Pan-African Enterprise", url: "https://www.youtube.com/@WODEMAYA" }
+                            { name: "Newzroom Afrika", handle: "@Newzroom405", focus: "Live African News Coverage", url: "https://www.youtube.com/@Newzroom405" },
+                            { name: "Wode Maya", handle: "@Wodemaya", focus: "Pan-African Enterprise", url: "https://www.youtube.com/@Wodemaya" }
                         ].map((channel, idx) => (
                             <a
                                 key={idx}
