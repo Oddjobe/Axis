@@ -1,4 +1,6 @@
 import { Activity, TrendingUp, Pickaxe } from "lucide-react";
+import { useState } from "react";
+import CountryDossierModal, { CountryData } from "./country-dossier-modal";
 
 export default function AfcftaMatrix() {
     const sovereignData = [
@@ -60,6 +62,8 @@ export default function AfcftaMatrix() {
         }
     };
 
+    const [selectedCountry, setSelectedCountry] = useState<CountryData | null>(null);
+
     return (
         <aside className="w-80 border-r border-border bg-panel backdrop-blur-sm flex flex-col shrink-0">
             <div className="p-4 border-b border-border">
@@ -74,7 +78,11 @@ export default function AfcftaMatrix() {
 
             <div className="flex-1 overflow-y-auto p-4 space-y-4 font-mono text-sm">
                 {sovereignData.map((data, i) => (
-                    <div key={i} className="p-3 border border-border/50 rounded-md bg-background/50 hover:bg-background/80 transition-colors cursor-pointer group">
+                    <div
+                        key={i}
+                        onClick={() => setSelectedCountry(data)}
+                        className="p-3 border border-border/50 rounded-md bg-background/50 hover:bg-background/80 transition-colors cursor-pointer group"
+                    >
                         <div className="flex justify-between items-center mb-1">
                             <span className="font-bold flex items-center gap-2">
                                 {data.country}
@@ -113,6 +121,13 @@ export default function AfcftaMatrix() {
                     </div>
                 ))}
             </div>
+
+            {/* Modal Overlay */}
+            <CountryDossierModal
+                isOpen={!!selectedCountry}
+                onClose={() => setSelectedCountry(null)}
+                countryData={selectedCountry}
+            />
         </aside>
     );
 }
