@@ -306,11 +306,11 @@ export default function FrictionEngine({ mode, filterCountry }: { mode: "SOVEREI
                             EXTERNAL OSINT MEDIA SOURCES
                         </div>
                         {[
-                            { name: "Into Africa (CSIS)", handle: "@csis", focus: "African Political, Economic & Security Issues", url: "https://www.youtube.com/c/CSIS_org" },
-                            { name: "African Geopolitics in Action", handle: "@AfricanGeopolitics", focus: "Policy & Strategic Shifts", url: "https://www.youtube.com/results?search_query=African+Geopolitics+in+Action" },
-                            { name: "Africa World Hour", handle: "@AfricaWorldHour", focus: "African Perspectives on Regional Developments", url: "https://www.youtube.com/results?search_query=Africa+World+Hour" },
-                            { name: "Geopolitical Monitor", handle: "@GeopoliticalMonitor", focus: "Security, Resources & Strategic Developments", url: "https://www.youtube.com/c/GeopoliticalMonitor" },
-                            { name: "Peter Zeihan", handle: "@ZeihanOnGeopolitics", focus: "Data-Driven Analysis on African Infrastructure & Resources", url: "https://www.youtube.com/c/ZeihanOnGeopolitics" }
+                            { name: "Into Africa (CSIS)", handle: "@csis", focus: "African Political, Economic & Security Issues", url: "https://www.youtube.com/@csis" },
+                            { name: "African Geopolitics in Action", handle: "#Geopolitics", focus: "Policy & Strategic Shifts", url: "https://www.youtube.com/results?search_query=African+Geopolitics+in+Action" },
+                            { name: "Africa World Hour", handle: "@sabcnews", focus: "African Perspectives on Regional Developments", url: "https://www.youtube.com/results?search_query=Africa+World+Hour" },
+                            { name: "Geopolitical Monitor", handle: "Geopolitics", focus: "Security, Resources & Strategic Developments", url: "https://www.youtube.com/results?search_query=Geopolitical+Monitor+Africa" },
+                            { name: "Peter Zeihan", handle: "@ZeihanOnGeopolitics", focus: "Data-Driven Analysis on African Infrastructure & Resources", url: "https://www.youtube.com/@ZeihanOnGeopolitics" }
                         ].map((channel, idx) => (
                             <a
                                 key={idx}
