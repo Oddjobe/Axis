@@ -10,6 +10,7 @@ export interface CountryData {
     trend: string;
     highlights: string[];
     status: string;
+    population: string;
 }
 
 export interface CountryDossierProps {

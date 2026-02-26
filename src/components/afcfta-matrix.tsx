@@ -4,7 +4,12 @@ import CountryDossierModal, { CountryData } from "./country-dossier-modal";
 
 import { ALL_SOVEREIGN_DATA } from "@/lib/mock-data";
 
-export default function AfcftaMatrix() {
+interface AfcftaMatrixProps {
+    selectedCode: string | null;
+    onSelectCode: (code: string | null) => void;
+}
+
+export default function AfcftaMatrix({ selectedCode, onSelectCode }: AfcftaMatrixProps) {
     const sovereignData = ALL_SOVEREIGN_DATA;
 
     const getScoreColor = (score: number) => {
@@ -41,8 +46,14 @@ export default function AfcftaMatrix() {
                 {sovereignData.map((data, i) => (
                     <div
                         key={i}
-                        onClick={() => setSelectedCountry(data)}
-                        className="p-3 border border-border/50 rounded-md bg-background/50 hover:bg-background/80 transition-colors cursor-pointer group"
+                        onClick={() => {
+                            setSelectedCountry(data);
+                            onSelectCode(selectedCode === data.country ? null : data.country);
+                        }}
+                        className={`p-3 border rounded-md transition-colors cursor-pointer group ${selectedCode === data.country
+                            ? "border-green-500/60 bg-green-500/10"
+                            : "border-border/50 bg-background/50 hover:bg-background/80"
+                            }`}
                     >
                         <div className="flex justify-between items-center mb-1">
                             <span className="font-bold flex items-center gap-2">

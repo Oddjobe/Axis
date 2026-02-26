@@ -17,6 +17,17 @@ const AFRICAN_NATIONS = [
     { c: "ZMB", n: "Zambia" }, { c: "ZWE", n: "Zimbabwe" }
 ];
 
+const POP_MAP: Record<string, number> = {
+    "NGA": 218.5, "ETH": 123.4, "EGY": 111.0, "COD": 99.0, "TZA": 65.5, "ZAF": 59.9, "KEN": 54.0,
+    "UGA": 47.1, "SDN": 46.9, "DZA": 44.9, "MAR": 37.5, "AGO": 35.6, "GHA": 33.5, "MOZ": 33.0,
+    "MDG": 29.6, "CIV": 28.2, "CMR": 27.9, "NER": 26.2, "BFA": 22.7, "MLI": 22.6, "MWI": 20.4,
+    "ZMB": 20.0, "TCD": 17.7, "SOM": 17.6, "SEN": 17.3, "ZWE": 16.3, "GIN": 13.9, "RWA": 13.6,
+    "BEN": 13.3, "BDI": 12.9, "TUN": 12.4, "SSD": 10.9, "TGO": 8.8, "SLE": 8.6, "LBY": 6.8,
+    "COG": 6.0, "CAF": 5.6, "LBR": 5.3, "MRT": 4.7, "ERI": 3.6, "GMB": 2.7, "BWA": 2.6,
+    "NAM": 2.6, "GNB": 2.1, "LSO": 2.3, "GNQ": 1.7, "MUS": 1.3, "SWZ": 1.2, "DJI": 1.1,
+    "COM": 0.8, "CPV": 0.6, "STP": 0.2, "SYC": 0.1
+};
+
 const generateMockData = (): CountryData[] => {
     return AFRICAN_NATIONS.map((nation, index) => {
         // Generate pseudo-random deterministic data based on index
@@ -45,7 +56,8 @@ const generateMockData = (): CountryData[] => {
             axisScore: baseScore,
             trend: `${isPositive ? '+' : '-'}${trendValue.toFixed(1)}%`,
             highlights: highlightPatterns[index % highlightPatterns.length],
-            status: status
+            status: status,
+            population: `${(POP_MAP[nation.c] || (1 + (index * 5.3) % 40)).toFixed(1)}M`
         };
     }).sort((a, b) => a.name.localeCompare(b.name));
 };

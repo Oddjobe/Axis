@@ -12,7 +12,7 @@ interface Article {
     timeAgo: string
 }
 
-export default function FrictionEngine({ mode }: { mode: "SOVEREIGNTY" | "WESTERN RISK" }) {
+export default function FrictionEngine({ mode, filterCountry }: { mode: "SOVEREIGNTY" | "WESTERN RISK"; filterCountry: string | null }) {
     const [alerts, setAlerts] = useState<Article[]>([])
     const [loading, setLoading] = useState(true)
     const [activeTab, setActiveTab] = useState<"ALERTS" | "NEWS" | "MEDIA">("ALERTS")
@@ -34,7 +34,15 @@ export default function FrictionEngine({ mode }: { mode: "SOVEREIGNTY" | "WESTER
         fetchIntelligence();
     }, []);
 
-    const filteredAlerts = alerts.filter(a => a.category === mode);
+    const filteredAlerts = alerts.filter(a => {
+        const modeMatch = a.category === mode;
+        if (!filterCountry) return modeMatch;
+        return modeMatch && (
+            a.title.toLowerCase().includes(filterCountry.toLowerCase()) ||
+            a.summary.toLowerCase().includes(filterCountry.toLowerCase()) ||
+            a.isoCode.toLowerCase().includes(filterCountry.substring(0, 3).toLowerCase())
+        );
+    });
 
     return (
         <aside className="w-96 border-l border-border bg-panel backdrop-blur-sm flex flex-col shrink-0 transition-colors">
@@ -62,6 +70,13 @@ export default function FrictionEngine({ mode }: { mode: "SOVEREIGNTY" | "WESTER
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                {/* Filter indicator */}
+                {filterCountry && (
+                    <div className="text-[10px] font-mono px-2 py-1 bg-green-500/10 border border-green-500/30 rounded text-green-500 flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                        FILTERED: {filterCountry.toUpperCase()}
+                    </div>
+                )}
                 {activeTab === "ALERTS" && (
                     <>
                         {loading && alerts.length === 0 ? (

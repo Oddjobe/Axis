@@ -4,6 +4,13 @@ import React, { useState } from "react"
 import { ComposableMap, Geographies, Geography, ZoomableGroup } from "react-simple-maps"
 import { useTheme } from "next-themes"
 import { Plus, Minus } from "lucide-react"
+import { ALL_SOVEREIGN_DATA } from "@/lib/mock-data"
+import type { CountryData } from "@/components/country-dossier-modal"
+
+interface AfricaMapProps {
+    selectedCountryCode: string | null;
+    onSelectCountry: (code: string | null) => void;
+}
 
 // List of ISO 3166-1 numeric codes for African countries matching the TopoJSON
 const AFRICAN_COUNTRIES = [
@@ -17,21 +24,23 @@ const AFRICAN_COUNTRIES = [
 
 const geoUrl = "/world.json";
 
-export default function AfricaMap() {
+export default function AfricaMap({ selectedCountryCode, onSelectCountry }: AfricaMapProps) {
     const { theme } = useTheme();
-    const [tooltip, setTooltip] = useState({ show: false, content: "", data: null as { riskScore: number, resourceKey: string, fdiTrend: string } | null, x: 0, y: 0 });
+    const [tooltip, setTooltip] = useState({ show: false, content: "", data: null as CountryData | null, x: 0, y: 0 });
     const [position, setPosition] = useState({ coordinates: [0, 0], zoom: 1.2 });
 
-    // Mock Intelligence Data for Map Tooltips
-    const intelligenceMock = (countryName: string) => {
-        // Generate a pseudo-random stable score based on string length
-        const baseScore = 50 + (countryName.length * 3);
-        const resource = ["Copper/Cobalt", "Gold/Uranium", "Oil/Gas", "Agriculture/Tech", "Rare Earths", "Lithium"][countryName.length % 6];
-        return {
-            riskScore: Math.min(baseScore, 95),
-            resourceKey: resource,
-            fdiTrend: baseScore > 70 ? "+2.4%" : "-1.1%"
-        };
+    const getCountryData = (geoName: string) => {
+        return ALL_SOVEREIGN_DATA.find(c =>
+            c.name.toLowerCase() === geoName.toLowerCase() ||
+            c.name.toLowerCase().includes(geoName.toLowerCase()) ||
+            geoName.toLowerCase().includes(c.name.toLowerCase()) ||
+            (geoName === "Dem. Rep. Congo" && c.country === "COD") ||
+            (geoName === "Central African Rep." && c.country === "CAF") ||
+            (geoName === "Côte d'Ivoire" && c.country === "CIV") ||
+            (geoName === "Eq. Guinea" && c.country === "GNQ") ||
+            (geoName === "S. Sudan" && c.country === "SSD") ||
+            (geoName === "W. Sahara" && c.country === "ESH")
+        );
     };
 
     // Theme-aware map colors
@@ -105,31 +114,45 @@ export default function AfricaMap() {
                                     );
                                 }
 
+                                const cData = getCountryData(geo.properties.name);
+                                const isSelected = selectedCountryCode && cData?.country === selectedCountryCode;
+
                                 return (
                                     <Geography
                                         key={geo.rsmKey}
                                         geography={geo}
-                                        stroke={mapConfig.stroke}
-                                        strokeWidth={0.5}
+                                        stroke={isSelected ? "rgba(0, 255, 128, 1)" : mapConfig.stroke}
+                                        strokeWidth={isSelected ? 1.5 : 0.5}
+                                        onClick={() => {
+                                            if (isSelected) {
+                                                onSelectCountry(null); // toggle off
+                                            } else if (cData) {
+                                                onSelectCountry(cData.country);
+                                            }
+                                        }}
                                         onMouseEnter={(e) => {
-                                            const intel = intelligenceMock(geo.properties.name);
-                                            setTooltip({ show: true, content: geo.properties.name, data: intel, x: e.clientX, y: e.clientY });
+                                            if (cData) {
+                                                setTooltip({ show: true, content: cData.name, data: cData, x: e.clientX, y: e.clientY });
+                                            }
                                         }}
                                         onMouseMove={(e) => {
-                                            setTooltip((prev) => ({ ...prev, x: e.clientX, y: e.clientY }));
+                                            if (cData) {
+                                                setTooltip((prev) => ({ ...prev, x: e.clientX, y: e.clientY }));
+                                            }
                                         }}
                                         onMouseLeave={() => {
                                             setTooltip((prev) => ({ ...prev, show: false }));
                                         }}
                                         style={{
                                             default: {
-                                                fill: mapConfig.fill,
+                                                fill: isSelected ? mapConfig.active : mapConfig.fill,
                                                 outline: "none",
-                                                transition: "all 250ms"
+                                                transition: "all 250ms",
+                                                filter: isSelected ? `drop-shadow(0px 0px 8px ${mapConfig.glowInfo})` : "none",
                                             },
                                             hover: {
                                                 fill: mapConfig.hover,
-                                                stroke: mapConfig.hoverStroke, // Vibrant gold on hover
+                                                stroke: mapConfig.hoverStroke,
                                                 strokeWidth: 1.5,
                                                 outline: "none",
                                                 cursor: "pointer",
@@ -178,23 +201,23 @@ export default function AfricaMap() {
                     className="w-56 bg-panel/95 border border-border p-3 rounded-lg shadow-[0_0_20px_rgba(0,0,0,0.3)] backdrop-blur-md text-foreground pointer-events-none"
                 >
                     <div className="flex items-center gap-2 border-b border-border/50 pb-2 mb-2">
-                        <span className={`w-2 h-2 rounded-full animate-pulse ${(tooltip.data?.riskScore || 0) > 70 ? 'bg-green-500' : 'bg-red-500'}`} />
+                        <span className={`w-2 h-2 rounded-full animate-pulse ${(tooltip.data?.axisScore || 0) > 70 ? 'bg-green-500' : 'bg-red-500'}`} />
                         <h4 className="text-sm font-bold tracking-wider uppercase">{tooltip.content}</h4>
                     </div>
 
                     <div className="space-y-2 font-mono text-[10px]">
                         <div className="flex justify-between items-center">
                             <span className="text-slate-light">SOVEREIGNTY SCORE</span>
-                            <span className={`font-bold ${(tooltip.data?.riskScore || 0) > 70 ? 'text-green-500' : 'text-red-500'}`}>{tooltip.data?.riskScore}/100</span>
+                            <span className={`font-bold ${(tooltip.data?.axisScore || 0) > 70 ? 'text-green-500' : 'text-red-500'}`}>{tooltip.data?.axisScore}/100</span>
                         </div>
                         <div className="flex justify-between items-center">
-                            <span className="text-slate-light">KEY RESOURCE</span>
-                            <span className="text-cobalt font-bold">{tooltip.data?.resourceKey}</span>
+                            <span className="text-slate-light">KEY INITIATIVE</span>
+                            <span className="text-cobalt font-bold max-w-32 truncate text-right">{tooltip.data?.highlights[0]}</span>
                         </div>
                         <div className="flex justify-between items-center">
                             <span className="text-slate-light">FDI TREND (QOQ)</span>
-                            <span className={`${(tooltip.data?.fdiTrend || "").startsWith('+') ? 'text-green-500' : 'text-orange-500'}`}>
-                                {tooltip.data?.fdiTrend}
+                            <span className={`${(tooltip.data?.trend || "").startsWith('+') ? 'text-green-500' : 'text-orange-500'}`}>
+                                {tooltip.data?.trend}
                             </span>
                         </div>
                     </div>
