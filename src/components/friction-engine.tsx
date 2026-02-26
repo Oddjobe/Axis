@@ -306,12 +306,11 @@ export default function FrictionEngine({ mode, filterCountry }: { mode: "SOVEREI
                             EXTERNAL OSINT MEDIA SOURCES
                         </div>
                         {[
-                            { name: "SABC News", handle: "@sabcnews", focus: "South Africa & Continental Politics", url: "https://www.youtube.com/c/sabcnews" },
-                            { name: "Channels Television", handle: "@channelsweb", focus: "Nigeria & West Africa", url: "https://www.youtube.com/c/channelsweb" },
-                            { name: "Citizen TV Kenya", handle: "@citizentv", focus: "East African Geopolitics", url: "https://www.youtube.com/c/citizentv" },
-                            { name: "Al Jazeera English (Africa)", handle: "@aljazeera", focus: "Global coverage of Africa", url: "https://www.youtube.com/user/AlJazeeraEnglish" },
-                            { name: "Wode Maya", handle: "@Wodemaya", focus: "Pan-African Enterprise", url: "https://www.youtube.com/c/WODEMAYA" },
-                            { name: "African Diaspora News", handle: "@AfricanDiasporaNewsChannel", focus: "Global African Affairs", url: "https://www.youtube.com/c/AfricanDiasporaNewsChannel" }
+                            { name: "Into Africa (CSIS)", handle: "@csis", focus: "African Political, Economic & Security Issues", url: "https://www.youtube.com/c/CSIS_org" },
+                            { name: "African Geopolitics in Action", handle: "@AfricanGeopolitics", focus: "Policy & Strategic Shifts", url: "https://www.youtube.com/results?search_query=African+Geopolitics+in+Action" },
+                            { name: "Africa World Hour", handle: "@AfricaWorldHour", focus: "African Perspectives on Regional Developments", url: "https://www.youtube.com/results?search_query=Africa+World+Hour" },
+                            { name: "Geopolitical Monitor", handle: "@GeopoliticalMonitor", focus: "Security, Resources & Strategic Developments", url: "https://www.youtube.com/c/GeopoliticalMonitor" },
+                            { name: "Peter Zeihan", handle: "@ZeihanOnGeopolitics", focus: "Data-Driven Analysis on African Infrastructure & Resources", url: "https://www.youtube.com/c/ZeihanOnGeopolitics" }
                         ].map((channel, idx) => (
                             <a
                                 key={idx}
