@@ -33,11 +33,13 @@
 }
 
 .dark {
-  /* Dark Mode: "Deep Slate & Cobalt" */
-  --background: var(--color-onyx);
-  --foreground: #f3f4f6;
-  --panel-bg: rgba(31, 41, 55, 0.45);
-  --border-color: rgba(55, 65, 81, 0.8);
+  /* Dark Mode: "Steel Ash & Cobalt" */
+  --background: #1e293b;
+  /* Lighter slate background */
+  --foreground: #f8fafc;
+  --panel-bg: rgba(51, 65, 85, 0.45);
+  /* Lighter panel bg */
+  --border-color: rgba(71, 85, 105, 0.6);
 }
 
 body {

@@ -19,8 +19,20 @@ const geoUrl = "/world.json";
 
 export default function AfricaMap() {
     const { theme } = useTheme();
-    const [tooltip, setTooltip] = useState({ show: false, content: "", x: 0, y: 0 });
+    const [tooltip, setTooltip] = useState({ show: false, content: "", data: null as any, x: 0, y: 0 });
     const [position, setPosition] = useState({ coordinates: [0, 0], zoom: 1.2 });
+
+    // Mock Intelligence Data for Map Tooltips
+    const intelligenceMock = (countryName: string) => {
+        // Generate a pseudo-random stable score based on string length
+        const baseScore = 50 + (countryName.length * 3);
+        const resource = ["Copper/Cobalt", "Gold/Uranium", "Oil/Gas", "Agriculture/Tech", "Rare Earths", "Lithium"][countryName.length % 6];
+        return {
+            riskScore: Math.min(baseScore, 95),
+            resourceKey: resource,
+            fdiTrend: baseScore > 70 ? "+2.4%" : "-1.1%"
+        };
+    };
 
     // Theme-aware map colors
     // Default to dark mode colors since dark is default
@@ -87,7 +99,8 @@ export default function AfricaMap() {
                                         stroke={mapConfig.stroke}
                                         strokeWidth={0.5}
                                         onMouseEnter={(e) => {
-                                            setTooltip({ show: true, content: geo.properties.name, x: e.clientX, y: e.clientY });
+                                            const intel = intelligenceMock(geo.properties.name);
+                                            setTooltip({ show: true, content: geo.properties.name, data: intel, x: e.clientX, y: e.clientY });
                                         }}
                                         onMouseMove={(e) => {
                                             setTooltip((prev) => ({ ...prev, x: e.clientX, y: e.clientY }));
@@ -139,20 +152,39 @@ export default function AfricaMap() {
                 </button>
             </div>
 
-            {/* Hover Tooltip */}
+            {/* Rich Hover Tooltip */}
             {tooltip.show && (
                 <div
                     style={{
                         position: "fixed",
-                        left: tooltip.x + 15,
-                        top: tooltip.y + 15,
+                        left: tooltip.x + 20,
+                        top: tooltip.y + 20,
                         zIndex: 1000,
                         pointerEvents: "none"
                     }}
-                    className="bg-panel border border-border px-3 py-1.5 rounded-md shadow-[0_0_15px_rgba(37,99,235,0.15)] text-xs font-bold tracking-wider backdrop-blur-md text-foreground flex items-center gap-2"
+                    className="w-56 bg-panel/95 border border-border p-3 rounded-lg shadow-[0_0_20px_rgba(0,0,0,0.3)] backdrop-blur-md text-foreground pointer-events-none"
                 >
-                    <span className="w-1.5 h-1.5 rounded-full bg-cobalt animate-pulse shadow-[0_0_5px_rgba(37,99,235,0.8)]" />
-                    {tooltip.content.toUpperCase()}
+                    <div className="flex items-center gap-2 border-b border-border/50 pb-2 mb-2">
+                        <span className={`w-2 h-2 rounded-full animate-pulse ${tooltip.data?.riskScore > 70 ? 'bg-green-500' : 'bg-red-500'}`} />
+                        <h4 className="text-sm font-bold tracking-wider uppercase">{tooltip.content}</h4>
+                    </div>
+
+                    <div className="space-y-2 font-mono text-[10px]">
+                        <div className="flex justify-between items-center">
+                            <span className="text-slate-light">SOVEREIGNTY SCORE</span>
+                            <span className={`font-bold ${tooltip.data?.riskScore > 70 ? 'text-green-500' : 'text-red-500'}`}>{tooltip.data?.riskScore}/100</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                            <span className="text-slate-light">KEY RESOURCE</span>
+                            <span className="text-cobalt font-bold">{tooltip.data?.resourceKey}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                            <span className="text-slate-light">FDI TREND (QOQ)</span>
+                            <span className={`${tooltip.data?.fdiTrend.startsWith('+') ? 'text-green-500' : 'text-orange-500'}`}>
+                                {tooltip.data?.fdiTrend}
+                            </span>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
