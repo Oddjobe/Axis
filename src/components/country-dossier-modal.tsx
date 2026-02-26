@@ -140,8 +140,8 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
 
                                         {/* Core */}
                                         <div className="relative flex items-center justify-center">
-                                            <Hexagon className="w-16 h-16 text-cobalt stroke-1" />
-                                            <span className="absolute text-[10px] font-bold text-cobalt">{countryData.axisScore}</span>
+                                            <Hexagon className="w-20 h-20 text-cobalt stroke-1" />
+                                            <span className="absolute text-xs font-bold text-cobalt">{countryData.axisScore}</span>
                                         </div>
 
                                         {/* Render Resources on inner ring */}
@@ -153,7 +153,7 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
                                             return (
                                                 <div key={`res-${i}`} className="absolute flex flex-col items-center" style={{ top: `${top}%`, left: `${left}%`, transform: 'translate(-50%, -50%)' }}>
                                                     <div className="w-2.5 h-2.5 bg-amber-500 rounded border border-amber-300 shadow-[0_0_10px_rgba(245,158,11,0.5)]" />
-                                                    <span className="text-[8px] font-mono mt-1 text-amber-500 whitespace-nowrap bg-background/80 px-1 rounded">{res.toUpperCase()}</span>
+                                                    <span className="text-[10px] font-mono mt-1 text-amber-500 whitespace-nowrap bg-background/80 px-1 rounded">{res.toUpperCase()}</span>
                                                 </div>
                                             );
                                         })}
@@ -167,7 +167,7 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
                                             return (
                                                 <div key={`init-${i}`} className="absolute flex flex-col items-center" style={{ top: `${top}%`, left: `${left}%`, transform: 'translate(-50%, -50%)' }}>
                                                     <div className="w-2 h-2 bg-green-500 rounded-full shadow-[0_0_10px_rgba(34,197,94,0.8)] animate-pulse" />
-                                                    <span className="text-[7px] font-mono mt-1 text-green-400 whitespace-nowrap bg-background/80 px-1 rounded">{init.title.toUpperCase()}</span>
+                                                    <span className="text-[9px] font-mono mt-1 text-green-400 whitespace-nowrap bg-background/80 px-1 rounded">{init.title.toUpperCase()}</span>
                                                 </div>
                                             );
                                         })}
@@ -184,8 +184,8 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
                                                     <div className={`w-3 h-3 border-2 border-${clr} rotate-45 flex items-center justify-center bg-background`}>
                                                         <div className={`w-1 h-1 bg-${clr}`} />
                                                     </div>
-                                                    <div className={`absolute -bottom-4 text-[7px] text-${clr} font-mono whitespace-nowrap bg-background/80 px-1 rounded border border-${clr}/30`}>
-                                                        {frict.title.substring(0, 15)}..
+                                                    <div className={`absolute -bottom-5 text-[9px] text-${clr} font-mono whitespace-nowrap bg-background/80 px-1.5 py-0.5 rounded border border-${clr}/30`}>
+                                                        {frict.title.substring(0, 18)}..
                                                     </div>
                                                 </div>
                                             );
