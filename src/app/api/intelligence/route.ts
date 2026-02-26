@@ -89,15 +89,6 @@ export async function GET() {
         // Verified fallback data
         return NextResponse.json([
             {
-                title: "AFCFTA TRADE PROTOCOL EXPANSION",
-                summary: "The African Continental Free Trade Area expands its protocol to cover digital trade and e-commerce, enabling cross-border fintech growth across 54 member states.",
-                severity: "MEDIUM",
-                category: "SOVEREIGNTY RISK",
-                isoCode: "PAN",
-                timeAgo: "2 HRS AGO",
-                source: "Fallback"
-            },
-            {
                 title: "DRC COBALT EXPORT BAN ENFORCEMENT",
                 summary: "DRC government enforces ban on raw cobalt exports, mandating domestic processing to capture more value from its critical mineral reserves.",
                 severity: "HIGH",
@@ -108,7 +99,7 @@ export async function GET() {
             },
             {
                 title: "IMF STRUCTURAL ADJUSTMENT IN GHANA",
-                summary: "IMF conditions $3B bailout on privatization of state energy assets, raising concerns about sovereignty over critical infrastructure.",
+                summary: "IMF conditions bailout on privatization of state energy assets, raising concerns over sovereignty of critical infrastructure.",
                 severity: "HIGH",
                 category: "OUTSIDE INFLUENCE",
                 isoCode: "GHA",
@@ -116,8 +107,8 @@ export async function GET() {
                 source: "Fallback"
             },
             {
-                title: "CHINA BELT & ROAD PORT DEAL IN KENYA",
-                summary: "New BRI-funded port expansion at Mombasa increases trade capacity but adds $2.1B to sovereign debt, raising debt sustainability questions.",
+                title: "CHINA SECURES KENYAN PORT EXPANSION",
+                summary: "New BRI-funded port expansion at Mombasa increases trade capacity but adds $2.1B to sovereign debt, raising intense debt sustainability questions.",
                 severity: "MEDIUM",
                 category: "OUTSIDE INFLUENCE",
                 isoCode: "KEN",
@@ -125,12 +116,30 @@ export async function GET() {
                 source: "Fallback"
             },
             {
-                title: "EU CBAM IMPACT ON SOUTH AFRICAN EXPORTS",
-                summary: "EU Carbon Border Adjustment Mechanism expected to reduce South African steel and aluminum export competitiveness by 12-15%.",
+                title: "ZAMBIA DEBT RESTRUCTURING FINALIZED",
+                summary: "Zambia successfully completes historic $3B debt restructuring with international bondholders under the G20 Common Framework.",
+                severity: "MEDIUM",
+                category: "SOVEREIGNTY RISK",
+                isoCode: "ZMB",
+                timeAgo: "10 HRS AGO",
+                source: "Fallback"
+            },
+            {
+                title: "EU CBAM IMPACTS SOUTH AFRICAN EXPORTS",
+                summary: "EU Carbon Border Adjustment Mechanism expected to sharply reduce South African steel and aluminum export competitiveness.",
                 severity: "HIGH",
                 category: "OUTSIDE INFLUENCE",
                 isoCode: "ZAF",
-                timeAgo: "10 HRS AGO",
+                timeAgo: "11 HRS AGO",
+                source: "Fallback"
+            },
+            {
+                title: "NIGERIA DANGOTE REFINERY SCALES",
+                summary: "Dangote Refinery ramps up domestic petrol production, significantly reducing West Africa's dependency on imported European fuels.",
+                severity: "HIGH",
+                category: "SOVEREIGNTY RISK",
+                isoCode: "NGA",
+                timeAgo: "14 HRS AGO",
                 source: "Fallback"
             },
             {
@@ -139,7 +148,34 @@ export async function GET() {
                 severity: "LOW",
                 category: "SOVEREIGNTY RISK",
                 isoCode: "RWA",
-                timeAgo: "12 HRS AGO",
+                timeAgo: "16 HRS AGO",
+                source: "Fallback"
+            },
+            {
+                title: "FRANCE WITHDRAWS FROM NIGER URANIUM",
+                summary: "Orano ceases uranium extraction operations in Niger after the military government revokes mining licenses in push for resource sovereignty.",
+                severity: "HIGH",
+                category: "OUTSIDE INFLUENCE",
+                isoCode: "NER",
+                timeAgo: "18 HRS AGO",
+                source: "Fallback"
+            },
+            {
+                title: "NAMIBIA LITHIUM PROCESSING LAW",
+                summary: "Namibian parliament debates legislation requiring 50% state ownership in new corporate lithium mining ventures.",
+                severity: "MEDIUM",
+                category: "SOVEREIGNTY RISK",
+                isoCode: "NAM",
+                timeAgo: "22 HRS AGO",
+                source: "Fallback"
+            },
+            {
+                title: "US AGOA EXPIRATION LOOMS",
+                summary: "African manufacturers brace for potential tariff hikes as US Congress stalls on reauthorizing the African Growth and Opportunity Act.",
+                severity: "HIGH",
+                category: "OUTSIDE INFLUENCE",
+                isoCode: "PAN",
+                timeAgo: "24 HRS AGO",
                 source: "Fallback"
             }
         ]);
