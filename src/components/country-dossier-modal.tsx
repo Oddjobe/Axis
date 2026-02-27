@@ -1,7 +1,9 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Globe, ShieldAlert, BarChart3, ArrowRight, Activity, Cpu, Hexagon } from "lucide-react";
+import { X, Globe, ShieldAlert, BarChart3, ArrowRight, Activity, Cpu, Hexagon, Download } from "lucide-react";
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 export interface CountryData {
     country: string;
@@ -30,10 +32,40 @@ export interface CountryDossierProps {
 export default function CountryDossierModal({ isOpen, onClose, countryData }: CountryDossierProps) {
     const [activeTab, setActiveTab] = useState<"STRATEGY" | "EXPORTS" | "FRICTION">("STRATEGY");
     const [mounted, setMounted] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
 
     useEffect(() => {
         setMounted(true);
     }, []);
+
+    const handleExportPDF = async () => {
+        const modalElement = document.getElementById("dossier-modal-content");
+        if (!modalElement || !countryData) return;
+
+        try {
+            setIsExporting(true);
+            const canvas = await html2canvas(modalElement, {
+                scale: 2,
+                backgroundColor: "#000000",
+                useCORS: true,
+                logging: false,
+            });
+
+            const imgData = canvas.toDataURL("image/jpeg", 0.95);
+            const pdf = new jsPDF({
+                orientation: "portrait",
+                unit: "px",
+                format: [canvas.width / 2, canvas.height / 2],
+            });
+
+            pdf.addImage(imgData, "JPEG", 0, 0, canvas.width / 2, canvas.height / 2);
+            pdf.save(`AXIS_DOSSIER_${countryData.country}_${new Date().toISOString().split('T')[0]}.pdf`);
+        } catch (error) {
+            console.error("PDF Export failed", error);
+        } finally {
+            setIsExporting(false);
+        }
+    };
 
     if (!isOpen || !countryData || !mounted) return null;
 
@@ -50,6 +82,7 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
                     animate={{ scale: 1, y: 0 }}
                     exit={{ scale: 0.95, y: 20 }}
                     className="w-full max-w-4xl max-h-[85vh] bg-panel border border-border rounded-xl shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden relative"
+                    id="dossier-modal-content"
                 >
                     {/* Header */}
                     <div className="flex items-center justify-between p-6 border-b border-border bg-black/5 dark:bg-white/5">
@@ -65,9 +98,18 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
                                 </div>
                             </div>
                         </div>
-                        <button onClick={onClose} className="p-2 hover:bg-black/10 dark:hover:bg-white/10 rounded-full transition-colors text-slate-light hover:text-foreground">
-                            <X className="w-6 h-6" />
-                        </button>
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={handleExportPDF}
+                                disabled={isExporting}
+                                className={`flex items-center gap-2 px-3 py-1.5 rounded bg-cobalt/10 border border-cobalt/30 text-[10px] font-bold tracking-widest transition-colors ${isExporting ? "opacity-50 cursor-not-allowed text-cobalt/50" : "text-cobalt hover:bg-cobalt/20 hover:border-cobalt/50"}`}
+                            >
+                                <Download className="w-3.5 h-3.5" /> {isExporting ? "ENCRYPTING PDF..." : "EXPORT DOSSIER"}
+                            </button>
+                            <button onClick={onClose} className="p-2 hover:bg-black/10 dark:hover:bg-white/10 rounded-full transition-colors text-slate-light hover:text-foreground">
+                                <X className="w-6 h-6" />
+                            </button>
+                        </div>
                     </div>
 
                     {/* Tabs */}
