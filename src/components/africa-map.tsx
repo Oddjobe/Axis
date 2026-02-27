@@ -3,7 +3,7 @@
 import React, { useState } from "react"
 import { ComposableMap, Geographies, Geography, ZoomableGroup, Marker } from "react-simple-maps"
 import { useTheme } from "next-themes"
-import { Plus, Minus } from "lucide-react"
+import { Plus, Minus, Layers } from "lucide-react"
 import { ALL_SOVEREIGN_DATA } from "@/lib/mock-data"
 import type { CountryData } from "@/components/country-dossier-modal"
 
@@ -12,6 +12,8 @@ interface AfricaMapProps {
     onSelectCountry: (code: string | null) => void;
     timeValue?: number;
 }
+
+export type MapTheme = "SOVEREIGNTY" | "RESOURCE_WEALTH" | "FDI_TREND" | "BASE";
 
 // List of ISO 3166-1 numeric codes for African countries matching the TopoJSON
 const AFRICAN_COUNTRIES = [
@@ -95,6 +97,7 @@ export default function AfricaMap({ selectedCountryCode, onSelectCountry, timeVa
     const { theme } = useTheme();
     const [tooltip, setTooltip] = useState({ show: false, content: "", data: null as CountryData | null, x: 0, y: 0 });
     const [position, setPosition] = useState({ coordinates: [0, 0], zoom: 1 });
+    const [mapTheme, setMapTheme] = useState<MapTheme>("SOVEREIGNTY");
 
     const getCountryData = (geoName: string) => {
         return ALL_SOVEREIGN_DATA.find(c =>
@@ -110,25 +113,47 @@ export default function AfricaMap({ selectedCountryCode, onSelectCountry, timeVa
         );
     };
 
-    // Heat map: color by Axis Score
-    const getHeatColor = (baseScore: number, isDark: boolean, country?: CountryData) => {
-        let score = baseScore;
-
-        // Adjust score based on timeValue if provided
-        if (timeValue && country) {
-            const currentYear = new Date().getFullYear();
-            const yearDiff = currentYear - timeValue;
-            // If the trend is positive '+', it means the score has been going UP, so it was LOWER in the past.
-            const trendMultiplier = country.trend.startsWith('+') ? 1 : -1;
-            // E.g., if trend is +, yearDiff is 5 years, score = 70. 70 - (1 * 5 * 1.8) = 61.
-            score = Math.max(10, Math.min(100, score - (trendMultiplier * yearDiff * 1.8)));
+    // Thematic map coloring logic
+    const getThemeColor = (cData: CountryData | undefined, isDark: boolean): string => {
+        if (!cData || mapTheme === "BASE") {
+            return isDark ? "rgba(30, 41, 59, 0.4)" : "rgba(241, 245, 249, 1)"; // Neutral slate base
         }
 
-        if (score >= 80) return isDark ? "rgba(34, 197, 94, 0.7)" : "rgba(34, 197, 94, 0.6)";   // Green
-        if (score >= 65) return isDark ? "rgba(34, 197, 94, 0.4)" : "rgba(34, 197, 94, 0.35)";  // Light green
-        if (score >= 55) return isDark ? "rgba(234, 179, 8, 0.4)" : "rgba(234, 179, 8, 0.35)";  // Yellow
-        if (score >= 45) return isDark ? "rgba(249, 115, 22, 0.4)" : "rgba(249, 115, 22, 0.35)"; // Orange
-        return isDark ? "rgba(239, 68, 68, 0.4)" : "rgba(239, 68, 68, 0.35)";                    // Red
+        if (mapTheme === "SOVEREIGNTY") {
+            let score = cData.axisScore;
+            // Adjust score based on timeValue if provided
+            if (timeValue) {
+                const currentYear = new Date().getFullYear();
+                const yearDiff = currentYear - timeValue;
+                const trendMultiplier = cData.trend.startsWith('+') ? 1 : -1;
+                score = Math.max(10, Math.min(100, score - (trendMultiplier * yearDiff * 1.8)));
+            }
+            if (score >= 80) return isDark ? "rgba(34, 197, 94, 0.7)" : "rgba(34, 197, 94, 0.6)";   // Green
+            if (score >= 65) return isDark ? "rgba(34, 197, 94, 0.4)" : "rgba(34, 197, 94, 0.35)";  // Light green
+            if (score >= 55) return isDark ? "rgba(234, 179, 8, 0.4)" : "rgba(234, 179, 8, 0.35)";  // Yellow
+            if (score >= 45) return isDark ? "rgba(249, 115, 22, 0.4)" : "rgba(249, 115, 22, 0.35)"; // Orange
+            return isDark ? "rgba(239, 68, 68, 0.4)" : "rgba(239, 68, 68, 0.35)";                    // Red
+        }
+
+        if (mapTheme === "RESOURCE_WEALTH") {
+            const wealth = cData.resourceWealth || 0;
+            if (wealth >= 85) return "rgba(180, 83, 9, 0.8)";     // Deep amber/bronze
+            if (wealth >= 70) return "rgba(217, 119, 6, 0.7)";    // Amber
+            if (wealth >= 50) return "rgba(245, 158, 11, 0.5)";   // Golden
+            if (wealth >= 30) return "rgba(252, 211, 77, 0.4)";   // Pale yellow
+            return isDark ? "rgba(30, 41, 59, 0.3)" : "rgba(241, 245, 249, 0.5)"; // Low resource neutral
+        }
+
+        if (mapTheme === "FDI_TREND") {
+            if (cData.trend.startsWith('++')) return "rgba(59, 130, 246, 0.7)"; // Strong positive (Blue)
+            if (cData.trend.startsWith('+')) return "rgba(56, 189, 248, 0.5)";  // Positive (Light Blue)
+            if (cData.trend === 'Stable') return isDark ? "rgba(148, 163, 184, 0.4)" : "rgba(148, 163, 184, 0.3)"; // Stable (Slate)
+            if (cData.trend.startsWith('--')) return "rgba(225, 29, 72, 0.7)";  // Strong negative (Rose)
+            if (cData.trend.startsWith('-')) return "rgba(244, 63, 94, 0.5)";   // Negative (Light Rose)
+            return isDark ? "rgba(30, 41, 59, 0.4)" : "rgba(241, 245, 249, 1)";
+        }
+
+        return isDark ? "rgba(30, 41, 59, 0.4)" : "rgba(241, 245, 249, 1)";
     };
 
     const isDark = theme === "dark" || theme === "system" || !theme;
@@ -193,7 +218,7 @@ export default function AfricaMap({ selectedCountryCode, onSelectCountry, timeVa
 
                                 const cData = getCountryData(geo.properties.name);
                                 const isSelected = selectedCountryCode && cData?.country === selectedCountryCode;
-                                const heatFill = cData ? getHeatColor(cData.axisScore, isDark, cData) : (isDark ? "rgba(10, 35, 20, 0.9)" : "rgba(220, 235, 220, 1)");
+                                const heatFill = getThemeColor(cData, isDark);
 
                                 return (
                                     <Geography
@@ -247,8 +272,8 @@ export default function AfricaMap({ selectedCountryCode, onSelectCountry, timeVa
                         }
                     </Geographies>
 
-                    {/* Animated Alert Markers — one per country */}
-                    {COUNTRY_LABELS.map((label, idx) => {
+                    {/* Animated Alert Markers (Only on SOVEREIGNTY map) */}
+                    {mapTheme === "SOVEREIGNTY" && COUNTRY_LABELS.map((label, idx) => {
                         const countryData = ALL_SOVEREIGN_DATA.find(d =>
                             d.name.toUpperCase().startsWith(label.name.split(".")[0].split(" ")[0]) ||
                             label.name.includes(d.country) ||
@@ -290,20 +315,63 @@ export default function AfricaMap({ selectedCountryCode, onSelectCountry, timeVa
                 </ZoomableGroup>
             </ComposableMap>
 
-            {/* Heat Map Legend */}
-            <div className="absolute bottom-4 left-4 bg-panel/80 border border-border rounded-lg p-2.5 backdrop-blur-md shadow-lg">
-                <div className="text-[8px] font-mono text-slate-light mb-1.5 tracking-wider">SOVEREIGNTY HEAT MAP</div>
-                <div className="flex items-center gap-1">
-                    <div className="w-4 h-2.5 rounded-sm bg-red-500/50" />
-                    <div className="w-4 h-2.5 rounded-sm bg-orange-500/50" />
-                    <div className="w-4 h-2.5 rounded-sm bg-yellow-500/50" />
-                    <div className="w-4 h-2.5 rounded-sm bg-green-500/30" />
-                    <div className="w-4 h-2.5 rounded-sm bg-green-500/70" />
-                </div>
-                <div className="flex justify-between text-[7px] font-mono text-slate-light mt-0.5">
-                    <span>EXTRACTIVE</span>
-                    <span>OPTIMAL</span>
-                </div>
+            {/* Dynamic Map Legend based on theme */}
+            <div className="absolute bottom-4 left-4 bg-panel/80 border border-border rounded-lg p-2.5 backdrop-blur-md shadow-lg transition-all pointer-events-none">
+                <div className="text-[8px] font-mono text-slate-light mb-1.5 tracking-wider uppercase">{mapTheme.replace('_', ' ')} MAP</div>
+
+                {mapTheme === "SOVEREIGNTY" && (
+                    <>
+                        <div className="flex items-center gap-1">
+                            <div className="w-4 h-2.5 rounded-sm bg-red-500/50" />
+                            <div className="w-4 h-2.5 rounded-sm bg-orange-500/50" />
+                            <div className="w-4 h-2.5 rounded-sm bg-yellow-500/50" />
+                            <div className="w-4 h-2.5 rounded-sm bg-green-500/30" />
+                            <div className="w-4 h-2.5 rounded-sm bg-green-500/70" />
+                        </div>
+                        <div className="flex justify-between text-[7px] font-mono text-slate-light mt-0.5">
+                            <span>EXTRACTIVE</span>
+                            <span>OPTIMAL</span>
+                        </div>
+                    </>
+                )}
+
+                {mapTheme === "RESOURCE_WEALTH" && (
+                    <>
+                        <div className="flex items-center gap-1">
+                            <div className="w-4 h-2.5 rounded-sm bg-slate-500/30" />
+                            <div className="w-4 h-2.5 rounded-sm bg-amber-200/50" />
+                            <div className="w-4 h-2.5 rounded-sm bg-amber-400/50" />
+                            <div className="w-4 h-2.5 rounded-sm bg-amber-600/70" />
+                            <div className="w-4 h-2.5 rounded-sm bg-amber-700/80" />
+                        </div>
+                        <div className="flex justify-between text-[7px] font-mono text-slate-light mt-0.5">
+                            <span>LOW</span>
+                            <span>HIGH WEALTH</span>
+                        </div>
+                    </>
+                )}
+
+                {mapTheme === "FDI_TREND" && (
+                    <>
+                        <div className="flex items-center gap-1">
+                            <div className="w-4 h-2.5 rounded-sm bg-rose-600/70" />
+                            <div className="w-4 h-2.5 rounded-sm bg-rose-400/50" />
+                            <div className="w-4 h-2.5 rounded-sm bg-slate-400/50" />
+                            <div className="w-4 h-2.5 rounded-sm bg-sky-400/50" />
+                            <div className="w-4 h-2.5 rounded-sm bg-blue-500/70" />
+                        </div>
+                        <div className="flex justify-between text-[7px] font-mono text-slate-light mt-0.5">
+                            <span>DECLINING</span>
+                            <span>GROWING</span>
+                        </div>
+                    </>
+                )}
+
+                {mapTheme === "BASE" && (
+                    <div className="flex justify-between text-[7px] font-mono text-slate-light mt-0.5 w-[88px]">
+                        <span>TOPOLOGY BASE</span>
+                    </div>
+                )}
             </div>
 
             {/* Zoom Controls */}
@@ -321,6 +389,43 @@ export default function AfricaMap({ selectedCountryCode, onSelectCountry, timeVa
                 >
                     <Minus className="w-4 h-4 text-slate-light group-hover:text-foreground" />
                 </button>
+            </div>
+
+            {/* Map Theme Toggle Button */}
+            <div className="absolute top-24 right-4 group/theme z-50">
+                <button className="flex items-center gap-2 bg-panel/80 p-2 border border-border backdrop-blur-md rounded-lg shadow-lg hover:bg-background transition-colors pointer-events-auto">
+                    <span className="text-[10px] font-bold font-mono text-foreground hidden sm:block">THEME</span>
+                    <Layers className="w-4 h-4 text-cobalt" />
+                </button>
+
+                {/* Dropdown Menu - Opens to the left side of the button */}
+                <div className="absolute right-0 top-full mt-2 w-48 bg-panel/95 border border-border rounded-lg shadow-xl opacity-0 invisible group-hover/theme:opacity-100 group-hover/theme:visible transition-all flex flex-col overflow-hidden backdrop-blur-xl">
+                    <button
+                        onClick={() => setMapTheme("SOVEREIGNTY")}
+                        className={`text-right px-3 py-2 text-[10px] font-mono border-r-2 transition-all ${mapTheme === "SOVEREIGNTY" ? "border-green-500 bg-background/50 text-foreground font-bold" : "border-transparent text-slate-light hover:bg-background/30 hover:text-foreground"}`}
+                    >
+                        ⚡ SOVEREIGNTY HEAT
+                    </button>
+                    <button
+                        onClick={() => setMapTheme("RESOURCE_WEALTH")}
+                        className={`text-right px-3 py-2 text-[10px] font-mono border-r-2 transition-all ${mapTheme === "RESOURCE_WEALTH" ? "border-amber-500 bg-background/50 text-foreground font-bold" : "border-transparent text-slate-light hover:bg-background/30 hover:text-foreground"}`}
+                    >
+                        💎 RESOURCE WEALTH
+                    </button>
+                    <button
+                        onClick={() => setMapTheme("FDI_TREND")}
+                        className={`text-right px-3 py-2 text-[10px] font-mono border-r-2 transition-all ${mapTheme === "FDI_TREND" ? "border-blue-500 bg-background/50 text-foreground font-bold" : "border-transparent text-slate-light hover:bg-background/30 hover:text-foreground"}`}
+                    >
+                        📈 FOREIGN INVESTMENT (FDI)
+                    </button>
+                    <div className="h-px bg-border/50 my-1 mx-2" />
+                    <button
+                        onClick={() => setMapTheme("BASE")}
+                        className={`text-right px-3 py-2 text-[10px] font-mono border-r-2 transition-all ${mapTheme === "BASE" ? "border-slate-400 bg-background/50 text-foreground font-bold" : "border-transparent text-slate-light hover:bg-background/30 hover:text-foreground"}`}
+                    >
+                        🗺️ BASE TOPOLOGY
+                    </button>
+                </div>
             </div>
 
             {/* Rich Hover Tooltip — centered above cursor */}

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { ShieldAlert, Newspaper, Video, BookOpen, Lightbulb, Globe, Play, Square, Pause } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
@@ -72,6 +72,13 @@ export default function FrictionEngine({ mode, filterCountry }: { mode: "SOVEREI
     const [activeTab, setActiveTab] = useState<"ALERTS" | "NEWS" | "MEDIA" | "BLOGS">("ALERTS")
     const [isPlayingAudio, setIsPlayingAudio] = useState(false);
     const [audioPaused, setAudioPaused] = useState(false);
+    const [isDownloadingModel, setIsDownloadingModel] = useState(false);
+
+    // Kokoro TTS Refs
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const ttsRef = useRef<any>(null);
+    const audioCtxRef = useRef<AudioContext | null>(null);
+    const currentSourceRef = useRef<AudioBufferSourceNode | null>(null);
 
     useEffect(() => {
         let isMounted = true;
@@ -145,62 +152,114 @@ export default function FrictionEngine({ mode, filterCountry }: { mode: "SOVEREI
     });
 
     const stopAudio = () => {
-        if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel();
-            setIsPlayingAudio(false);
-            setAudioPaused(false);
+        setIsPlayingAudio(false);
+        setAudioPaused(false);
+        if (currentSourceRef.current) {
+            try { currentSourceRef.current.stop(); } catch (e) { }
+            currentSourceRef.current.disconnect();
+            currentSourceRef.current = null;
+        }
+        if (audioCtxRef.current) {
+            try { audioCtxRef.current.close(); } catch (e) { }
+            audioCtxRef.current = null;
         }
     };
 
-    const toggleAudioBrief = () => {
-        if (!('speechSynthesis' in window)) return;
-
-        if (isPlayingAudio && !audioPaused) {
-            window.speechSynthesis.pause();
-            setAudioPaused(true);
-            return;
-        }
-
-        if (isPlayingAudio && audioPaused) {
-            window.speechSynthesis.resume();
-            setAudioPaused(false);
-            return;
-        }
+    const toggleAudioBrief = async () => {
+        if (isDownloadingModel) return;
 
         const topAlerts = filteredAlerts.slice(0, 5);
         if (topAlerts.length === 0) return;
 
+        if (isPlayingAudio && !audioPaused) {
+            if (audioCtxRef.current && audioCtxRef.current.state === 'running') {
+                audioCtxRef.current.suspend();
+                setAudioPaused(true);
+            }
+            return;
+        }
+
+        if (isPlayingAudio && audioPaused) {
+            if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
+                audioCtxRef.current.resume();
+                setAudioPaused(false);
+            }
+            return;
+        }
+
         setIsPlayingAudio(true);
         setAudioPaused(false);
 
-        const intro = new SpeechSynthesisUtterance(`Commencing Axis Intelligence Briefing for ${mode} events.`);
-        intro.rate = 0.95;
-        intro.pitch = 0.9;
-        window.speechSynthesis.speak(intro);
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        topAlerts.forEach((alert: any, index: number) => {
-            const numSpoken = index + 1;
-            const text = `Alert ${numSpoken}. ${alert.title}. ${alert.summary}`;
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.rate = 0.95;
-            utterance.pitch = 0.9;
-            if (index === topAlerts.length - 1) {
-                utterance.onend = () => {
-                    setIsPlayingAudio(false);
-                    setAudioPaused(false);
-                };
+        try {
+            if (!ttsRef.current) {
+                setIsDownloadingModel(true);
+                // Dynamic import to prevent SSR issues
+                const { KokoroTTS } = await import("kokoro-js");
+                ttsRef.current = await KokoroTTS.from_pretrained('onnx-community/Kokoro-82M-v1.0-ONNX', {
+                    dtype: "q8",
+                });
+                setIsDownloadingModel(false);
             }
-            window.speechSynthesis.speak(utterance);
-        });
+
+            if (!audioCtxRef.current) {
+                audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
+            }
+            if (audioCtxRef.current.state === 'suspended') {
+                await audioCtxRef.current.resume();
+            }
+
+            const introText = `Commencing Axis Intelligence Briefing for ${mode} events.`;
+            const textsToSpeak = [introText];
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            topAlerts.forEach((alert: any, index: number) => {
+                textsToSpeak.push(`Alert ${index + 1}. ${alert.title}. ${alert.summary}`);
+            });
+
+            for (let i = 0; i < textsToSpeak.length; i++) {
+                if (!audioCtxRef.current) break; // User stopped
+
+                const text = textsToSpeak[i];
+                const audio = await ttsRef.current.generate(text, {
+                    voice: 'af_heart', // af_heart is English
+                });
+
+                if (!audioCtxRef.current) break; // User stopped during generation
+
+                await new Promise<void>((resolve) => {
+                    if (!audioCtxRef.current) return resolve();
+
+                    const buffer = audioCtxRef.current.createBuffer(1, audio.audio.length, audio.sampling_rate);
+                    buffer.getChannelData(0).set(audio.audio);
+
+                    const source = audioCtxRef.current.createBufferSource();
+                    source.buffer = buffer;
+                    source.connect(audioCtxRef.current.destination);
+
+                    source.onended = () => {
+                        currentSourceRef.current = null;
+                        resolve();
+                    };
+
+                    currentSourceRef.current = source;
+                    source.start();
+                });
+            }
+        } catch (error) {
+            console.error("TTS Error:", error);
+            setIsDownloadingModel(false);
+        } finally {
+            if (audioCtxRef.current) {
+                // If it wasn't destroyed by stopAudio, that means the sequence finished normally
+                setIsPlayingAudio(false);
+                setAudioPaused(false);
+            }
+        }
     };
 
     // Cleanup audio on unmount
     useEffect(() => {
         return () => {
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-            }
+            stopAudio();
         };
     }, []);
 
@@ -251,11 +310,12 @@ export default function FrictionEngine({ mode, filterCountry }: { mode: "SOVEREI
                                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[10px] font-bold tracking-widest transition-all ${filteredAlerts.length === 0 ? "opacity-30 cursor-not-allowed border border-border bg-background" :
                                     isPlayingAudio && !audioPaused ? "bg-red-500/10 text-red-500 border border-red-500/30 hover:bg-red-500/20" :
                                         isPlayingAudio && audioPaused ? "bg-yellow-500/10 text-yellow-500 border border-yellow-500/30 hover:bg-yellow-500/20" :
-                                            "bg-orange-500/10 text-orange-500 border border-orange-500/30 hover:bg-orange-500/20"
+                                            isDownloadingModel ? "bg-cobalt/10 text-cobalt border border-cobalt/30 hover:bg-cobalt/20 opacity-80 cursor-wait" :
+                                                "bg-orange-500/10 text-orange-500 border border-orange-500/30 hover:bg-orange-500/20"
                                     }`}
                             >
-                                {isPlayingAudio && !audioPaused ? <Square className="w-3.5 h-3.5" /> : isPlayingAudio && audioPaused ? <Play className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
-                                {isPlayingAudio && !audioPaused ? "STOP BRIEFING" : isPlayingAudio && audioPaused ? "RESUME BRIEFING" : "PLAY AUDIO BRIEF"}
+                                {isDownloadingModel ? <Globe className="w-3.5 h-3.5 animate-spin" /> : isPlayingAudio && !audioPaused ? <Square className="w-3.5 h-3.5" /> : isPlayingAudio && audioPaused ? <Play className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+                                {isDownloadingModel ? "INITIALIZING AI VOICE..." : isPlayingAudio && !audioPaused ? "STOP BRIEFING" : isPlayingAudio && audioPaused ? "RESUME BRIEFING" : "PLAY AUDIO BRIEF"}
                             </button>
                         </div>
                         {loading && alerts.length === 0 ? (
@@ -339,13 +399,13 @@ export default function FrictionEngine({ mode, filterCountry }: { mode: "SOVEREI
                         <div className="text-[10px] font-mono text-slate-light border-b border-border pb-1 mt-6 mb-2">MACROECONOMIC CONTEXT & FORESIGHT</div>
 
                         {[
-                            { title: "Continental Economic History & Structural Architecture", source: "Britannica", time: "ENCYCLOPEDIA", iso: "PAN-AFRICA", url: "https://www.britannica.com/place/Africa/Economy", Icon: ReutersIcon, color: "text-amber-500" },
-                            { title: "Investing in Africa: Continental Capital Aggregation", source: "AFSIC", time: "EVENTS", iso: "GLOBAL", url: "https://www.afsic.net/", Icon: BloombergIcon, color: "text-green-500" },
-                            { title: "Live African Business, Trade & Market Feed", source: "Africanews", time: "WIRE", iso: "PAN-AFRICA", url: "https://www.africanews.com/business/", Icon: AlJazeeraIcon, color: "text-cobalt" },
-                            { title: "Zambia finalizes $3B debt restructuring with international bondholders.", source: "Reuters Africa", time: "RECENT", iso: "ZMB", url: "https://www.reuters.com/world/africa/", Icon: ReutersIcon, color: "text-cobalt" },
-                            { title: "DRC and Zambia sign historic agreement for regional electric battery value chain.", source: "Mining Weekly", time: "RECENT", iso: "COD", url: "https://www.miningweekly.com/page/africa", Icon: MiningIcon, color: "text-orange-500" },
+                            { title: "African Development Bank approves $1.3B for continental rail infrastructure.", source: "AfDB News", time: "RECENT", iso: "PAN-AFRICA", url: "https://www.afdb.org/en/news-and-events", Icon: AfDBIcon, color: "text-green-500" },
                             { title: "Nigeria's Dangote Refinery begins petrol production, reducing import dependency.", source: "Bloomberg Africa", time: "RECENT", iso: "NGA", url: "https://www.bloomberg.com/africa", Icon: BloombergIcon, color: "text-purple-500" },
-                            { title: "African Development Bank approves $1.3B for continental rail infrastructure.", source: "AfDB News", time: "RECENT", iso: "PAN-AFRICA", url: "https://www.afdb.org/en/news-and-events", Icon: AfDBIcon, color: "text-green-500" }
+                            { title: "DRC and Zambia sign historic agreement for regional electric battery value chain.", source: "Mining Weekly", time: "RECENT", iso: "COD", url: "https://www.miningweekly.com/page/africa", Icon: MiningIcon, color: "text-orange-500" },
+                            { title: "Zambia finalizes $3B debt restructuring with international bondholders.", source: "Reuters Africa", time: "RECENT", iso: "ZMB", url: "https://www.reuters.com/world/africa/", Icon: ReutersIcon, color: "text-cobalt" },
+                            { title: "Live African Business, Trade & Market Feed", source: "Africanews", time: "WIRE", iso: "PAN-AFRICA", url: "https://www.africanews.com/business/", Icon: AlJazeeraIcon, color: "text-cobalt" },
+                            { title: "Investing in Africa: Continental Capital Aggregation", source: "AFSIC", time: "EVENTS", iso: "GLOBAL", url: "https://www.afsic.net/", Icon: BloombergIcon, color: "text-green-500" },
+                            { title: "Continental Economic History & Structural Architecture", source: "Britannica", time: "ENCYCLOPEDIA", iso: "PAN-AFRICA", url: "https://www.britannica.com/place/Africa/Economy", Icon: ReutersIcon, color: "text-amber-500" }
                         ].map((news, idx) => (
                             <a
                                 key={idx}
