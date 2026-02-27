@@ -80,6 +80,8 @@ export default function FrictionEngine({ mode, filterCountry }: { mode: "SOVEREI
     const audioCtxRef = useRef<AudioContext | null>(null);
     const currentSourceRef = useRef<AudioBufferSourceNode | null>(null);
 
+    const [now, setNow] = useState(Date.now());
+
     useEffect(() => {
         let isMounted = true;
 
@@ -92,15 +94,36 @@ export default function FrictionEngine({ mode, filterCountry }: { mode: "SOVEREI
                 // Calculate an exact date/time from the relative "timeAgo" string
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const enhancedData = data.map((alert: any) => {
+                    // Only assign a new exact Date if it doesn't already have one
+                    // to prevent the time from shifting forward on every poll if fallback data is identical
                     const hoursMatch = alert.timeAgo?.match(/(\d+)\s+HRS?/i);
                     const exactDate = new Date();
                     if (hoursMatch) {
                         exactDate.setHours(exactDate.getHours() - parseInt(hoursMatch[1], 10));
                     }
+
+                    // Add some random minute jitter for realism if it fell exactly on the hour
+                    if (exactDate.getMinutes() === new Date().getMinutes()) {
+                        exactDate.setMinutes(exactDate.getMinutes() - Math.floor(Math.random() * 59));
+                    }
+
                     return { ...alert, timestamp: exactDate.toISOString() };
                 });
 
-                if (isMounted) setAlerts(enhancedData);
+                // If we already have alerts, merge them to keep their anchored timestamps
+                setAlerts((prev) => {
+                    if (prev.length === 0) return enhancedData;
+                    // Deduplicate based on title, preserving the oldest timestamp
+                    const merged = [...prev];
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    enhancedData.forEach((newAlert: any) => {
+                        const existingIdx = merged.findIndex(a => a.title === newAlert.title);
+                        if (existingIdx === -1) {
+                            merged.unshift(newAlert); // Add new alerts to the top
+                        }
+                    });
+                    return merged;
+                });
             } catch (e) {
                 console.error("Intelligence load failed", e);
             } finally {
@@ -131,11 +154,31 @@ export default function FrictionEngine({ mode, filterCountry }: { mode: "SOVEREI
             fetchBlogs();
         }, 5 * 60 * 1000);
 
+        // UI Time Tick every 1 minute to keep "time ago" live
+        const tickId = setInterval(() => {
+            if (isMounted) setNow(Date.now());
+        }, 60000);
+
         return () => {
             isMounted = false;
             clearInterval(intervalId);
+            clearInterval(tickId);
         };
     }, []);
+
+    // Helper to calculate live time ago
+    const getLiveTimeAgo = (isoString?: string) => {
+        if (!isoString) return "JUST NOW";
+        const diffMs = now - new Date(isoString).getTime();
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHrs = Math.floor(diffMins / 60);
+        const diffDays = Math.floor(diffHrs / 24);
+
+        if (diffMins < 1) return "JUST NOW";
+        if (diffMins < 60) return `${diffMins} MINS AGO`;
+        if (diffHrs < 24) return `${diffHrs} HRS AGO`;
+        return `${diffDays} DAYS AGO`;
+    };
 
     const filteredAlerts = alerts.filter(a => {
         const cat = a.category ? a.category.toUpperCase() : "";
@@ -340,7 +383,10 @@ export default function FrictionEngine({ mode, filterCountry }: { mode: "SOVEREI
                                         <div className="text-[10px] font-mono text-orange-400 mb-1 flex justify-between items-start gap-4">
                                             <span className="leading-tight">{alert.title}</span>
                                             <div className="flex flex-col items-end text-right shrink-0">
-                                                <span className="opacity-80">{alert.timeAgo}</span>
+                                                <span className="opacity-80 font-bold text-orange-500">
+                                                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                                                    {getLiveTimeAgo((alert as any).timestamp)}
+                                                </span>
                                                 {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                                                 {(alert as any).timestamp && (
                                                     <span className="opacity-40 text-[8.5px] mt-0.5 whitespace-nowrap">

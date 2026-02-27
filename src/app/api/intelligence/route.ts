@@ -1,6 +1,9 @@
 import FirecrawlApp from "@mendable/firecrawl-js";
 import { NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 const app = new FirecrawlApp({ apiKey: process.env.FIRECRAWL_API_KEY });
 let cachedData: unknown = null;
 let lastFetch: number = 0;
