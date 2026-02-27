@@ -79,7 +79,19 @@ export default function FrictionEngine({ mode, filterCountry }: { mode: "SOVEREI
             try {
                 const res = await fetch("/api/intelligence");
                 const data = await res.json();
-                if (isMounted) setAlerts(data);
+
+                // Calculate an exact date/time from the relative "timeAgo" string
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const enhancedData = data.map((alert: any) => {
+                    const hoursMatch = alert.timeAgo?.match(/(\d+)\s+HRS?/i);
+                    const exactDate = new Date();
+                    if (hoursMatch) {
+                        exactDate.setHours(exactDate.getHours() - parseInt(hoursMatch[1], 10));
+                    }
+                    return { ...alert, timestamp: exactDate.toISOString() };
+                });
+
+                if (isMounted) setAlerts(enhancedData);
             } catch (e) {
                 console.error("Intelligence load failed", e);
             } finally {
@@ -190,9 +202,18 @@ export default function FrictionEngine({ mode, filterCountry }: { mode: "SOVEREI
                                         transition={{ delay: idx * 0.1, duration: 0.3 }}
                                         className="p-3 border border-orange-500/20 bg-orange-500/5 rounded-md transition-all hover:bg-orange-500/10 hover:shadow-[0_0_15px_rgba(249,115,22,0.1)] cursor-default"
                                     >
-                                        <div className="text-[10px] font-mono text-orange-400 mb-1 flex justify-between">
-                                            <span>{alert.title}</span>
-                                            <span className="opacity-70">{alert.timeAgo}</span>
+                                        <div className="text-[10px] font-mono text-orange-400 mb-1 flex justify-between items-start gap-4">
+                                            <span className="leading-tight">{alert.title}</span>
+                                            <div className="flex flex-col items-end text-right shrink-0">
+                                                <span className="opacity-80">{alert.timeAgo}</span>
+                                                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                                                {(alert as any).timestamp && (
+                                                    <span className="opacity-40 text-[8.5px] mt-0.5 whitespace-nowrap">
+                                                        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                                                        {new Date((alert as any).timestamp).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
                                         <p className="text-sm text-foreground/90">{alert.summary}</p>
                                         <div className="mt-3 flex gap-2">
