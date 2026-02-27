@@ -3,7 +3,7 @@ import { X, Globe, ShieldAlert, BarChart3, ArrowRight, Activity, Cpu, Hexagon, D
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
+import { jsPDF } from "jspdf";
 
 export interface CountryData {
     country: string;
@@ -44,24 +44,41 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
 
         try {
             setIsExporting(true);
+
+            // Wait for React to process state
+            await new Promise(resolve => setTimeout(resolve, 100));
+
             const canvas = await html2canvas(modalElement, {
                 scale: 2,
-                backgroundColor: "#000000",
+                backgroundColor: "#050A15", // Force dark dashboard background
                 useCORS: true,
                 logging: false,
+                windowWidth: modalElement.scrollWidth,
+                windowHeight: modalElement.scrollHeight
             });
+
+            // Ensure dimensions are valid
+            if (canvas.width === 0 || canvas.height === 0) {
+                throw new Error("Canvas dimensions are zero");
+            }
 
             const imgData = canvas.toDataURL("image/jpeg", 0.95);
+
+            // Calculate format correctly for pt
+            const pdfWidth = canvas.width / 2;
+            const pdfHeight = canvas.height / 2;
+
             const pdf = new jsPDF({
-                orientation: "portrait",
+                orientation: pdfWidth > pdfHeight ? "landscape" : "portrait",
                 unit: "px",
-                format: [canvas.width / 2, canvas.height / 2],
+                format: [pdfWidth, pdfHeight],
             });
 
-            pdf.addImage(imgData, "JPEG", 0, 0, canvas.width / 2, canvas.height / 2);
+            pdf.addImage(imgData, "JPEG", 0, 0, pdfWidth, pdfHeight);
             pdf.save(`AXIS_DOSSIER_${countryData.country}_${new Date().toISOString().split('T')[0]}.pdf`);
         } catch (error) {
-            console.error("PDF Export failed", error);
+            console.error("PDF Export failed:", error);
+            alert("Error generating PDF dossier. Check console for details.");
         } finally {
             setIsExporting(false);
         }
