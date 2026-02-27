@@ -72,35 +72,48 @@ export default function FrictionEngine({ mode, filterCountry }: { mode: "SOVEREI
     const [activeTab, setActiveTab] = useState<"ALERTS" | "NEWS" | "MEDIA" | "BLOGS">("ALERTS")
 
     useEffect(() => {
+        let isMounted = true;
+
         async function fetchIntelligence() {
-            setLoading(true);
+            if (alerts.length === 0) setLoading(true);
             try {
                 const res = await fetch("/api/intelligence");
                 const data = await res.json();
-                setAlerts(data);
+                if (isMounted) setAlerts(data);
             } catch (e) {
                 console.error("Intelligence load failed", e);
             } finally {
-                setLoading(false);
+                if (isMounted) setLoading(false);
             }
         }
-        fetchIntelligence();
-    }, []);
 
-    useEffect(() => {
         async function fetchBlogs() {
-            setBlogsLoading(true);
+            if (blogs.length === 0) setBlogsLoading(true);
             try {
                 const res = await fetch("/api/blogs");
                 const data = await res.json();
-                setBlogs(data);
+                if (isMounted) setBlogs(data);
             } catch (e) {
                 console.error("Blog scrape failed", e);
             } finally {
-                setBlogsLoading(false);
+                if (isMounted) setBlogsLoading(false);
             }
         }
+
+        // Initial fetch
+        fetchIntelligence();
         fetchBlogs();
+
+        // Real-time polling every 5 minutes (300000 ms)
+        const intervalId = setInterval(() => {
+            fetchIntelligence();
+            fetchBlogs();
+        }, 5 * 60 * 1000);
+
+        return () => {
+            isMounted = false;
+            clearInterval(intervalId);
+        };
     }, []);
 
     const filteredAlerts = alerts.filter(a => {
