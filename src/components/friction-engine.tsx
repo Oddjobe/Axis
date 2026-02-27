@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { ShieldAlert, Newspaper, Video, BookOpen, Lightbulb, Globe } from "lucide-react"
+import { ShieldAlert, Newspaper, Video, BookOpen, Lightbulb, Globe, Play, Square, Pause } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
 // Brand SVG Icons
@@ -70,6 +70,8 @@ export default function FrictionEngine({ mode, filterCountry }: { mode: "SOVEREI
     const [loading, setLoading] = useState(true)
     const [blogsLoading, setBlogsLoading] = useState(true)
     const [activeTab, setActiveTab] = useState<"ALERTS" | "NEWS" | "MEDIA" | "BLOGS">("ALERTS")
+    const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+    const [audioPaused, setAudioPaused] = useState(false);
 
     useEffect(() => {
         let isMounted = true;
@@ -142,6 +144,66 @@ export default function FrictionEngine({ mode, filterCountry }: { mode: "SOVEREI
         );
     });
 
+    const stopAudio = () => {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            setIsPlayingAudio(false);
+            setAudioPaused(false);
+        }
+    };
+
+    const toggleAudioBrief = () => {
+        if (!('speechSynthesis' in window)) return;
+
+        if (isPlayingAudio && !audioPaused) {
+            window.speechSynthesis.pause();
+            setAudioPaused(true);
+            return;
+        }
+
+        if (isPlayingAudio && audioPaused) {
+            window.speechSynthesis.resume();
+            setAudioPaused(false);
+            return;
+        }
+
+        const topAlerts = filteredAlerts.slice(0, 5);
+        if (topAlerts.length === 0) return;
+
+        setIsPlayingAudio(true);
+        setAudioPaused(false);
+
+        const intro = new SpeechSynthesisUtterance(`Commencing Axis Intelligence Briefing for ${mode} events.`);
+        intro.rate = 0.95;
+        intro.pitch = 0.9;
+        window.speechSynthesis.speak(intro);
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        topAlerts.forEach((alert: any, index: number) => {
+            const numSpoken = index + 1;
+            const text = `Alert ${numSpoken}. ${alert.title}. ${alert.summary}`;
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 0.95;
+            utterance.pitch = 0.9;
+            if (index === topAlerts.length - 1) {
+                utterance.onend = () => {
+                    setIsPlayingAudio(false);
+                    setAudioPaused(false);
+                };
+            }
+            window.speechSynthesis.speak(utterance);
+        });
+    };
+
+    // Cleanup audio on unmount
+    useEffect(() => {
+        return () => {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+            }
+        };
+    }, []);
+
     return (
         <aside className="w-full lg:w-96 border-l border-border bg-panel backdrop-blur-sm flex flex-col shrink-0 transition-colors">
 
@@ -183,6 +245,19 @@ export default function FrictionEngine({ mode, filterCountry }: { mode: "SOVEREI
                 )}
                 {activeTab === "ALERTS" && (
                     <>
+                        <div className="flex justify-end mb-2">
+                            <button
+                                onClick={filteredAlerts.length > 0 ? (isPlayingAudio && !audioPaused ? stopAudio : toggleAudioBrief) : undefined}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[10px] font-bold tracking-widest transition-all ${filteredAlerts.length === 0 ? "opacity-30 cursor-not-allowed border border-border bg-background" :
+                                    isPlayingAudio && !audioPaused ? "bg-red-500/10 text-red-500 border border-red-500/30 hover:bg-red-500/20" :
+                                        isPlayingAudio && audioPaused ? "bg-yellow-500/10 text-yellow-500 border border-yellow-500/30 hover:bg-yellow-500/20" :
+                                            "bg-orange-500/10 text-orange-500 border border-orange-500/30 hover:bg-orange-500/20"
+                                    }`}
+                            >
+                                {isPlayingAudio && !audioPaused ? <Square className="w-3.5 h-3.5" /> : isPlayingAudio && audioPaused ? <Play className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+                                {isPlayingAudio && !audioPaused ? "STOP BRIEFING" : isPlayingAudio && audioPaused ? "RESUME BRIEFING" : "PLAY AUDIO BRIEF"}
+                            </button>
+                        </div>
                         {loading && alerts.length === 0 ? (
                             <div className="flex flex-col items-center justify-center h-full opacity-50 space-y-2">
                                 <span className="text-xs font-mono animate-pulse">EXTRACTING LIVE INTEL...</span>
