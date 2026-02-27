@@ -2,7 +2,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Globe, ShieldAlert, BarChart3, ArrowRight, Activity, Cpu, Hexagon, Download } from "lucide-react";
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import html2canvas from "html2canvas";
+import html2canvas from "html2canvas-pro";
 import { jsPDF } from "jspdf";
 
 export interface CountryData {
