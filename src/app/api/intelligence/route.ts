@@ -39,7 +39,7 @@ const EXTRACT_SCHEMA = {
                     summary: { type: "string" },
                     severity: { type: "string", enum: ["HIGH", "MEDIUM", "LOW"] },
                     category: { type: "string", enum: ["SOVEREIGNTY RISK", "OUTSIDE INFLUENCE"] },
-                    isoCode: { type: "string", description: "3-letter ISO code for the country, e.g. NGA, ZAF, COD" },
+                    isoCode: { type: "string", description: "3-letter ISO code for the country" },
                     timeAgo: { type: "string" }
                 },
                 required: ["title", "summary", "severity", "category", "isoCode", "timeAgo"]
@@ -60,15 +60,16 @@ export async function GET() {
 
         // Parallelize requests to prevent Vercel Serverless Function Timeout (10s literal threshold on Hobby tier)
         const fetchPromises = INTEL_SOURCES.map(source => {
-            return (app as any).v1.scrapeUrl(source.url, {
+            return app.scrapeUrl(source.url, {
                 formats: ["extract"],
                 extract: {
                     prompt: `Extract the top 3 latest news articles about African geopolitics, economy, mining, resources, and conflicts from ${source.name}. Classify each as HIGH/MEDIUM/LOW severity and categorize as either SOVEREIGNTY RISK (African nations building independence) or OUTSIDE INFLUENCE (foreign powers, IMF, EU, China, US impacting African affairs). Extract the 3-letter ISO country code this relates to.`,
-                    schema: EXTRACT_SCHEMA
+                    schema: EXTRACT_SCHEMA as any
                 }
             }).then((response: any) => {
-                if (response.success && response.extract?.articles) {
-                    return response.extract.articles.map((a: any) => ({
+                const extractedArticles = response?.extract?.articles || response?.data?.extract?.articles || response?.data?.articles || response?.articles;
+                if (Array.isArray(extractedArticles) && extractedArticles.length > 0) {
+                    return extractedArticles.map((a: any) => ({
                         ...a,
                         source: source.name
                     }));
