@@ -1,5 +1,5 @@
-import { Activity, TrendingUp, Pickaxe, ChevronDown, Info, Search, Filter } from "lucide-react";
-import { useState, useMemo } from "react";
+import { Activity, TrendingUp, Pickaxe, ChevronDown, Info, Search, Filter, Star } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
 import CountryDossierModal, { CountryData } from "./country-dossier-modal";
 
 import { ALL_SOVEREIGN_DATA } from "@/lib/mock-data";
@@ -15,6 +15,25 @@ export default function AfcftaMatrix({ selectedCode, onSelectCode }: AfcftaMatri
     const [searchQuery, setSearchQuery] = useState("");
     const [sortBy, setSortBy] = useState<"name" | "score" | "wealth">("name");
     const [filterStatus, setFilterStatus] = useState<string>("ALL");
+    const [watchlist, setWatchlist] = useState<string[]>([]);
+
+    useEffect(() => {
+        const saved = localStorage.getItem("axisWatchlist");
+        if (saved) {
+            try { setWatchlist(JSON.parse(saved)); } catch (e) { }
+        }
+    }, []);
+
+    const toggleWatchlist = (e: React.MouseEvent, countryCode: string) => {
+        e.stopPropagation();
+        setWatchlist(prev => {
+            const newWatchlist = prev.includes(countryCode)
+                ? prev.filter(c => c !== countryCode)
+                : [...prev, countryCode];
+            localStorage.setItem("axisWatchlist", JSON.stringify(newWatchlist));
+            return newWatchlist;
+        });
+    };
 
     const sortedAndFilteredData = useMemo(() => {
         let result = ALL_SOVEREIGN_DATA;
@@ -37,12 +56,19 @@ export default function AfcftaMatrix({ selectedCode, onSelectCode }: AfcftaMatri
         }
 
         return [...result].sort((a, b) => {
-            if (sortBy === "name") return a.name.localeCompare(b.name);
+            // Always prioritize watched countries first when not explicitly sorting by score/wealth
+            if (sortBy === "name") {
+                const aWatched = watchlist.includes(a.country);
+                const bWatched = watchlist.includes(b.country);
+                if (aWatched && !bWatched) return -1;
+                if (!aWatched && bWatched) return 1;
+                return a.name.localeCompare(b.name);
+            }
             if (sortBy === "score") return b.axisScore - a.axisScore;
             if (sortBy === "wealth") return b.resourceWealth - a.resourceWealth;
             return 0;
         });
-    }, [searchQuery, sortBy, filterStatus, selectedCode]);
+    }, [searchQuery, sortBy, filterStatus, selectedCode, watchlist]);
 
     const getScoreColor = (score: number) => {
         if (score >= 75) return "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.8)]";
@@ -162,6 +188,12 @@ export default function AfcftaMatrix({ selectedCode, onSelectCode }: AfcftaMatri
                     >
                         <div className="flex justify-between items-center mb-1">
                             <span className="font-bold flex items-center gap-2">
+                                <button
+                                    onClick={(e) => toggleWatchlist(e, data.country)}
+                                    className={`transition-colors hover:scale-110 ${watchlist.includes(data.country) ? 'text-yellow-500' : 'text-slate-light/30 hover:text-yellow-500/50'}`}
+                                >
+                                    <Star className="w-3.5 h-3.5" fill={watchlist.includes(data.country) ? "currentColor" : "none"} />
+                                </button>
                                 {data.country}
                                 <span className={`text-[9px] px-1.5 py-0.5 rounded border ${getStatusColor(data.status)}`}>
                                     {data.status}
