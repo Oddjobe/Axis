@@ -261,15 +261,16 @@ export default function FrictionEngine({ mode, filterCountry }: { mode: "SOVEREI
                             </div>
                         </a>
 
-                        <div className="text-[10px] font-mono text-slate-light border-b border-border pb-1 mt-6 mb-2">LATEST REPORTS</div>
+                        <div className="text-[10px] font-mono text-slate-light border-b border-border pb-1 mt-6 mb-2">MACROECONOMIC CONTEXT & FORESIGHT</div>
 
                         {[
+                            { title: "Continental Economic History & Structural Architecture", source: "Britannica", time: "ENCYCLOPEDIA", iso: "PAN-AFRICA", url: "https://www.britannica.com/place/Africa/Economy", Icon: ReutersIcon, color: "text-amber-500" },
+                            { title: "Investing in Africa: Continental Capital Aggregation", source: "AFSIC", time: "EVENTS", iso: "GLOBAL", url: "https://www.afsic.net/", Icon: BloombergIcon, color: "text-green-500" },
+                            { title: "Live African Business, Trade & Market Feed", source: "Africanews", time: "WIRE", iso: "PAN-AFRICA", url: "https://www.africanews.com/business/", Icon: AlJazeeraIcon, color: "text-cobalt" },
                             { title: "Zambia finalizes $3B debt restructuring with international bondholders.", source: "Reuters Africa", time: "RECENT", iso: "ZMB", url: "https://www.reuters.com/world/africa/", Icon: ReutersIcon, color: "text-cobalt" },
                             { title: "DRC and Zambia sign historic agreement for regional electric battery value chain.", source: "Mining Weekly", time: "RECENT", iso: "COD", url: "https://www.miningweekly.com/page/africa", Icon: MiningIcon, color: "text-orange-500" },
-                            { title: "Kenya's M-PESA processes $314B annually, transforming digital finance.", source: "Al Jazeera Africa", time: "RECENT", iso: "KEN", url: "https://www.aljazeera.com/economy", Icon: AlJazeeraIcon, color: "text-amber-500" },
                             { title: "Nigeria's Dangote Refinery begins petrol production, reducing import dependency.", source: "Bloomberg Africa", time: "RECENT", iso: "NGA", url: "https://www.bloomberg.com/africa", Icon: BloombergIcon, color: "text-purple-500" },
-                            { title: "African Development Bank approves $1.3B for continental rail infrastructure.", source: "AfDB News", time: "RECENT", iso: "PAN-AFRICA", url: "https://www.afdb.org/en/news-and-events", Icon: AfDBIcon, color: "text-green-500" },
-                            { title: "Ghana's domestic gold purchase program stabilizes currency reserves.", source: "African Business", time: "RECENT", iso: "GHA", url: "https://african.business/", Icon: ReutersIcon, color: "text-cobalt" }
+                            { title: "African Development Bank approves $1.3B for continental rail infrastructure.", source: "AfDB News", time: "RECENT", iso: "PAN-AFRICA", url: "https://www.afdb.org/en/news-and-events", Icon: AfDBIcon, color: "text-green-500" }
                         ].map((news, idx) => (
                             <a
                                 key={idx}

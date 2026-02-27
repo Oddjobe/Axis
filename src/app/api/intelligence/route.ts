@@ -11,6 +11,10 @@ const INTEL_SOURCES = [
         name: "Al Jazeera Africa"
     },
     {
+        url: "https://www.africanews.com/business/",
+        name: "Africanews Business"
+    },
+    {
         url: "https://www.miningweekly.com/page/africa",
         name: "Mining Weekly Africa"
     },
