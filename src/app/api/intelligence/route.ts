@@ -55,31 +55,34 @@ export async function GET() {
     try {
         const allArticles: unknown[] = [];
 
-        // Try each source — collect what we can
-        for (const source of INTEL_SOURCES) {
-            try {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const response = await (app as any).v1.scrapeUrl(source.url, {
-                    formats: ["extract"],
-                    extract: {
-                        prompt: `Extract the top 3 latest news articles about African geopolitics, economy, mining, resources, and conflicts from ${source.name}. Classify each as HIGH/MEDIUM/LOW severity and categorize as either SOVEREIGNTY RISK (African nations building independence) or OUTSIDE INFLUENCE (foreign powers, IMF, EU, China, US impacting African affairs). Extract the 3-letter ISO country code this relates to.`,
-                        schema: EXTRACT_SCHEMA
-                    }
-                });
-
+        // Parallelize requests to prevent Vercel Serverless Function Timeout (10s literal threshold on Hobby tier)
+        const fetchPromises = INTEL_SOURCES.map(source => {
+            return (app as any).v1.scrapeUrl(source.url, {
+                formats: ["extract"],
+                extract: {
+                    prompt: `Extract the top 3 latest news articles about African geopolitics, economy, mining, resources, and conflicts from ${source.name}. Classify each as HIGH/MEDIUM/LOW severity and categorize as either SOVEREIGNTY RISK (African nations building independence) or OUTSIDE INFLUENCE (foreign powers, IMF, EU, China, US impacting African affairs). Extract the 3-letter ISO country code this relates to.`,
+                    schema: EXTRACT_SCHEMA
+                }
+            }).then((response: any) => {
                 if (response.success && response.extract?.articles) {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const tagged = response.extract.articles.map((a: any) => ({
+                    return response.extract.articles.map((a: any) => ({
                         ...a,
                         source: source.name
                     }));
-                    allArticles.push(...tagged);
                 }
-            } catch (sourceError) {
+                return [];
+            }).catch((sourceError: any) => {
                 console.warn(`Failed to scrape ${source.name}:`, sourceError);
-                // Continue to next source
+                return [];
+            });
+        });
+
+        const results = await Promise.allSettled(fetchPromises);
+        results.forEach(result => {
+            if (result.status === "fulfilled" && result.value) {
+                allArticles.push(...result.value);
             }
-        }
+        });
 
         if (allArticles.length > 0) {
             cachedData = allArticles;

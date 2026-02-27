@@ -20,43 +20,49 @@ export async function GET() {
     try {
         const allPosts: unknown[] = [];
 
-        for (const url of MEDIUM_SOURCES) {
-            try {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const response = await (app as any).v1.scrapeUrl(url, {
-                    formats: ["extract"],
-                    extract: {
-                        prompt: "Extract the top 3 blog post titles, a 1-sentence summary, the author name, and what geopolitical topic it relates to (e.g. 'AfCFTA Trade', 'Resource Sovereignty', 'Foreign Influence', 'Infrastructure', 'Digital Economy'). Only include posts that directly relate to African geopolitics, economy, sovereignty, or continental development. Exclude unrelated content.",
-                        schema: {
-                            type: "object",
-                            properties: {
-                                posts: {
-                                    type: "array",
-                                    items: {
-                                        type: "object",
-                                        properties: {
-                                            title: { type: "string" },
-                                            summary: { type: "string" },
-                                            author: { type: "string" },
-                                            tag: { type: "string" },
-                                            url: { type: "string" }
-                                        },
-                                        required: ["title", "summary", "author", "tag"]
-                                    }
+        const fetchPromises = MEDIUM_SOURCES.map(url => {
+            return (app as any).v1.scrapeUrl(url, {
+                formats: ["extract"],
+                extract: {
+                    prompt: "Extract the top 3 blog post titles, a 1-sentence summary, the author name, and what geopolitical topic it relates to (e.g. 'AfCFTA Trade', 'Resource Sovereignty', 'Foreign Influence', 'Infrastructure', 'Digital Economy'). Only include posts that directly relate to African geopolitics, economy, sovereignty, or continental development. Exclude unrelated content.",
+                    schema: {
+                        type: "object",
+                        properties: {
+                            posts: {
+                                type: "array",
+                                items: {
+                                    type: "object",
+                                    properties: {
+                                        title: { type: "string" },
+                                        summary: { type: "string" },
+                                        author: { type: "string" },
+                                        tag: { type: "string" },
+                                        url: { type: "string" }
+                                    },
+                                    required: ["title", "summary", "author", "tag"]
                                 }
-                            },
-                            required: ["posts"]
-                        }
+                            }
+                        },
+                        required: ["posts"]
                     }
-                });
-
-                if (response.success && response.extract?.posts) {
-                    allPosts.push(...response.extract.posts);
                 }
-            } catch (sourceError) {
+            }).then((response: any) => {
+                if (response.success && response.extract?.posts) {
+                    return response.extract.posts;
+                }
+                return [];
+            }).catch((sourceError: any) => {
                 console.warn(`Blog scrape failed for ${url}:`, sourceError);
+                return [];
+            });
+        });
+
+        const results = await Promise.allSettled(fetchPromises);
+        results.forEach(result => {
+            if (result.status === "fulfilled" && result.value) {
+                allPosts.push(...result.value);
             }
-        }
+        });
 
         if (allPosts.length > 0) {
             cachedData = allPosts;
