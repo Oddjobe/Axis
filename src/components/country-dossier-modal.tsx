@@ -1,9 +1,10 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Globe, ShieldAlert, BarChart3, ArrowRight, Activity, Cpu, Hexagon, Download } from "lucide-react";
+import { X, Globe, ShieldAlert, BarChart3, ArrowRight, Activity, Cpu, Hexagon, Download, Star } from "lucide-react";
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import html2canvas from "html2canvas-pro";
 import { jsPDF } from "jspdf";
+import { useWatchlist } from "@/lib/use-watchlist";
 
 export interface CountryData {
     country: string;
@@ -37,6 +38,8 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
     const [activeTab, setActiveTab] = useState<"STRATEGY" | "EXPORTS" | "FRICTION">("STRATEGY");
     const [mounted, setMounted] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
+    const { watchlist, togglePin } = useWatchlist();
+    const isPinned = countryData ? watchlist.includes(countryData.country) : false;
 
     useEffect(() => {
         setMounted(true);
@@ -120,6 +123,16 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
                             </div>
                         </div>
                         <div className="flex items-center gap-3">
+                            <button
+                                onClick={() => countryData && togglePin(countryData.country)}
+                                className={`flex items-center justify-center p-2 rounded border transition-colors ${isPinned
+                                        ? "bg-amber-500/20 border-amber-500/50 text-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.2)]"
+                                        : "bg-black/10 dark:bg-white/5 border-transparent text-slate-light hover:text-amber-500/80 hover:bg-amber-500/10"
+                                    }`}
+                                title={isPinned ? "Remove from Watchlist" : "Pin to Watchlist"}
+                            >
+                                <Star className={`w-4 h-4 ${isPinned ? "fill-amber-500" : ""}`} />
+                            </button>
                             <button
                                 onClick={handleExportPDF}
                                 disabled={isExporting}

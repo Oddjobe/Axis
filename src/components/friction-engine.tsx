@@ -1,9 +1,10 @@
 "use client"
 
 import { useEffect, useState, useRef } from "react"
-import { ShieldAlert, Newspaper, Video, BookOpen, Lightbulb, Globe, Play, Square, Pause } from "lucide-react"
+import { ShieldAlert, Newspaper, Video, BookOpen, Lightbulb, Globe, Play, Square, Pause, Star } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { supabase } from "@/lib/supabase"
+import { useWatchlist } from "@/lib/use-watchlist"
 
 // Brand SVG Icons
 const YouTubeIcon = () => (
@@ -74,6 +75,15 @@ export default function FrictionEngine({ mode, filterCountry }: { mode: "SOVEREI
     const [isPlayingAudio, setIsPlayingAudio] = useState(false);
     const [audioPaused, setAudioPaused] = useState(false);
     const [isDownloadingModel, setIsDownloadingModel] = useState(false);
+    const { watchlist } = useWatchlist();
+
+    // Hook into the custom DOM event to force a re-render when the modal changes the watchlist
+    const [, setDummy] = useState(0);
+    useEffect(() => {
+        const handleWatchlistChange = () => setDummy(n => n + 1);
+        window.addEventListener("watchlistUpdated", handleWatchlistChange);
+        return () => window.removeEventListener("watchlistUpdated", handleWatchlistChange);
+    }, []);
 
     // Kokoro TTS Refs
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -368,44 +378,56 @@ export default function FrictionEngine({ mode, filterCountry }: { mode: "SOVEREI
                             </div>
                         ) : (
                             <AnimatePresence>
-                                {filteredAlerts.map((alert, idx) => (
-                                    <motion.div
-                                        key={`${alert.title}-${idx}`}
-                                        initial={{ opacity: 0, x: 20 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        transition={{ delay: idx * 0.1, duration: 0.3 }}
-                                        className="p-3 border border-orange-500/20 bg-orange-500/5 rounded-md transition-all hover:bg-orange-500/10 hover:shadow-[0_0_15px_rgba(249,115,22,0.1)] cursor-default"
-                                    >
-                                        <div className="text-[10px] font-mono text-orange-400 mb-1 flex justify-between items-start gap-4">
-                                            <span className="leading-tight">{alert.title}</span>
-                                            <div className="flex flex-col items-end text-right shrink-0">
-                                                <span className="opacity-80 font-bold text-orange-500">
-                                                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                                                    {getLiveTimeAgo((alert as any).timestamp)}
-                                                </span>
-                                                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                                                {(alert as any).timestamp && (
-                                                    <span className="opacity-40 text-[8.5px] mt-0.5 whitespace-nowrap">
+                                {/* Advanced Sort: Bubbles Pinned countries to the top */}
+                                {[...filteredAlerts].sort((a, b) => {
+                                    const aPinned = watchlist.includes(a.isoCode);
+                                    const bPinned = watchlist.includes(b.isoCode);
+                                    if (aPinned && !bPinned) return -1;
+                                    if (!aPinned && bPinned) return 1;
+                                    return 0; // Maintain original chronological order
+                                }).map((alert, idx) => {
+                                    const isPinned = watchlist.includes(alert.isoCode);
+
+                                    return (
+                                        <motion.div
+                                            key={`${alert.title}-${idx}`}
+                                            initial={{ opacity: 0, x: 20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            transition={{ delay: idx * 0.1, duration: 0.3 }}
+                                            className="p-3 border border-orange-500/20 bg-orange-500/5 rounded-md transition-all hover:bg-orange-500/10 hover:shadow-[0_0_15px_rgba(249,115,22,0.1)] cursor-default"
+                                        >
+                                            <div className="text-[10px] font-mono text-orange-400 mb-1 flex justify-between items-start gap-4">
+                                                <span className="leading-tight">{alert.title}</span>
+                                                <div className="flex flex-col items-end text-right shrink-0">
+                                                    <span className="opacity-80 font-bold text-orange-500">
                                                         {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                                                        {new Date((alert as any).timestamp).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                                        {getLiveTimeAgo((alert as any).timestamp)}
                                                     </span>
-                                                )}
+                                                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                                                    {(alert as any).timestamp && (
+                                                        <span className="opacity-40 text-[8.5px] mt-0.5 whitespace-nowrap">
+                                                            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                                                            {new Date((alert as any).timestamp).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </div>
-                                        </div>
-                                        <p className="text-sm text-foreground/90">{alert.summary}</p>
-                                        <div className="mt-3 flex gap-2">
-                                            <span className={`text-[10px] px-2 py-0.5 bg-background border rounded font-bold ${alert.severity === "HIGH" ? "border-red-500/50 text-red-500 shadow-[0_0_8px_rgba(239,68,68,0.3)]" :
-                                                alert.severity === "MEDIUM" ? "border-orange-500/50 text-orange-500" :
-                                                    "border-yellow-500/50 text-yellow-500"
-                                                }`}>
-                                                {alert.severity} SEVERITY
-                                            </span>
-                                            <span className="text-[10px] px-2 py-0.5 bg-background border border-border rounded opacity-80">
-                                                {alert.isoCode}
-                                            </span>
-                                        </div>
-                                    </motion.div>
-                                ))}
+                                            <p className="text-sm text-foreground/90">{alert.summary}</p>
+                                            <div className="mt-3 flex gap-2">
+                                                <span className={`text-[10px] px-2 py-0.5 bg-background border rounded font-bold ${alert.severity === "HIGH" ? "border-red-500/50 text-red-500 shadow-[0_0_8px_rgba(239,68,68,0.3)]" :
+                                                    alert.severity === "MEDIUM" ? "border-orange-500/50 text-orange-500" :
+                                                        "border-yellow-500/50 text-yellow-500"
+                                                    }`}>
+                                                    {alert.severity} SEVERITY
+                                                </span>
+                                                <span className={`text-[10px] px-2 py-0.5 bg-background border border-border rounded opacity-80 flex items-center gap-1 ${isPinned ? "border-amber-500/30 text-amber-500 font-bold" : ""}`}>
+                                                    {isPinned && <Star className="w-2.5 h-2.5 fill-amber-500" />}
+                                                    {alert.isoCode}
+                                                </span>
+                                            </div>
+                                        </motion.div>
+                                    );
+                                })}
                             </AnimatePresence>
                         )}
                     </>
