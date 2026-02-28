@@ -45,22 +45,25 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
         if (!countryData) return null;
 
         // FDI Dependency
-        const uniqueDestinations = new Set(countryData.exportsData.map(e => e.destination)).size;
-        const topDest = countryData.exportsData[0]?.destination || "Unknown";
+        const safeExports = countryData.exportsData || [];
+        const uniqueDestinations = new Set(safeExports.map(e => e.destination)).size;
+        const topDest = safeExports[0]?.destination || "Unknown";
         const fdiRiskLevel = uniqueDestinations <= 1 ? "HIGH RISK" : "DIVERSIFIED";
         const fdiColor = uniqueDestinations <= 1 ? "text-red-500 bg-red-500/10 border-red-500/30" : "text-green-500 bg-green-500/10 border-green-500/30";
         const fdiDetail = uniqueDestinations <= 1 ? `Heavily reliant on ${topDest.toUpperCase()}` : `Exports distributed across ${uniqueDestinations} regions`;
 
         // Resource Monopoly
-        const resCount = countryData.keyResources.length;
+        const safeResources = countryData.keyResources || [];
+        const resCount = safeResources.length;
         const diversityLevel = resCount >= 4 ? "RESILIENT" : resCount === 3 ? "EMERGING" : "VULNERABLE";
         const diversityColor = resCount >= 4 ? "text-green-500 bg-green-500/10 border-green-500/30" : resCount === 3 ? "text-yellow-500 bg-yellow-500/10 border-yellow-500/30" : "text-red-500 bg-red-500/10 border-red-500/30";
         const diversityDetail = `Controls ${resCount} strategic ${resCount === 1 ? 'resource' : 'resources'}`;
 
         // Geopolitical Heat
-        const highFrictionCount = countryData.frictionVectors.filter(v => v.severity === "HIGH").length;
-        const medFrictionCount = countryData.frictionVectors.filter(v => v.severity === "MEDIUM").length;
-        const heatScore = (highFrictionCount * 10) + (medFrictionCount * 5) + (countryData.frictionVectors.length * 2);
+        const safeFriction = countryData.frictionVectors || [];
+        const highFrictionCount = safeFriction.filter(v => v.severity === "HIGH").length;
+        const medFrictionCount = safeFriction.filter(v => v.severity === "MEDIUM").length;
+        const heatScore = (highFrictionCount * 10) + (medFrictionCount * 5) + (safeFriction.length * 2);
         const heatLevel = heatScore >= 15 ? "ELEVATED" : heatScore >= 10 ? "MODERATE" : "STABLE";
         const heatColor = heatScore >= 15 ? "text-red-500 bg-red-500/10 border-red-500/30" : heatScore >= 10 ? "text-yellow-500 bg-yellow-500/10 border-yellow-500/30" : "text-green-500 bg-green-500/10 border-green-500/30";
         const heatDetail = `Calculated friction severity score: ${heatScore}/30`;
