@@ -75,7 +75,12 @@ export default function FrictionEngine({ mode, filterCountry }: { mode: "SOVEREI
     const [isPlayingAudio, setIsPlayingAudio] = useState(false);
     const [audioPaused, setAudioPaused] = useState(false);
     const [isDownloadingModel, setIsDownloadingModel] = useState(false);
+    const [isMounted, setIsMounted] = useState(false);
     const { watchlist } = useWatchlist();
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     // Hook into the custom DOM event to force a re-render when the modal changes the watchlist
     const [, setDummy] = useState(0);
@@ -378,15 +383,15 @@ export default function FrictionEngine({ mode, filterCountry }: { mode: "SOVEREI
                             </div>
                         ) : (
                             <AnimatePresence>
-                                {/* Advanced Sort: Bubbles Pinned countries to the top */}
-                                {[...filteredAlerts].sort((a, b) => {
+                                {/* Advanced Sort: Bubbles Pinned countries to the top ONLY after hydration */}
+                                {(isMounted ? [...filteredAlerts].sort((a, b) => {
                                     const aPinned = watchlist.includes(a.isoCode);
                                     const bPinned = watchlist.includes(b.isoCode);
                                     if (aPinned && !bPinned) return -1;
                                     if (!aPinned && bPinned) return 1;
                                     return 0; // Maintain original chronological order
-                                }).map((alert, idx) => {
-                                    const isPinned = watchlist.includes(alert.isoCode);
+                                }) : filteredAlerts).map((alert, idx) => {
+                                    const isPinned = isMounted && watchlist.includes(alert.isoCode);
 
                                     return (
                                         <motion.div
