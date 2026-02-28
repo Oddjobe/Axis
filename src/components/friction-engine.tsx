@@ -410,7 +410,7 @@ export default function FrictionEngine({ mode, filterCountry }: { mode: "SOVEREI
                                                         {getLiveTimeAgo((alert as any).timestamp)}
                                                     </span>
                                                     {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                                                    {(alert as any).timestamp && (
+                                                    {isMounted && (alert as any).timestamp && (
                                                         <span className="opacity-40 text-[8.5px] mt-0.5 whitespace-nowrap">
                                                             {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                                                             {new Date((alert as any).timestamp).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}

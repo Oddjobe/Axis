@@ -148,7 +148,7 @@ export default function Home() {
                 <div className="flex justify-between items-center text-[10px] font-mono font-bold text-slate-light">
                   <span>2015</span>
                   <span className="text-cobalt bg-cobalt/10 px-2 py-0.5 rounded border border-cobalt/30">
-                    {timeValue === currentYear ? `CURRENT (${new Date().toLocaleDateString(undefined, { month: 'short', year: 'numeric' })})` : timeValue}
+                    {timeValue === currentYear ? `CURRENT (${currentYear})` : timeValue}
                   </span>
                   <span>{currentYear}</span>
                 </div>

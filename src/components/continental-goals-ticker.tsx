@@ -61,7 +61,7 @@ export default function ContinentalGoalsTicker() {
                             <span className="text-slate-light/60">[{item.id}]</span>
                             <span className="font-bold text-foreground tracking-wider">{item.title}</span>
                             <span className={`font-bold tabular-nums ${item.trend === '+' ? 'text-green-500' : 'text-red-500'}`}>
-                                {item.price >= 1000 ? item.price.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : item.price.toFixed(2)} {item.unit}
+                                {item.price >= 1000 ? item.price.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : item.price.toFixed(2)} {item.unit}
                             </span>
                             <span className={`flex items-center gap-0.5 ${item.trend === '+' ? 'text-green-500' : 'text-red-500'}`}>
                                 {item.trend === '+' ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
