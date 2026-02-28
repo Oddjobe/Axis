@@ -231,7 +231,7 @@ export default function AfcftaMatrix({ selectedCode, onSelectCode }: AfcftaMatri
                         </div>
 
                         <div className="flex flex-wrap gap-1 mb-1">
-                            {data.keyResources.slice(0, 3).map((res, idx) => (
+                            {(data.keyResources || []).slice(0, 3).map((res, idx) => (
                                 <span key={idx} className="text-[8px] px-1.5 py-0.5 bg-amber-500/10 border border-amber-500/30 rounded text-amber-500">
                                     {res.toUpperCase()}
                                 </span>
@@ -239,7 +239,7 @@ export default function AfcftaMatrix({ selectedCode, onSelectCode }: AfcftaMatri
                         </div>
 
                         <div className="flex gap-2 mt-2">
-                            {data.highlights.map((highlight, idx) => (
+                            {(data.highlights || []).map((highlight, idx) => (
                                 <span key={idx} className="text-[9px] px-1.5 py-0.5 bg-white/5 dark:bg-black/20 border border-border/50 rounded flex items-center gap-1 text-slate-light">
                                     {idx === 0 ? <Pickaxe className="w-2.5 h-2.5" /> : <TrendingUp className="w-2.5 h-2.5" />}
                                     {highlight.toUpperCase()}

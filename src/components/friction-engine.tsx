@@ -191,7 +191,7 @@ export default function FrictionEngine({ mode, filterCountry }: { mode: "SOVEREI
         return `${diffDays} DAYS AGO`;
     };
 
-    const filteredAlerts = alerts.filter(a => {
+    const filteredAlerts = (alerts || []).filter(a => {
         const cat = a.category ? a.category.toUpperCase() : "";
         const modeMatch = mode === "SOVEREIGNTY"
             ? cat.includes("SOVEREIGNTY") || cat.includes("RISK")
@@ -222,7 +222,7 @@ export default function FrictionEngine({ mode, filterCountry }: { mode: "SOVEREI
     const toggleAudioBrief = async () => {
         if (isDownloadingModel) return;
 
-        const topAlerts = filteredAlerts.slice(0, 5);
+        const topAlerts = (filteredAlerts || []).slice(0, 5);
         if (topAlerts.length === 0) return;
 
         if (isPlayingAudio && !audioPaused) {
@@ -384,13 +384,13 @@ export default function FrictionEngine({ mode, filterCountry }: { mode: "SOVEREI
                         ) : (
                             <AnimatePresence>
                                 {/* Advanced Sort: Bubbles Pinned countries to the top ONLY after hydration */}
-                                {(isMounted ? [...filteredAlerts].sort((a, b) => {
+                                {(isMounted ? [...(filteredAlerts || [])].sort((a, b) => {
                                     const aPinned = watchlist.includes(a.isoCode);
                                     const bPinned = watchlist.includes(b.isoCode);
                                     if (aPinned && !bPinned) return -1;
                                     if (!aPinned && bPinned) return 1;
                                     return 0; // Maintain original chronological order
-                                }) : filteredAlerts).map((alert, idx) => {
+                                }) : (filteredAlerts || [])).map((alert, idx) => {
                                     const isPinned = isMounted && watchlist.includes(alert.isoCode);
 
                                     return (

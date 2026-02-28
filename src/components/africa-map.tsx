@@ -503,13 +503,13 @@ export default function AfricaMap({ selectedCountryCode, onSelectCountry, timeVa
                             <span className="font-bold text-amber-500">{tooltip.data?.resourceWealth}/100</span>
                         </div>
                         <div className="flex flex-wrap gap-1">
-                            {tooltip.data?.keyResources.slice(0, 3).map((r, i) => (
+                            {(tooltip.data?.keyResources || []).slice(0, 3).map((r, i) => (
                                 <span key={i} className="text-[8px] px-1 py-0.5 bg-amber-500/15 border border-amber-500/30 rounded text-amber-400">{r}</span>
                             ))}
                         </div>
                         <div className="flex justify-between items-center">
                             <span className="text-zinc-400">KEY INITIATIVE</span>
-                            <span className="text-blue-400 font-bold max-w-32 truncate text-right">{tooltip.data?.highlights[0]}</span>
+                            <span className="text-blue-400 font-bold max-w-32 truncate text-right">{(tooltip.data?.highlights || [])[0]}</span>
                         </div>
                         <div className="flex justify-between items-center">
                             <span className="text-zinc-400">FDI TREND (QOQ)</span>
