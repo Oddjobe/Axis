@@ -96,7 +96,7 @@ export default function FrictionEngine({ mode, filterCountry }: { mode: "SOVEREI
     const audioCtxRef = useRef<AudioContext | null>(null);
     const currentSourceRef = useRef<AudioBufferSourceNode | null>(null);
 
-    const [now, setNow] = useState(Date.now());
+    const [now, setNow] = useState<number | null>(null);
 
     useEffect(() => {
         let isMounted = true;
@@ -158,6 +158,7 @@ export default function FrictionEngine({ mode, filterCountry }: { mode: "SOVEREI
         // Initial fetch
         fetchIntelligence();
         fetchBlogs();
+        setNow(Date.now());
 
         // Real-time polling every 5 minutes (300000 ms)
         const intervalId = setInterval(() => {
@@ -179,7 +180,7 @@ export default function FrictionEngine({ mode, filterCountry }: { mode: "SOVEREI
 
     // Helper to calculate live time ago
     const getLiveTimeAgo = (isoString?: string) => {
-        if (!isoString) return "JUST NOW";
+        if (!now || !isoString) return "JUST NOW";
         const diffMs = now - new Date(isoString).getTime();
         const diffMins = Math.floor(diffMs / 60000);
         const diffHrs = Math.floor(diffMins / 60);
