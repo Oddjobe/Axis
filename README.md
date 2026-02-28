@@ -47,13 +47,53 @@ Click any country for a detailed modal with three tabs:
 
 | Layer | Technology |
 |---|---|
-| Framework | Next.js 16 (Turbopack) |
-| Styling | Tailwind CSS 4 |
-| Mapping | react-simple-maps + D3 |
-| Animation | Framer Motion |
-| Theming | next-themes (Dark/Light) |
-| OSINT | Firecrawl API |
+| Framework | Next.js 16 (App Router) |
+| Database | Supabase (PostgreSQL + RLS) |
+| Automation | GitHub Actions (Cron Jobs) |
+| OSINT Engine | Firecrawl API via Node.js |
+| Mapping | React Simple Maps + D3 |
+| State | Browser LocalStorage |
 | Hosting | Vercel |
+
+## Architecture & Data Flow
+
+```mermaid
+graph TD
+    %% Define Nodes
+    subgraph Frontend [Next.js Web Application / Vercel]
+        UI[Axis Interactive Dashboard]
+        Map[Sovereignty Map]
+        Feed[Friction Engine Feed]
+        Local[Browser LocalStorage]
+    end
+
+    subgraph Backend [Serverless & Cloud]
+        DB[(Supabase PostgreSQL)]
+        Cron[GitHub Actions Automation]
+        OSINT[Firecrawl Web Scraper]
+    end
+
+    %% Define Connections
+    Cron -- 1. Triggered Twice Daily --> OSINT
+    OSINT -- 2. Scrapes News (Al Jazeera, Reuters, etc.) --> OSINT
+    OSINT -- 3. Parses via AI Schema --> Cron
+    Cron -- 4. Inserts Validated Alerts --> DB
+
+    DB -- 5. Streams Live Intelligence & Scores --> Feed
+    DB -- 6. Streams ISO Country Metrics --> Map
+    
+    Local -- 7. Hydrates User Watchlist (Client-Side) --> UI
+    UI -- 8. Filters & Sorts Feed based on Pins --> Feed
+
+    %% Styling
+    classDef frontend fill:#1e293b,stroke:#3b82f6,stroke-width:2px,color:#fff
+    classDef backend fill:#0f172a,stroke:#10b981,stroke-width:2px,color:#fff
+    classDef storage fill:#334155,stroke:#f59e0b,stroke-width:2px,color:#fff
+    
+    class UI,Map,Feed frontend
+    class DB,Cron,OSINT backend
+    class Local storage
+```
 
 ## Getting Started
 
@@ -77,9 +117,14 @@ Open [http://localhost:3000](http://localhost:3000) to view the dashboard.
 
 ## Environment Variables
 
-| Variable | Description | Required |
-|---|---|---|
-| `FIRECRAWL_API_KEY` | API key from [firecrawl.dev](https://firecrawl.dev) | Yes |
+For the application to run successfully locally or on Vercel, you need the following environment variables in `.env.local`:
+
+| Variable | Description |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Your Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Your public Supabase API key |
+| `FIRECRAWL_API_KEY` | API key from [firecrawl.dev](https://firecrawl.dev) (Used by the GitHub action) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Master database bypass key (Only required in GitHub Actions Secrets) |
 
 ## Sovereignty Index Explained
 
@@ -106,6 +151,7 @@ MIT License — see [LICENSE](LICENSE) for details.
 
 ## Acknowledgments
 
+- [Supabase](https://supabase.com) — Open source Firebase alternative
 - [Firecrawl](https://firecrawl.dev) — OSINT scraping engine
 - [react-simple-maps](https://www.react-simple-maps.io/) — SVG map rendering
 - [Vercel](https://vercel.com) — Hosting and deployment
