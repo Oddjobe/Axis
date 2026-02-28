@@ -2,8 +2,8 @@ name: Automated OSINT Intelligence Scraper
 
 on:
   schedule:
-    # Run twice daily at 6 AM and 6 PM UTC
-    - cron: '0 6,18 * * *'
+    # Run once daily at 6 AM UTC (Limits Firecrawl Action to 20 credits/day)
+    - cron: '0 6 * * *'
   workflow_dispatch:
     # Allow manual triggering from the GitHub Actions tab
 
