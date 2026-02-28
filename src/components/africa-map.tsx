@@ -4,7 +4,7 @@ import React, { useState } from "react"
 import { ComposableMap, Geographies, Geography, ZoomableGroup, Marker } from "react-simple-maps"
 import { useTheme } from "next-themes"
 import { Plus, Minus, Layers } from "lucide-react"
-import { ALL_SOVEREIGN_DATA } from "@/lib/mock-data"
+import { supabase } from "@/lib/supabase"
 import type { CountryData } from "@/components/country-dossier-modal"
 
 interface AfricaMapProps {
@@ -98,9 +98,24 @@ export default function AfricaMap({ selectedCountryCode, onSelectCountry, timeVa
     const [tooltip, setTooltip] = useState({ show: false, content: "", data: null as CountryData | null, x: 0, y: 0 });
     const [position, setPosition] = useState({ coordinates: [0, 0], zoom: 1 });
     const [mapTheme, setMapTheme] = useState<MapTheme>("SOVEREIGNTY");
+    const [countryDataMaster, setCountryDataMaster] = useState<CountryData[]>([]);
+
+    React.useEffect(() => {
+        async function fetchMapData() {
+            const { data, error } = await supabase.from('countries').select('*');
+            if (error) {
+                console.error("Failed to load map data", error);
+                return;
+            }
+            if (data) {
+                setCountryDataMaster(data as CountryData[]);
+            }
+        }
+        fetchMapData();
+    }, []);
 
     const getCountryData = (geoName: string) => {
-        return ALL_SOVEREIGN_DATA.find(c =>
+        return countryDataMaster.find(c =>
             c.name.toLowerCase() === geoName.toLowerCase() ||
             c.name.toLowerCase().includes(geoName.toLowerCase()) ||
             geoName.toLowerCase().includes(c.name.toLowerCase()) ||
@@ -296,7 +311,7 @@ export default function AfricaMap({ selectedCountryCode, onSelectCountry, timeVa
 
                     {/* Animated Alert Markers (Only on SOVEREIGNTY map) */}
                     {mapTheme === "SOVEREIGNTY" && COUNTRY_LABELS.map((label, idx) => {
-                        const countryData = ALL_SOVEREIGN_DATA.find(d =>
+                        const countryData = countryDataMaster.find(d =>
                             d.name.toUpperCase().startsWith(label.name.split(".")[0].split(" ")[0]) ||
                             label.name.includes(d.country) ||
                             d.name.toUpperCase() === label.name

@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react"
 import { ShieldAlert, Newspaper, Video, BookOpen, Lightbulb, Globe, Play, Square, Pause } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
+import { supabase } from "@/lib/supabase"
 
 // Brand SVG Icons
 const YouTubeIcon = () => (
@@ -88,25 +89,20 @@ export default function FrictionEngine({ mode, filterCountry }: { mode: "SOVEREI
         async function fetchIntelligence() {
             if (alerts.length === 0) setLoading(true);
             try {
-                const res = await fetch("/api/intelligence");
-                const data = await res.json();
+                // Fetch live intelligence alerts directly from Supabase
+                const { data, error } = await supabase
+                    .from('intelligence_alerts')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                    .limit(50);
+
+                if (error) throw error;
+                if (!data) return;
 
                 // Calculate an exact date/time from the relative "timeAgo" string
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const enhancedData = data.map((alert: any) => {
-                    // Only assign a new exact Date if it doesn't already have one
-                    // to prevent the time from shifting forward on every poll if fallback data is identical
-                    const hoursMatch = alert.timeAgo?.match(/(\d+)\s+HRS?/i);
-                    const exactDate = new Date();
-                    if (hoursMatch) {
-                        exactDate.setHours(exactDate.getHours() - parseInt(hoursMatch[1], 10));
-                    }
-
-                    // Add some random minute jitter for realism if it fell exactly on the hour
-                    if (exactDate.getMinutes() === new Date().getMinutes()) {
-                        exactDate.setMinutes(exactDate.getMinutes() - Math.floor(Math.random() * 59));
-                    }
-
+                    const exactDate = new Date(alert.created_at);
                     return { ...alert, timestamp: exactDate.toISOString() };
                 });
 

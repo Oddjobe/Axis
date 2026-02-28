@@ -18,6 +18,10 @@ export interface CountryData {
     infrastructureControl: number;
     policyIndependence: number;
     currencyStability: number;
+    gdp?: number | string;
+    topExport?: string;
+    fdiClimate?: string;
+    strategicFocus?: string;
     keyInitiatives: { title: string, details: string }[];
     exportsData: { resource: string, volume: string, destination: string, value: string, status: string }[];
     frictionVectors: { title: string, severity: string, details: string }[];
