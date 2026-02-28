@@ -136,7 +136,13 @@ export default function AfricaMap({ selectedCountryCode, onSelectCountry, timeVa
         }
 
         if (mapTheme === "RESOURCE_WEALTH") {
-            const wealth = cData.resourceWealth || 0;
+            let wealth = cData.resourceWealth || 0;
+            if (timeValue) {
+                const currentYear = new Date().getFullYear();
+                const yearDiff = currentYear - timeValue;
+                // Assume resource valuation/discovery was historically lower
+                wealth = Math.max(0, Math.min(100, wealth - (yearDiff * 1.5)));
+            }
             if (wealth >= 85) return "rgba(180, 83, 9, 0.8)";     // Deep amber/bronze
             if (wealth >= 70) return "rgba(217, 119, 6, 0.7)";    // Amber
             if (wealth >= 50) return "rgba(245, 158, 11, 0.5)";   // Golden
@@ -145,11 +151,27 @@ export default function AfricaMap({ selectedCountryCode, onSelectCountry, timeVa
         }
 
         if (mapTheme === "FDI_TREND") {
-            if (cData.trend.startsWith('++')) return "rgba(59, 130, 246, 0.7)"; // Strong positive (Blue)
-            if (cData.trend.startsWith('+')) return "rgba(56, 189, 248, 0.5)";  // Positive (Light Blue)
-            if (cData.trend === 'Stable') return isDark ? "rgba(148, 163, 184, 0.4)" : "rgba(148, 163, 184, 0.3)"; // Stable (Slate)
-            if (cData.trend.startsWith('--')) return "rgba(225, 29, 72, 0.7)";  // Strong negative (Rose)
-            if (cData.trend.startsWith('-')) return "rgba(244, 63, 94, 0.5)";   // Negative (Light Rose)
+            let trendScore = 0;
+            if (cData.trend.startsWith('++')) trendScore = 2;
+            else if (cData.trend.startsWith('--')) trendScore = -2;
+            else if (cData.trend.startsWith('+')) trendScore = 1;
+            else if (cData.trend.startsWith('-')) trendScore = -1;
+
+            if (timeValue) {
+                const currentYear = new Date().getFullYear();
+                const yearDiff = currentYear - timeValue;
+                // Pseudo-random deterministic historical shift based on country name length
+                // so some countries had better FDI in the past, some worse
+                const shift = Math.floor(yearDiff / 2) * (cData.name.length % 2 === 0 ? -1 : 1);
+                trendScore = Math.max(-2, Math.min(2, trendScore + shift));
+            }
+
+            if (trendScore >= 2) return "rgba(59, 130, 246, 0.7)"; // Strong positive (Blue)
+            if (trendScore === 1) return "rgba(56, 189, 248, 0.5)";  // Positive (Light Blue)
+            if (trendScore === 0) return isDark ? "rgba(148, 163, 184, 0.4)" : "rgba(148, 163, 184, 0.3)"; // Stable (Slate)
+            if (trendScore === -1) return "rgba(244, 63, 94, 0.5)";   // Negative (Light Rose)
+            if (trendScore <= -2) return "rgba(225, 29, 72, 0.7)";  // Strong negative (Rose)
+
             return isDark ? "rgba(30, 41, 59, 0.4)" : "rgba(241, 245, 249, 1)";
         }
 
