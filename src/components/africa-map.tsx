@@ -5,6 +5,7 @@ import { ComposableMap, Geographies, Geography, ZoomableGroup, Marker } from "re
 import { useTheme } from "next-themes"
 import { Plus, Minus, Layers } from "lucide-react"
 import { supabase } from "@/lib/supabase"
+import { ALL_SOVEREIGN_DATA } from "@/lib/mock-data"
 import type { CountryData } from "@/components/country-dossier-modal"
 
 interface AfricaMapProps {
@@ -108,7 +109,16 @@ export default function AfricaMap({ selectedCountryCode, onSelectCountry, timeVa
                 return;
             }
             if (data) {
-                setCountryDataMaster(data as CountryData[]);
+                // Merge live Postgres data with complex static arrays not yet ported to DB
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const merged = data.map((dbCountry: any) => {
+                    const staticData = ALL_SOVEREIGN_DATA.find(s => s.country === dbCountry.id);
+                    return {
+                        ...staticData,
+                        ...dbCountry,
+                    };
+                });
+                setCountryDataMaster(merged as CountryData[]);
             }
         }
         fetchMapData();
