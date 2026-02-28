@@ -223,7 +223,7 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
                                             <Cpu className="w-4 h-4" /> KEY INITIATIVES
                                         </h3>
                                         <div className="space-y-3">
-                                            {countryData.keyInitiatives.map((init, i: number) => (
+                                            {(countryData.keyInitiatives || []).map((init, i: number) => (
                                                 <div key={i} className="flex flex-col border-l-2 border-cobalt pl-3 py-1">
                                                     <span className="text-sm border flex font-bold border-transparent">{init.title.toUpperCase()}</span>
                                                     <span className="text-xs text-slate-light font-mono mt-1">{init.details}</span>
@@ -287,8 +287,9 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
                                         </div>
 
                                         {/* Render Resources on inner ring */}
-                                        {countryData.keyResources.slice(0, 4).map((res, i) => {
-                                            const angle = (i * (360 / Math.max(1, countryData.keyResources.slice(0, 4).length))) * (Math.PI / 180);
+                                        {(countryData.keyResources || []).slice(0, 4).map((res, i) => {
+                                            const resourcesLength = (countryData.keyResources || []).slice(0, 4).length;
+                                            const angle = (i * (360 / Math.max(1, resourcesLength))) * (Math.PI / 180);
                                             const radius = 22; // percentage
                                             const top = 50 + radius * Math.sin(angle);
                                             const left = 50 + radius * Math.cos(angle);
@@ -301,8 +302,9 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
                                         })}
 
                                         {/* Render Initiatives on middle ring */}
-                                        {countryData.keyInitiatives.map((init, i) => {
-                                            const angle = (20 + i * (360 / Math.max(1, countryData.keyInitiatives.length))) * (Math.PI / 180);
+                                        {(countryData.keyInitiatives || []).map((init, i) => {
+                                            const initiativesLength = (countryData.keyInitiatives || []).length;
+                                            const angle = (20 + i * (360 / Math.max(1, initiativesLength))) * (Math.PI / 180);
                                             const radius = 35; // percentage
                                             const top = 50 + radius * Math.sin(angle);
                                             const left = 50 + radius * Math.cos(angle);
@@ -315,8 +317,9 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
                                         })}
 
                                         {/* Render Threat Vectors on outer ring */}
-                                        {countryData.frictionVectors.map((frict, i) => {
-                                            const angle = (45 + i * (360 / Math.max(1, countryData.frictionVectors.length))) * (Math.PI / 180);
+                                        {(countryData.frictionVectors || []).map((frict, i) => {
+                                            const vectorsLength = (countryData.frictionVectors || []).length;
+                                            const angle = (45 + i * (360 / Math.max(1, vectorsLength))) * (Math.PI / 180);
                                             const radius = 42; // percentage
                                             const top = 50 + radius * Math.sin(angle);
                                             const left = 50 + radius * Math.cos(angle);
@@ -340,7 +343,7 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
                         {activeTab === "EXPORTS" && (
                             <div className="grid grid-cols-1 gap-4 animate-in fade-in zoom-in-95 duration-500">
                                 <h3 className="text-xs font-bold text-slate-light mb-2 font-mono border-b border-border pb-2">COMMODITY PIPELINE & PARTNERSHIPS</h3>
-                                {countryData.exportsData.map((row, i) => (
+                                {(countryData.exportsData || []).map((row, i) => (
                                     <div key={i} className="flex items-center justify-between p-4 border border-border/50 bg-background/30 rounded-lg font-mono hover:bg-white/5 transition-colors cursor-default">
                                         <div className="flex flex-col w-1/4">
                                             <span className="text-xs text-slate-light">RESOURCE</span>
