@@ -112,7 +112,7 @@ export default function AfricaMap({ selectedCountryCode, onSelectCountry, timeVa
                 // Merge live Postgres data with complex static arrays not yet ported to DB
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const merged = data.map((dbCountry: any) => {
-                    const staticData = ALL_SOVEREIGN_DATA.find(s => s.country === dbCountry.id);
+                    const staticData = ALL_SOVEREIGN_DATA.find(s => s.country === dbCountry.country);
                     return {
                         ...staticData,
                         ...dbCountry,

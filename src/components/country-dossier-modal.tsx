@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Globe, ShieldAlert, BarChart3, ArrowRight, Activity, Cpu, Hexagon, Download, Star } from "lucide-react";
+import { X, Globe, ShieldAlert, BarChart3, ArrowRight, Activity, Cpu, Hexagon, Download, Star, BrainCircuit } from "lucide-react";
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import html2canvas from "html2canvas-pro";
@@ -40,6 +40,34 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
     const [isExporting, setIsExporting] = useState(false);
     const { watchlist, togglePin } = useWatchlist();
     const isPinned = countryData ? watchlist.includes(countryData.country) : false;
+
+    const calculateSmartMetrics = () => {
+        if (!countryData) return null;
+
+        // FDI Dependency
+        const uniqueDestinations = new Set(countryData.exportsData.map(e => e.destination)).size;
+        const topDest = countryData.exportsData[0]?.destination || "Unknown";
+        const fdiRiskLevel = uniqueDestinations <= 1 ? "HIGH RISK" : "DIVERSIFIED";
+        const fdiColor = uniqueDestinations <= 1 ? "text-red-500 bg-red-500/10 border-red-500/30" : "text-green-500 bg-green-500/10 border-green-500/30";
+        const fdiDetail = uniqueDestinations <= 1 ? `Heavily reliant on ${topDest.toUpperCase()}` : `Exports distributed across ${uniqueDestinations} regions`;
+
+        // Resource Monopoly
+        const resCount = countryData.keyResources.length;
+        const diversityLevel = resCount >= 4 ? "RESILIENT" : resCount === 3 ? "EMERGING" : "VULNERABLE";
+        const diversityColor = resCount >= 4 ? "text-green-500 bg-green-500/10 border-green-500/30" : resCount === 3 ? "text-yellow-500 bg-yellow-500/10 border-yellow-500/30" : "text-red-500 bg-red-500/10 border-red-500/30";
+        const diversityDetail = `Controls ${resCount} strategic ${resCount === 1 ? 'resource' : 'resources'}`;
+
+        // Geopolitical Heat
+        const highFrictionCount = countryData.frictionVectors.filter(v => v.severity === "HIGH").length;
+        const medFrictionCount = countryData.frictionVectors.filter(v => v.severity === "MEDIUM").length;
+        const heatScore = (highFrictionCount * 10) + (medFrictionCount * 5) + (countryData.frictionVectors.length * 2);
+        const heatLevel = heatScore >= 15 ? "ELEVATED" : heatScore >= 10 ? "MODERATE" : "STABLE";
+        const heatColor = heatScore >= 15 ? "text-red-500 bg-red-500/10 border-red-500/30" : heatScore >= 10 ? "text-yellow-500 bg-yellow-500/10 border-yellow-500/30" : "text-green-500 bg-green-500/10 border-green-500/30";
+        const heatDetail = `Calculated friction severity score: ${heatScore}/30`;
+
+        return { fdiRiskLevel, fdiColor, fdiDetail, diversityLevel, diversityColor, diversityDetail, heatLevel, heatColor, heatDetail };
+    };
+    const metrics = calculateSmartMetrics();
 
     useEffect(() => {
         setMounted(true);
@@ -126,8 +154,8 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
                             <button
                                 onClick={() => countryData && togglePin(countryData.country)}
                                 className={`flex items-center justify-center p-2 rounded border transition-colors ${isPinned
-                                        ? "bg-amber-500/20 border-amber-500/50 text-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.2)]"
-                                        : "bg-black/10 dark:bg-white/5 border-transparent text-slate-light hover:text-amber-500/80 hover:bg-amber-500/10"
+                                    ? "bg-amber-500/20 border-amber-500/50 text-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.2)]"
+                                    : "bg-black/10 dark:bg-white/5 border-transparent text-slate-light hover:text-amber-500/80 hover:bg-amber-500/10"
                                     }`}
                                 title={isPinned ? "Remove from Watchlist" : "Pin to Watchlist"}
                             >
@@ -203,6 +231,39 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
                                             ))}
                                         </div>
                                     </div>
+
+                                    {metrics && (
+                                        <div className="bg-background/50 border border-border p-5 rounded-lg">
+                                            <h3 className="text-xs font-bold text-slate-light mb-4 flex items-center gap-2 font-mono">
+                                                <BrainCircuit className="w-4 h-4 text-purple-500" /> AI SMART METRICS
+                                            </h3>
+                                            <div className="space-y-4 font-mono text-xs">
+                                                <div className="flex flex-col">
+                                                    <div className="flex justify-between items-center mb-1">
+                                                        <span className="text-slate-light">FDI Dependency</span>
+                                                        <span className={`text-[9px] px-1.5 py-0.5 rounded border font-bold ${metrics.fdiColor}`}>{metrics.fdiRiskLevel}</span>
+                                                    </div>
+                                                    <div className="text-[9px] text-slate-500 tracking-wide">{metrics.fdiDetail}</div>
+                                                </div>
+
+                                                <div className="flex flex-col">
+                                                    <div className="flex justify-between items-center mb-1">
+                                                        <span className="text-slate-light">Resource Monopoly</span>
+                                                        <span className={`text-[9px] px-1.5 py-0.5 rounded border font-bold ${metrics.diversityColor}`}>{metrics.diversityLevel}</span>
+                                                    </div>
+                                                    <div className="text-[9px] text-slate-500 tracking-wide">{metrics.diversityDetail}</div>
+                                                </div>
+
+                                                <div className="flex flex-col">
+                                                    <div className="flex justify-between items-center mb-1">
+                                                        <span className="text-slate-light">Geopolitical Heat</span>
+                                                        <span className={`text-[9px] px-1.5 py-0.5 rounded border font-bold ${metrics.heatColor}`}>{metrics.heatLevel}</span>
+                                                    </div>
+                                                    <div className="text-[9px] text-slate-500 tracking-wide">{metrics.heatDetail}</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="border border-border rounded-lg bg-[radial-gradient(circle_at_center,rgba(37,99,235,0.1)_0%,transparent_70%)] flex items-center justify-center p-8">
                                     {/* Dynamic Radar visual showing resources & vectors mapped around the rings */}
