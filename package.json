@@ -11,6 +11,8 @@
   "dependencies": {
     "@google/genai": "^1.43.0",
     "@mendable/firecrawl-js": "^1.11.2",
+    "@nivo/core": "^0.99.0",
+    "@nivo/sankey": "^0.99.0",
     "@supabase/supabase-js": "^2.98.0",
     "@types/react-simple-maps": "^3.0.6",
     "@types/topojson-client": "^3.1.5",
@@ -27,6 +29,7 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-simple-maps": "^3.0.0",
+    "recharts": "^3.7.0",
     "tailwindcss-animate": "^1.0.7",
     "topojson-client": "^3.1.0",
     "ts-node": "^10.9.2",

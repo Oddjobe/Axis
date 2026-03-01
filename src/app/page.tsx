@@ -1,15 +1,17 @@
 "use client"
 
 import { useState, useEffect } from "react";
-import { Globe, Users, Info, Menu, X, List, Map, ShieldAlert, Moon, Sun } from "lucide-react";
+import { Globe, Users, Info, Menu, X, List, Map, ShieldAlert, Moon, Sun, BarChart3 } from "lucide-react";
 import { useTheme } from "next-themes";
 import AfricaMap from "@/components/africa-map";
 import AfcftaMatrix from "@/components/afcfta-matrix";
 import FrictionEngine from "@/components/friction-engine";
 import ContinentalGoalsTicker from "@/components/continental-goals-ticker";
 import MissionModal from "@/components/mission-modal";
+import AnalyticsModal from "@/components/analytics-modal";
 import { ALL_SOVEREIGN_DATA } from "@/lib/mock-data";
 import { Language, useTranslation } from "@/lib/i18n";
+import type { CountryData } from "@/components/country-dossier-modal";
 
 const TOTAL_POPULATION = 1_444; // ~1.44 billion
 
@@ -17,10 +19,12 @@ export default function Home() {
   const [mode, setMode] = useState<"SOVEREIGNTY" | "OUTSIDE INFLUENCE">("SOVEREIGNTY");
   const [selectedCodes, setSelectedCodes] = useState<string[]>([]);
   const [missionOpen, setMissionOpen] = useState(false);
+  const [analyticsOpen, setAnalyticsOpen] = useState(false);
   const [mobilePanel, setMobilePanel] = useState<"map" | "index" | "intel">("map");
   const currentYear = new Date().getFullYear();
   const [timeValue, setTimeValue] = useState(currentYear);
   const [language, setLanguage] = useState<Language>("en");
+  const [countryDataMaster, setCountryDataMaster] = useState<CountryData[]>([]);
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -28,11 +32,25 @@ export default function Home() {
 
   useEffect(() => {
     setMounted(true);
+    // Fetch live data or use mock if no DB connectivity
+    import("@/lib/supabase").then(({ supabase }) => {
+      supabase.from('countries').select('*').then(({ data, error }) => {
+        if (!error && data) {
+          const merged = data.map((dbCountry: any) => {
+            const staticData = ALL_SOVEREIGN_DATA.find(s => s.country === dbCountry.id);
+            return { ...staticData, ...dbCountry, country: dbCountry.id };
+          });
+          setCountryDataMaster(merged as CountryData[]);
+        } else {
+          setCountryDataMaster(ALL_SOVEREIGN_DATA as CountryData[]);
+        }
+      });
+    }).catch(() => setCountryDataMaster(ALL_SOVEREIGN_DATA as CountryData[]));
   }, []);
 
   const selectedCountries = selectedCodes
-    .map(code => ALL_SOVEREIGN_DATA.find(c => c.country === code))
-    .filter(Boolean) as typeof ALL_SOVEREIGN_DATA;
+    .map(code => countryDataMaster.find(c => c.country === code))
+    .filter(Boolean) as CountryData[];
 
   // Function to parse strings like "35.6M" or "1.2B" to numbers
   const parsePop = (popStr: string) => {
@@ -78,6 +96,14 @@ export default function Home() {
             className="flex items-center gap-1.5 lg:gap-2 px-2 lg:px-3 py-1 lg:py-1.5 bg-cobalt/10 border border-cobalt/40 rounded-lg text-[10px] lg:text-xs font-bold text-cobalt hover:bg-cobalt/20 transition-all"
           >
             <Info className="w-3 h-3 lg:w-3.5 lg:h-3.5" /> <span className="hidden sm:inline">{t("about")}</span>
+          </button>
+
+          {/* Analytics Button */}
+          <button
+            onClick={() => setAnalyticsOpen(true)}
+            className="flex items-center gap-1.5 lg:gap-2 px-2 lg:px-3 py-1 lg:py-1.5 bg-green-500/10 border border-green-500/40 rounded-lg text-[10px] lg:text-xs font-bold text-green-500 hover:bg-green-500/20 transition-all"
+          >
+            <BarChart3 className="w-3 h-3 lg:w-3.5 lg:h-3.5" /> <span className="hidden sm:inline">ANALYTICS</span>
           </button>
 
           {/* Dashboard Mode Toggle */}
@@ -230,6 +256,7 @@ export default function Home() {
 
       {/* Modals */}
       <MissionModal isOpen={missionOpen} onClose={() => setMissionOpen(false)} />
+      <AnalyticsModal isOpen={analyticsOpen} onClose={() => setAnalyticsOpen(false)} data={countryDataMaster} />
     </div>
   );
 }
