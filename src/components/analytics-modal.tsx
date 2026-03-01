@@ -125,17 +125,17 @@ export default function AnalyticsModal({ isOpen, onClose, data }: AnalyticsModal
                                                 <h3 className="text-xs font-bold font-mono text-foreground mb-2 flex items-center gap-2">
                                                     <span className="text-orange-500">▶</span> THE DATA STORY
                                                 </h3>
-                                                <p className="text-[11px] text-slate-light leading-relaxed mb-4">
+                                                <p className="text-xs text-slate-light leading-relaxed mb-4">
                                                     This scatter plot visualizes the core thesis of AXIS: The gap between Africa's natural endowment and its sovereign value capture.
                                                 </p>
 
                                                 <div className="space-y-3">
-                                                    <div className="p-2 bg-red-500/10 border border-red-500/20 rounded text-[10px] font-mono">
+                                                    <div className="p-3 bg-red-500/10 border border-red-500/20 rounded text-xs font-mono">
                                                         <span className="font-bold text-red-500 block mb-1">BOTTOM RIGHT: EXTRACTIVIST TARGETS</span>
                                                         High Resource Wealth, Low Sovereignty Score. These nations possess massive critical minerals but suffer from extreme capital flight, foreign debt dependency, or imbalanced trade agreements favoring external powers.
                                                     </div>
 
-                                                    <div className="p-2 bg-green-500/10 border border-green-500/20 rounded text-[10px] font-mono">
+                                                    <div className="p-3 bg-green-500/10 border border-green-500/20 rounded text-xs font-mono">
                                                         <span className="font-bold text-green-500 block mb-1">TOP RIGHT: OPTIMAL ANCHORS</span>
                                                         High Resource Wealth, High Sovereignty. Nations leveraging their endowments for domestic industrialization, demanding fair tech-transfer, and securing diversified trade partnerships.
                                                     </div>
@@ -143,7 +143,7 @@ export default function AnalyticsModal({ isOpen, onClose, data }: AnalyticsModal
                                             </div>
 
                                             <div className="mt-auto p-4 bg-cobalt/5 border border-cobalt/20 rounded-xl">
-                                                <p className="text-[10px] font-mono text-slate-light flex items-center gap-2">
+                                                <p className="text-xs font-mono text-slate-light flex items-center gap-2">
                                                     <ExternalLink className="w-3 h-3 text-cobalt" />
                                                     Explore individual states on the map for deeper dossiers and live friction alerts.
                                                 </p>
@@ -183,17 +183,17 @@ export default function AnalyticsModal({ isOpen, onClose, data }: AnalyticsModal
                                                 <h3 className="text-xs font-bold font-mono text-foreground mb-2 flex items-center gap-2">
                                                     <span className="text-orange-500">▶</span> INFLUENCE MAPPING
                                                 </h3>
-                                                <p className="text-[11px] text-slate-light leading-relaxed mb-4">
+                                                <p className="text-xs text-slate-light leading-relaxed mb-4">
                                                     Visualizing extractive structural influence from external actors into Africa's most vulnerable states.
                                                 </p>
 
                                                 <div className="space-y-3">
-                                                    <div className="p-2 border border-border rounded text-[10px] font-mono">
+                                                    <div className="p-3 border border-border rounded text-xs font-mono">
                                                         <span className="font-bold text-red-500 block mb-1">🇨🇳 INFRASTRUCTURE & DEBT</span>
                                                         High-interest bilateral loans exchanged for unrefined mineral export monopolies.
                                                     </div>
 
-                                                    <div className="p-2 border border-border rounded text-[10px] font-mono">
+                                                    <div className="p-3 border border-border rounded text-xs font-mono">
                                                         <span className="font-bold text-amber-500 block mb-1">🏦 STRUCTURAL ADJUSTMENTS</span>
                                                         Forced privatization of state energy assets and currency devaluations.
                                                     </div>
