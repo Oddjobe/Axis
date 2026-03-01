@@ -134,12 +134,12 @@ export default function Home() {
         </div>
 
         {/* Center Panel: Map Engine */}
-        <section className={`flex-1 relative bg-onyx dark:bg-onyx-deep flex-col items-center justify-center p-2 lg:p-6 ${mobilePanel === "map" ? "flex" : "hidden lg:flex"}`}>
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(37,99,235,0.08)_0%,transparent_70%)] pointer-events-none" />
+        <section className={`flex-1 relative bg-slate-50 dark:bg-onyx-deep flex-col items-center justify-center p-2 lg:p-6 ${mobilePanel === "map" ? "flex" : "hidden lg:flex"}`}>
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(37,99,235,0.08)_0%,transparent_70%)] dark:bg-[radial-gradient(circle_at_center,rgba(37,99,235,0.15)_0%,transparent_70%)] pointer-events-none" />
 
           {/* Map Area */}
-          <div className="w-full h-full border border-border/30 rounded-xl flex items-center justify-center relative overflow-hidden backdrop-blur-sm shadow-[0_0_30px_rgba(37,99,235,0.05)]">
-            <div className="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f005_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f005_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:24px_24px]"></div>
+          <div className="w-full h-full border border-border/50 dark:border-border/30 rounded-xl flex items-center justify-center relative overflow-hidden backdrop-blur-sm shadow-sm dark:shadow-[0_0_30px_rgba(37,99,235,0.05)]">
+            <div className="absolute inset-0 bg-[linear-gradient(to_right,#0000000a_1px,transparent_1px),linear-gradient(to_bottom,#0000000a_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:24px_24px]"></div>
 
             <AfricaMap
               selectedCountryCodes={selectedCodes}

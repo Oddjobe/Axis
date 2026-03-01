@@ -398,7 +398,7 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
                                             initial={{ opacity: 0, x: 20 }}
                                             animate={{ opacity: 1, x: 0 }}
                                             transition={{ delay: idx * 0.1, duration: 0.3 }}
-                                            className="p-3 border border-orange-500/20 bg-orange-500/5 rounded-md transition-all hover:bg-orange-500/10 hover:shadow-[0_0_15px_rgba(249,115,22,0.1)] cursor-default"
+                                            className="p-3 border border-orange-500/20 bg-white hover:bg-orange-50 dark:bg-orange-500/5 rounded-md transition-all dark:hover:bg-orange-500/10 hover:shadow-[0_0_15px_rgba(249,115,22,0.1)] cursor-default"
                                         >
                                             <div className="text-[10px] font-mono text-orange-400 mb-1 flex justify-between items-start gap-4">
                                                 <span className="leading-tight">{alert.title}</span>
@@ -443,7 +443,7 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
                         <a
                             href="#"
                             onClick={(e) => e.preventDefault()}
-                            className="block p-4 border border-cobalt/50 bg-gradient-to-br from-cobalt/10 to-transparent rounded-lg shadow-[0_0_20px_rgba(37,99,235,0.15)] group transition-all hover:bg-cobalt/20 relative overflow-hidden"
+                            className="block p-4 border border-cobalt/20 dark:border-cobalt/50 bg-white dark:bg-gradient-to-br dark:from-cobalt/10 dark:to-transparent rounded-lg shadow-[0_0_20px_rgba(37,99,235,0.05)] dark:shadow-[0_0_20px_rgba(37,99,235,0.15)] group transition-all hover:bg-blue-50 dark:hover:bg-cobalt/20 relative overflow-hidden"
                         >
                             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                                 <Globe className="w-24 h-24" />
@@ -480,7 +480,7 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
                                 href={news.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex items-start gap-3 p-3 border border-border/50 bg-background/30 rounded-md transition-all hover:bg-background/80 hover:border-cobalt/40 group cursor-pointer"
+                                className="flex items-start gap-3 p-3 border border-border/50 bg-white dark:bg-background/30 rounded-md transition-all hover:bg-slate-50 dark:hover:bg-background/80 hover:border-cobalt/40 group cursor-pointer"
                             >
                                 <div className={`mt-0.5 ${news.color}`}><news.Icon /></div>
                                 <div className="flex-1 min-w-0">
@@ -520,7 +520,7 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
                                     href={post.url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="flex items-start gap-3 p-3 border border-green-500/20 bg-green-500/5 rounded-md transition-all hover:bg-green-500/10 hover:border-green-500/40 group cursor-pointer"
+                                    className="flex items-start gap-3 p-3 border border-green-500/20 bg-white hover:bg-green-50 dark:bg-green-500/5 rounded-md transition-all dark:hover:bg-green-500/10 hover:border-green-500/40 group cursor-pointer"
                                 >
                                     <div className="text-green-500 mt-0.5"><MediumIcon /></div>
                                     <div className="flex-1 min-w-0">

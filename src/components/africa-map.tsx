@@ -166,7 +166,7 @@ export default function AfricaMap({ selectedCountryCodes, onToggleCountry, timeV
     // Thematic map coloring logic
     const getThemeColor = (cData: CountryData | undefined, isDark: boolean): string => {
         if (!cData || mapTheme === "BASE") {
-            return isDark ? "rgba(30, 41, 59, 0.4)" : "rgba(241, 245, 249, 1)"; // Neutral slate base
+            return isDark ? "rgba(30, 41, 59, 0.4)" : "rgba(203, 213, 225, 1)"; // Neutral slate base
         }
 
         if (mapTheme === "SOVEREIGNTY") {
@@ -197,7 +197,7 @@ export default function AfricaMap({ selectedCountryCodes, onToggleCountry, timeV
             if (wealth >= 70) return "rgba(217, 119, 6, 0.7)";    // Amber
             if (wealth >= 50) return "rgba(245, 158, 11, 0.5)";   // Golden
             if (wealth >= 30) return "rgba(252, 211, 77, 0.4)";   // Pale yellow
-            return isDark ? "rgba(30, 41, 59, 0.3)" : "rgba(241, 245, 249, 0.5)"; // Low resource neutral
+            return isDark ? "rgba(30, 41, 59, 0.3)" : "rgba(203, 213, 225, 0.8)"; // Low resource neutral
         }
 
         if (mapTheme === "FDI_TREND") {
@@ -222,20 +222,20 @@ export default function AfricaMap({ selectedCountryCodes, onToggleCountry, timeV
             if (trendScore === -1) return "rgba(244, 63, 94, 0.5)";   // Negative (Light Rose)
             if (trendScore <= -2) return "rgba(225, 29, 72, 0.7)";  // Strong negative (Rose)
 
-            return isDark ? "rgba(30, 41, 59, 0.4)" : "rgba(241, 245, 249, 1)";
+            return isDark ? "rgba(30, 41, 59, 0.4)" : "rgba(203, 213, 225, 1)";
         }
 
-        return isDark ? "rgba(30, 41, 59, 0.4)" : "rgba(241, 245, 249, 1)";
+        return isDark ? "rgba(30, 41, 59, 0.4)" : "rgba(203, 213, 225, 1)";
     };
 
     const isDark = mounted ? (theme === "dark" || theme === "system" || !theme) : true;
 
     const mapConfig = {
         stroke: isDark ? "rgba(241, 181, 4, 0.5)" : "rgba(241, 181, 4, 0.8)",
-        hover: isDark ? "rgba(227, 18, 11, 0.6)" : "rgba(227, 18, 11, 0.8)",
-        active: isDark ? "rgba(0, 135, 81, 0.9)" : "rgba(0, 135, 81, 1)",
-        hoverStroke: "rgba(255, 215, 0, 1)",
-        glowInfo: "rgba(255, 215, 0, 0.5)"
+        hover: isDark ? "rgba(227, 18, 11, 0.6)" : "rgba(227, 18, 11, 0.4)",
+        active: isDark ? "rgba(0, 135, 81, 0.9)" : "rgba(34, 197, 94, 0.8)",
+        hoverStroke: isDark ? "rgba(255, 215, 0, 1)" : "rgba(217, 119, 6, 1)",
+        glowInfo: isDark ? "rgba(255, 215, 0, 0.5)" : "rgba(0, 0, 0, 0.15)"
     };
 
     function handleZoomIn() {

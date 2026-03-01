@@ -198,8 +198,8 @@ export default function AfcftaMatrix({ selectedCodes }: AfcftaMatrixProps) {
                             setSelectedCountry(data);
                         }}
                         className={`p-3 border rounded-md transition-colors cursor-pointer group ${selectedCodes.includes(data.country)
-                            ? "border-green-500/60 bg-green-500/10"
-                            : "border-border/50 bg-background/50 hover:bg-background/80"
+                            ? "border-green-500 bg-green-50 dark:border-green-500/60 dark:bg-green-500/10"
+                            : "border-border bg-white hover:bg-slate-50 dark:border-border/50 dark:bg-background/50 dark:hover:bg-background/80"
                             }`}
                     >
                         <div className="flex justify-between items-center mb-1">
