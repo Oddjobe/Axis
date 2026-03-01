@@ -19,7 +19,9 @@ export default function Home() {
   const currentYear = new Date().getFullYear();
   const [timeValue, setTimeValue] = useState(currentYear);
 
-  const selectedCountries = selectedCodes.map(code => ALL_SOVEREIGN_DATA.find(c => c.country === code)).filter(Boolean) as typeof ALL_SOVEREIGN_DATA;
+  const selectedCountries = selectedCodes
+    .map(code => ALL_SOVEREIGN_DATA.find(c => c.country === code))
+    .filter(Boolean) as typeof ALL_SOVEREIGN_DATA;
 
   // Function to parse strings like "35.6M" or "1.2B" to numbers
   const parsePop = (popStr: string) => {
@@ -108,9 +110,7 @@ export default function Home() {
             <AfricaMap
               selectedCountryCodes={selectedCodes}
               onToggleCountry={(code) => {
-                setSelectedCodes(prev =>
-                  prev.includes(code) ? prev.filter(c => c !== code) : [...prev, code]
-                );
+                setSelectedCodes(prev => prev.includes(code) ? prev.filter(c => c !== code) : [...prev, code]);
               }}
               timeValue={timeValue}
             />
@@ -160,7 +160,7 @@ export default function Home() {
 
         {/* Right Panel: Friction Engine */}
         <div className={`${mobilePanel === "intel" ? "flex" : "hidden"} lg:flex`}>
-          <FrictionEngine mode={mode} filterCountries={selectedCountries.length > 0 ? selectedCountries.map(c => c.name) : null} />
+          <FrictionEngine mode={mode} filterCountries={selectedCodes.length > 0 ? selectedCodes : null} />
         </div>
       </main>
 

@@ -101,7 +101,10 @@ export default function AfricaMap({ selectedCountryCodes, onToggleCountry, timeV
     const [mapTheme, setMapTheme] = useState<MapTheme>("SOVEREIGNTY");
     const [countryDataMaster, setCountryDataMaster] = useState<CountryData[]>([]);
 
+    const [mounted, setMounted] = useState(false);
+
     React.useEffect(() => {
+        setMounted(true);
         async function fetchMapData() {
             const { data, error } = await supabase.from('countries').select('*');
             if (error) {
@@ -112,10 +115,11 @@ export default function AfricaMap({ selectedCountryCodes, onToggleCountry, timeV
                 // Merge live Postgres data with complex static arrays not yet ported to DB
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const merged = data.map((dbCountry: any) => {
-                    const staticData = ALL_SOVEREIGN_DATA.find(s => s.country === dbCountry.country);
+                    const staticData = ALL_SOVEREIGN_DATA.find(s => s.country === dbCountry.id);
                     return {
                         ...staticData,
                         ...dbCountry,
+                        country: dbCountry.id,
                     };
                 });
                 setCountryDataMaster(merged as CountryData[]);
@@ -224,7 +228,7 @@ export default function AfricaMap({ selectedCountryCodes, onToggleCountry, timeV
         return isDark ? "rgba(30, 41, 59, 0.4)" : "rgba(241, 245, 249, 1)";
     };
 
-    const isDark = theme === "dark" || theme === "system" || !theme;
+    const isDark = mounted ? (theme === "dark" || theme === "system" || !theme) : true;
 
     const mapConfig = {
         stroke: isDark ? "rgba(241, 181, 4, 0.5)" : "rgba(241, 181, 4, 0.8)",
@@ -249,7 +253,7 @@ export default function AfricaMap({ selectedCountryCodes, onToggleCountry, timeV
     }
 
     return (
-        <div className="w-full h-full relative" style={{ isolation: "isolate" }}>
+        <div suppressHydrationWarning className="w-full h-full relative" style={{ isolation: "isolate" }}>
             <ComposableMap
                 projection="geoAzimuthalEqualArea"
                 projectionConfig={{

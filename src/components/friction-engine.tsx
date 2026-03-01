@@ -199,10 +199,8 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
             : cat.includes("OUTSIDE") || cat.includes("FOREIGN") || cat.includes("WESTERN") || cat.includes("INFLUENCE");
 
         if (!filterCountries || filterCountries.length === 0) return modeMatch;
-        return modeMatch && filterCountries.some(country =>
-            a.title.toLowerCase().includes(country.toLowerCase()) ||
-            a.summary.toLowerCase().includes(country.toLowerCase()) ||
-            a.isoCode.toLowerCase().includes(country.substring(0, 3).toLowerCase())
+        return modeMatch && filterCountries.some(countryIsoCode =>
+            a.isoCode.toLowerCase() === countryIsoCode.toLowerCase()
         );
     });
 
