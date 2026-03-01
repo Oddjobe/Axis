@@ -25,6 +25,7 @@ const INTEL_SOURCES = [
     { url: "https://www.reuters.com/world/africa/", name: "Reuters Africa" },
     { url: "https://theafricareport.com/", name: "The Africa Report" },
     { url: "https://www.dailymaverick.co.za/", name: "Daily Maverick" },
+    { url: "https://www.premiumtimesng.com/", name: "Premium Times Nigeria" },
 ];
 
 const EXTRACT_SCHEMA = {
