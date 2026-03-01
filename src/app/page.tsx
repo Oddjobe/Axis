@@ -13,18 +13,25 @@ const TOTAL_POPULATION = 1_444; // ~1.44 billion
 
 export default function Home() {
   const [mode, setMode] = useState<"SOVEREIGNTY" | "OUTSIDE INFLUENCE">("SOVEREIGNTY");
-  const [selectedCode, setSelectedCode] = useState<string | null>(null);
+  const [selectedCodes, setSelectedCodes] = useState<string[]>([]);
   const [missionOpen, setMissionOpen] = useState(false);
   const [mobilePanel, setMobilePanel] = useState<"map" | "index" | "intel">("map");
   const currentYear = new Date().getFullYear();
   const [timeValue, setTimeValue] = useState(currentYear);
 
-  const selectedCountry = selectedCode
-    ? ALL_SOVEREIGN_DATA.find(c => c.country === selectedCode) ?? null
-    : null;
+  const selectedCountries = selectedCodes.map(code => ALL_SOVEREIGN_DATA.find(c => c.country === code)).filter(Boolean) as typeof ALL_SOVEREIGN_DATA;
 
-  const displayPop = selectedCountry
-    ? selectedCountry.population
+  // Function to parse strings like "35.6M" or "1.2B" to numbers
+  const parsePop = (popStr: string) => {
+    if (popStr.endsWith('B')) return parseFloat(popStr) * 1000;
+    if (popStr.endsWith('M')) return parseFloat(popStr);
+    return 0;
+  };
+
+  const totalPopMillions = selectedCountries.reduce((sum, c) => sum + parsePop(c.population), 0);
+
+  const displayPop = selectedCountries.length > 0
+    ? totalPopMillions >= 1000 ? `${(totalPopMillions / 1000).toFixed(2)}B` : `${totalPopMillions.toFixed(1)}M`
     : `${(TOTAL_POPULATION / 1000).toFixed(2)}B`;
 
   return (
@@ -47,7 +54,7 @@ export default function Home() {
           <div className="flex items-center gap-1.5 lg:gap-2 px-2 lg:px-3 py-1 lg:py-1.5 bg-background border border-border rounded-lg text-[10px] lg:text-xs font-mono">
             <Users className="w-3 h-3 lg:w-3.5 lg:h-3.5 text-green-500" />
             <span className="text-slate-light hidden sm:inline">
-              {selectedCountry ? selectedCountry.name.toUpperCase() : "POPULATION"}
+              {selectedCountries.length === 1 ? selectedCountries[0].name.toUpperCase() : selectedCountries.length > 1 ? "SELECTED POPULATION" : "POPULATION"}
             </span>
             <span className="font-bold text-green-500 ml-0.5 lg:ml-1">{displayPop}</span>
           </div>
@@ -87,7 +94,7 @@ export default function Home() {
       <main className="flex-1 flex overflow-hidden pb-16 lg:pb-0">
         {/* Left Panel: 54-Nation Matrix — hidden on mobile unless selected */}
         <div className={`${mobilePanel === "index" ? "flex" : "hidden"} lg:flex`}>
-          <AfcftaMatrix selectedCode={selectedCode} onSelectCode={setSelectedCode} />
+          <AfcftaMatrix selectedCodes={selectedCodes} />
         </div>
 
         {/* Center Panel: Map Engine */}
@@ -98,21 +105,29 @@ export default function Home() {
           <div className="w-full h-full border border-border/30 rounded-xl flex items-center justify-center relative overflow-hidden backdrop-blur-sm shadow-[0_0_30px_rgba(37,99,235,0.05)]">
             <div className="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f005_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f005_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:24px_24px]"></div>
 
-            <AfricaMap selectedCountryCode={selectedCode} onSelectCountry={setSelectedCode} timeValue={timeValue} />
+            <AfricaMap
+              selectedCountryCodes={selectedCodes}
+              onToggleCountry={(code) => {
+                setSelectedCodes(prev =>
+                  prev.includes(code) ? prev.filter(c => c !== code) : [...prev, code]
+                );
+              }}
+              timeValue={timeValue}
+            />
 
             {/* Selected Country Banner */}
-            {selectedCountry && (
+            {selectedCountries.length > 0 && (
               <div className="absolute top-4 left-4 px-3 py-2 bg-green-500/20 border border-green-500/60 rounded-lg text-[11px] font-mono backdrop-blur-md shadow-lg text-green-400 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                FILTERING: <strong>{selectedCountry.name.toUpperCase()}</strong>
+                FILTERING: <strong>{selectedCountries.length === 1 ? selectedCountries[0].name.toUpperCase() : `${selectedCountries.length} COUNTRIES`}</strong>
                 <button
-                  onClick={() => setSelectedCode(null)}
-                  className="ml-2 text-green-500/70 hover:text-green-500 text-base leading-none"
-                >×</button>
+                  onClick={() => setSelectedCodes([])}
+                  className="ml-2 px-1.5 py-0.5 rounded bg-green-500/20 text-green-500 hover:bg-green-500 hover:text-white transition-colors text-[9px] font-bold"
+                >CLEAR</button>
               </div>
             )}
 
-            {!selectedCountry && (
+            {selectedCountries.length === 0 && (
               <div className="absolute inset-x-0 bottom-6 flex justify-center pointer-events-none">
                 <div className="px-4 py-2 bg-panel/80 border border-border rounded-full text-[10px] font-mono backdrop-blur-md shadow-lg text-cobalt bg-white/10 dark:bg-black/20">
                   D3 GEO ENGINE // CLICK A COUNTRY TO FILTER
@@ -145,7 +160,7 @@ export default function Home() {
 
         {/* Right Panel: Friction Engine */}
         <div className={`${mobilePanel === "intel" ? "flex" : "hidden"} lg:flex`}>
-          <FrictionEngine mode={mode} filterCountry={selectedCountry?.name ?? null} />
+          <FrictionEngine mode={mode} filterCountries={selectedCountries.length > 0 ? selectedCountries.map(c => c.name) : null} />
         </div>
       </main>
 

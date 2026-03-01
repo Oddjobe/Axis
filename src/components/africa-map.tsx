@@ -9,8 +9,8 @@ import { ALL_SOVEREIGN_DATA } from "@/lib/mock-data"
 import type { CountryData } from "@/components/country-dossier-modal"
 
 interface AfricaMapProps {
-    selectedCountryCode: string | null;
-    onSelectCountry: (code: string | null) => void;
+    selectedCountryCodes: string[];
+    onToggleCountry: (code: string) => void;
     timeValue?: number;
 }
 
@@ -94,7 +94,7 @@ const getSeverity = (score: number): "high" | "medium" | "low" => {
 
 const geoUrl = "/world.json";
 
-export default function AfricaMap({ selectedCountryCode, onSelectCountry, timeValue }: AfricaMapProps) {
+export default function AfricaMap({ selectedCountryCodes, onToggleCountry, timeValue }: AfricaMapProps) {
     const { theme } = useTheme();
     const [tooltip, setTooltip] = useState({ show: false, content: "", data: null as CountryData | null, x: 0, y: 0 });
     const [position, setPosition] = useState({ coordinates: [0, 0], zoom: 1 });
@@ -285,7 +285,7 @@ export default function AfricaMap({ selectedCountryCode, onSelectCountry, timeVa
                                 }
 
                                 const cData = getCountryData(geo.properties.name);
-                                const isSelected = selectedCountryCode && cData?.country === selectedCountryCode;
+                                const isSelected = cData ? selectedCountryCodes.includes(cData.country) : false;
                                 const heatFill = getThemeColor(cData, isDark);
 
                                 return (
@@ -295,10 +295,8 @@ export default function AfricaMap({ selectedCountryCode, onSelectCountry, timeVa
                                         stroke={isSelected ? "rgba(0, 255, 128, 1)" : mapConfig.stroke}
                                         strokeWidth={isSelected ? 1.5 : 0.5}
                                         onClick={() => {
-                                            if (isSelected) {
-                                                onSelectCountry(null);
-                                            } else if (cData) {
-                                                onSelectCountry(cData.country);
+                                            if (cData) {
+                                                onToggleCountry(cData.country);
                                             }
                                         }}
                                         onMouseEnter={(e) => {

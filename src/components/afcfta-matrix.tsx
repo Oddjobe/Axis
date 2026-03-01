@@ -5,11 +5,10 @@ import CountryDossierModal, { CountryData } from "./country-dossier-modal";
 import { ALL_SOVEREIGN_DATA } from "@/lib/mock-data";
 
 interface AfcftaMatrixProps {
-    selectedCode: string | null;
-    onSelectCode: (code: string | null) => void;
+    selectedCodes: string[];
 }
 
-export default function AfcftaMatrix({ selectedCode, onSelectCode }: AfcftaMatrixProps) {
+export default function AfcftaMatrix({ selectedCodes }: AfcftaMatrixProps) {
     const [selectedCountry, setSelectedCountry] = useState<CountryData | null>(null);
     const [legendOpen, setLegendOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
@@ -49,9 +48,9 @@ export default function AfcftaMatrix({ selectedCode, onSelectCode }: AfcftaMatri
     const sortedAndFilteredData = useMemo(() => {
         let result = ALL_SOVEREIGN_DATA;
 
-        // If a country is selected (e.g. from the map), filter to only show that country
-        if (selectedCode) {
-            result = result.filter(c => c.country === selectedCode);
+        // If one or more countries are selected (e.g. from the map), filter to only show those countries
+        if (selectedCodes && selectedCodes.length > 0) {
+            result = result.filter(c => selectedCodes.includes(c.country));
         } else {
             // Otherwise apply normal search and status filters
             if (searchQuery) {
@@ -79,7 +78,7 @@ export default function AfcftaMatrix({ selectedCode, onSelectCode }: AfcftaMatri
             if (sortBy === "wealth") return b.resourceWealth - a.resourceWealth;
             return 0;
         });
-    }, [searchQuery, sortBy, filterStatus, selectedCode, watchlist]);
+    }, [searchQuery, sortBy, filterStatus, selectedCodes, watchlist]);
 
     const getScoreColor = (score: number) => {
         if (score >= 75) return "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.8)]";
@@ -177,12 +176,12 @@ export default function AfcftaMatrix({ selectedCode, onSelectCode }: AfcftaMatri
                             key={status}
                             onClick={() => setFilterStatus(status)}
                             className={`whitespace-nowrap rounded-full px-3 py-1.5 text-[10px] font-bold font-mono transition-all border ${filterStatus === status
-                                    ? (status === 'OPTIMAL' ? 'bg-green-500 text-white border-green-500 shadow-[0_0_8px_rgba(34,197,94,0.3)]' :
-                                        status === 'EXTRACTIVE' ? 'bg-red-500 text-white border-red-500 shadow-[0_0_8px_rgba(239,68,68,0.3)]' :
-                                            status === 'IMPROVING' ? 'bg-yellow-500 text-white border-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.3)]' :
-                                                status === 'STABLE' ? 'bg-cobalt text-white border-cobalt shadow-[0_0_8px_rgba(37,99,235,0.3)]' :
-                                                    'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white border-slate-300 dark:border-slate-600')
-                                    : 'bg-background hover:bg-white/5 border-border text-slate-light'
+                                ? (status === 'OPTIMAL' ? 'bg-green-500 text-white border-green-500 shadow-[0_0_8px_rgba(34,197,94,0.3)]' :
+                                    status === 'EXTRACTIVE' ? 'bg-red-500 text-white border-red-500 shadow-[0_0_8px_rgba(239,68,68,0.3)]' :
+                                        status === 'IMPROVING' ? 'bg-yellow-500 text-white border-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.3)]' :
+                                            status === 'STABLE' ? 'bg-cobalt text-white border-cobalt shadow-[0_0_8px_rgba(37,99,235,0.3)]' :
+                                                'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white border-slate-300 dark:border-slate-600')
+                                : 'bg-background hover:bg-white/5 border-border text-slate-light'
                                 }`}
                         >
                             {status} <span className={`ml-1 font-normal ${filterStatus === status ? 'text-white/80' : 'opacity-50'}`}>({statusCounts[status]})</span>
@@ -197,9 +196,8 @@ export default function AfcftaMatrix({ selectedCode, onSelectCode }: AfcftaMatri
                         key={i}
                         onClick={() => {
                             setSelectedCountry(data);
-                            onSelectCode(selectedCode === data.country ? null : data.country);
                         }}
-                        className={`p-3 border rounded-md transition-colors cursor-pointer group ${selectedCode === data.country
+                        className={`p-3 border rounded-md transition-colors cursor-pointer group ${selectedCodes.includes(data.country)
                             ? "border-green-500/60 bg-green-500/10"
                             : "border-border/50 bg-background/50 hover:bg-background/80"
                             }`}

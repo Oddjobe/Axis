@@ -66,7 +66,7 @@ interface BlogPost {
     url: string
 }
 
-export default function FrictionEngine({ mode, filterCountry }: { mode: "SOVEREIGNTY" | "OUTSIDE INFLUENCE"; filterCountry: string | null }) {
+export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVEREIGNTY" | "OUTSIDE INFLUENCE"; filterCountries: string[] | null }) {
     const [alerts, setAlerts] = useState<Article[]>([])
     const [blogs, setBlogs] = useState<BlogPost[]>([])
     const [loading, setLoading] = useState(true)
@@ -198,11 +198,11 @@ export default function FrictionEngine({ mode, filterCountry }: { mode: "SOVEREI
             ? cat.includes("SOVEREIGNTY") || cat.includes("RISK")
             : cat.includes("OUTSIDE") || cat.includes("FOREIGN") || cat.includes("WESTERN") || cat.includes("INFLUENCE");
 
-        if (!filterCountry) return modeMatch;
-        return modeMatch && (
-            a.title.toLowerCase().includes(filterCountry.toLowerCase()) ||
-            a.summary.toLowerCase().includes(filterCountry.toLowerCase()) ||
-            a.isoCode.toLowerCase().includes(filterCountry.substring(0, 3).toLowerCase())
+        if (!filterCountries || filterCountries.length === 0) return modeMatch;
+        return modeMatch && filterCountries.some(country =>
+            a.title.toLowerCase().includes(country.toLowerCase()) ||
+            a.summary.toLowerCase().includes(country.toLowerCase()) ||
+            a.isoCode.toLowerCase().includes(country.substring(0, 3).toLowerCase())
         );
     });
 
@@ -351,10 +351,10 @@ export default function FrictionEngine({ mode, filterCountry }: { mode: "SOVEREI
 
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
                 {/* Filter indicator */}
-                {filterCountry && (
+                {filterCountries && filterCountries.length > 0 && (
                     <div className="text-[10px] font-mono px-2 py-1 bg-green-500/10 border border-green-500/30 rounded text-green-500 flex items-center gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                        FILTERED: {filterCountry.toUpperCase()}
+                        FILTERED: {filterCountries.length === 1 ? filterCountries[0].toUpperCase() : `${filterCountries.length} COUNTRIES`}
                     </div>
                 )}
                 {activeTab === "ALERTS" && (
@@ -455,10 +455,10 @@ export default function FrictionEngine({ mode, filterCountry }: { mode: "SOVEREI
                                 <span className="text-[10px] font-mono text-cobalt font-bold tracking-widest">TOP STORY</span>
                             </div>
                             <h2 className="text-lg font-bold text-foreground group-hover:text-white transition-colors leading-tight mb-2 relative z-10 w-[85%]">
-                                {filterCountry ? `${filterCountry.toUpperCase()}: Strategic Resource Agreements Restructure Regional Supply Chains` : "PAPSS processes over $2.8B in intra-African payments since launch."}
+                                {filterCountries && filterCountries.length > 0 ? `${filterCountries.length === 1 ? filterCountries[0].toUpperCase() : 'MULTI-NATION'}: Strategic Resource Agreements Restructure Regional Supply Chains` : "PAPSS processes over $2.8B in intra-African payments since launch."}
                             </h2>
                             <p className="text-xs text-slate-light font-mono line-clamp-2 mb-4 relative z-10">
-                                {filterCountry ? `New diplomatic and economic shifts in ${filterCountry} are creating significant shockwaves across the regional resource market, driving sovereignty indexes higher.` : "The Pan-African Payment and Settlement System is accelerating AfCFTA by eliminating dollar dependency in cross-border trade."}
+                                {filterCountries && filterCountries.length > 0 ? `New diplomatic and economic shifts in ${filterCountries.join(', ')} are creating significant shockwaves across the regional resource market, driving sovereignty indexes higher.` : "The Pan-African Payment and Settlement System is accelerating AfCFTA by eliminating dollar dependency in cross-border trade."}
                             </p>
                             <div className="flex justify-between items-center text-[10px] font-mono border-t border-cobalt/20 pt-3 relative z-10">
                                 <span className="flex items-center gap-1.5 text-cobalt"><AfDBIcon /> MARKET INTELLIGENCE</span>
