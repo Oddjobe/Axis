@@ -1,10 +1,11 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Globe, ShieldAlert, BarChart3, ArrowRight, Activity, Cpu, Hexagon, Download, Star, BrainCircuit } from "lucide-react";
+import { X, Globe, ShieldAlert, BarChart3, ArrowRight, Activity, Cpu, Download, Star, BrainCircuit, Newspaper } from "lucide-react";
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import html2canvas from "html2canvas-pro";
 import { jsPDF } from "jspdf";
 import { useWatchlist } from "@/lib/use-watchlist";
+import { supabase } from "@/lib/supabase";
 
 export interface CountryData {
     country: string;
@@ -35,9 +36,11 @@ export interface CountryDossierProps {
 }
 
 export default function CountryDossierModal({ isOpen, onClose, countryData }: CountryDossierProps) {
-    const [activeTab, setActiveTab] = useState<"STRATEGY" | "EXPORTS" | "FRICTION">("STRATEGY");
+    const [activeTab, setActiveTab] = useState<"STRATEGY" | "EXPORTS" | "FRICTION" | "INTEL">("STRATEGY");
     const [mounted, setMounted] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
+    const [intelAlerts, setIntelAlerts] = useState<any[]>([]);
+    const [intelLoading, setIntelLoading] = useState(false);
     const { watchlist, togglePin } = useWatchlist();
     const isPinned = countryData ? watchlist.includes(countryData.country) : false;
 
@@ -75,6 +78,35 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
     useEffect(() => {
         setMounted(true);
     }, []);
+
+    // Fetch live Supabase alerts whenever the selected country changes
+    useEffect(() => {
+        if (!countryData?.country) return;
+        setIntelAlerts([]);
+        setIntelLoading(true);
+
+        supabase
+            .from('intelligence_alerts')
+            .select('*')
+            .eq('isoCode', countryData.country)
+            .order('created_at', { ascending: false })
+            .limit(25)
+            .then(({ data, error }) => {
+                if (!error && data) setIntelAlerts(data);
+                setIntelLoading(false);
+            });
+    }, [countryData?.country]);
+
+    const getTimeAgo = (iso: string) => {
+        const diff = Date.now() - new Date(iso).getTime();
+        const mins = Math.floor(diff / 60000);
+        const hrs = Math.floor(mins / 60);
+        const days = Math.floor(hrs / 24);
+        if (mins < 1) return "JUST NOW";
+        if (mins < 60) return `${mins}m ago`;
+        if (hrs < 24) return `${hrs}h ago`;
+        return `${days}d ago`;
+    };
 
     const handleExportPDF = async () => {
         const modalElement = document.getElementById("dossier-modal-content");
@@ -203,6 +235,15 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
                             className={`pb-3 border-b-2 transition-colors flex items-center gap-2 shrink-0 ${activeTab === "FRICTION" ? "border-red-500 text-red-500 font-bold" : "border-transparent text-slate-light hover:text-foreground"}`}
                         >
                             <ShieldAlert className="w-4 h-4" /> FRICTION
+                        </button>
+                        <button
+                            onClick={() => setActiveTab("INTEL")}
+                            className={`pb-3 border-b-2 transition-colors flex items-center gap-2 shrink-0 ${activeTab === "INTEL" ? "border-amber-500 text-amber-500 font-bold" : "border-transparent text-slate-light hover:text-foreground"}`}
+                        >
+                            <Newspaper className="w-4 h-4" /> LIVE INTEL
+                            {intelAlerts.length > 0 && (
+                                <span className="text-[9px] px-1.5 py-0.5 bg-amber-500/20 text-amber-500 rounded-full font-bold">{intelAlerts.length}</span>
+                            )}
                         </button>
                     </div>
 
@@ -406,24 +447,106 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
                             </div>
                         )}
 
-                        {activeTab === "FRICTION" && (
-                            <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-500">
-                                <h3 className="text-xs font-bold text-red-500 mb-2 font-mono flex items-center gap-2 uppercase tracking-wider border-b border-border pb-2">
-                                    <ShieldAlert className="w-4 h-4" /> Active Threat Vectors
-                                </h3>
-                                {countryData.frictionVectors.map((alert, i) => (
-                                    <div key={i} className="bg-white/40 dark:bg-white/5 border border-black/10 dark:border-white/10 p-5 rounded-xl relative shadow-sm hover:shadow-md transition-shadow">
-                                        <div className="absolute top-4 right-4">
-                                            <span className={`text-[10px] font-bold px-2 py-1 rounded-full border ${alert.severity === "HIGH" ? "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20" :
-                                                "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20"
-                                                }`}>
-                                                {alert.severity} Risk
+                        {activeTab === "FRICTION" && (() => {
+                            // Prefer live Supabase SOVEREIGNTY RISK alerts; fall back to mock
+                            const liveRisk = intelAlerts.filter(a => a.category === 'SOVEREIGNTY RISK');
+                            return (
+                                <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-500">
+                                    <div className="flex items-center justify-between border-b border-border pb-2">
+                                        <h3 className="text-xs font-bold text-red-500 font-mono flex items-center gap-2 uppercase tracking-wider">
+                                            <ShieldAlert className="w-4 h-4" /> Active Threat Vectors
+                                        </h3>
+                                        {liveRisk.length > 0 && (
+                                            <span className="text-[10px] font-mono px-2 py-1 bg-green-500/10 text-green-500 border border-green-500/30 rounded flex items-center gap-1">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                                                LIVE · {liveRisk.length} ALERTS
                                             </span>
-                                        </div>
-                                        <h4 className="font-bold text-sm tracking-wide mb-2 pr-20">{alert.title}</h4>
-                                        <p className="text-sm text-slate-light font-mono leading-relaxed">{alert.details}</p>
+                                        )}
                                     </div>
-                                ))}
+                                    {liveRisk.length > 0 ? liveRisk.map((alert, i) => (
+                                        <div key={i} className="bg-white/40 dark:bg-white/5 border border-black/10 dark:border-white/10 p-5 rounded-xl relative shadow-sm hover:shadow-md transition-shadow">
+                                            <div className="absolute top-4 right-4 flex items-center gap-2">
+                                                <span className="text-[9px] font-mono text-slate-light">{getTimeAgo(alert.created_at)}</span>
+                                                <span className={`text-[10px] font-bold px-2 py-1 rounded-full border ${alert.severity === "HIGH" ? "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20" :
+                                                        alert.severity === "MEDIUM" ? "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20" :
+                                                            "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-500/20"
+                                                    }`}>{alert.severity}</span>
+                                            </div>
+                                            <h4 className="font-bold text-sm tracking-wide mb-2 pr-28 leading-tight">{alert.title}</h4>
+                                            <p className="text-sm text-slate-light font-mono leading-relaxed">{alert.summary}</p>
+                                            <div className="mt-2 text-[10px] font-mono text-slate-light">{alert.source}</div>
+                                        </div>
+                                    )) : countryData.frictionVectors.map((alert, i) => (
+                                        <div key={i} className="bg-white/40 dark:bg-white/5 border border-black/10 dark:border-white/10 p-5 rounded-xl relative shadow-sm hover:shadow-md transition-shadow">
+                                            <div className="absolute top-4 right-4">
+                                                <span className={`text-[10px] font-bold px-2 py-1 rounded-full border ${alert.severity === "HIGH" ? "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20" :
+                                                        "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20"
+                                                    }`}>{alert.severity} Risk</span>
+                                            </div>
+                                            <h4 className="font-bold text-sm tracking-wide mb-2 pr-20">{alert.title}</h4>
+                                            <p className="text-sm text-slate-light font-mono leading-relaxed">{alert.details}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            );
+                        })()}
+
+                        {activeTab === "INTEL" && (
+                            <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-500">
+                                <div className="flex items-center justify-between border-b border-border pb-2">
+                                    <h3 className="text-xs font-bold text-amber-500 font-mono flex items-center gap-2 uppercase tracking-wider">
+                                        <Newspaper className="w-4 h-4" /> Live Intelligence Feed
+                                    </h3>
+                                    {intelAlerts.length > 0 && (
+                                        <span className="text-[10px] font-mono px-2 py-1 bg-green-500/10 text-green-500 border border-green-500/30 rounded flex items-center gap-1">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                                            LIVE · {intelAlerts.length} RECORDS
+                                        </span>
+                                    )}
+                                </div>
+
+                                {intelLoading ? (
+                                    <div className="flex flex-col items-center justify-center py-12 opacity-50 space-y-2">
+                                        <span className="text-xs font-mono animate-pulse">PULLING LIVE INTEL...</span>
+                                    </div>
+                                ) : intelAlerts.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center py-12 opacity-50 space-y-2 text-center px-4">
+                                        <Newspaper className="w-8 h-8 text-slate-light mb-2" />
+                                        <span className="text-xs font-mono">NO ACTIVE INTELLIGENCE FOR THIS STATE.</span>
+                                        <span className="text-[10px] text-slate-light">The scraper may not have indexed this country yet. Trigger a manual scrape run from GitHub Actions.</span>
+                                    </div>
+                                ) : (
+                                    intelAlerts.map((alert, i) => (
+                                        <div key={i} className={`p-4 border rounded-xl transition-shadow hover:shadow-md ${alert.category === 'OUTSIDE INFLUENCE'
+                                                ? 'bg-orange-500/5 border-orange-500/20 dark:border-orange-500/30'
+                                                : 'bg-white/40 dark:bg-white/5 border-black/10 dark:border-white/10'
+                                            }`}>
+                                            <div className="flex items-start justify-between gap-4 mb-2">
+                                                <h4 className="font-bold text-sm leading-tight flex-1">{alert.title}</h4>
+                                                <div className="flex flex-col items-end gap-1 shrink-0">
+                                                    <span className="text-[9px] font-mono text-slate-light">{getTimeAgo(alert.created_at)}</span>
+                                                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${alert.severity === 'HIGH' ? 'text-red-500 border-red-500/30 bg-red-500/10' :
+                                                            alert.severity === 'MEDIUM' ? 'text-orange-500 border-orange-500/30 bg-orange-500/10' :
+                                                                'text-yellow-500 border-yellow-500/30 bg-yellow-500/10'
+                                                        }`}>{alert.severity}</span>
+                                                </div>
+                                            </div>
+                                            <p className="text-xs text-slate-light font-mono leading-relaxed mb-3">{alert.summary}</p>
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <span className={`text-[9px] font-mono px-2 py-0.5 rounded border ${alert.category === 'OUTSIDE INFLUENCE'
+                                                        ? 'text-orange-500 border-orange-500/30 bg-orange-500/10'
+                                                        : 'text-cobalt border-cobalt/30 bg-cobalt/10'
+                                                    }`}>{alert.category}</span>
+                                                {alert.actor && (
+                                                    <span className="text-[9px] font-mono px-2 py-0.5 rounded border border-red-500/30 bg-red-500/10 text-red-500">
+                                                        ACTOR: {alert.actor}
+                                                    </span>
+                                                )}
+                                                <span className="text-[9px] font-mono text-slate-light ml-auto">{alert.source}</span>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
                             </div>
                         )}
                     </div>

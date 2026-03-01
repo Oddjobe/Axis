@@ -25,8 +25,12 @@ CREATE TABLE IF NOT EXISTS public.intelligence_alerts (
     "isoCode" TEXT REFERENCES public.countries(id) ON DELETE CASCADE,
     "timeAgo" TEXT NOT NULL,
     source TEXT NOT NULL,
+    actor TEXT,  -- Primary foreign actor, e.g. 'China', 'IMF / World Bank', 'EU / CBAM', etc.
     "created_at" TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
+
+-- Run this ALTER if upgrading an existing database:
+-- ALTER TABLE public.intelligence_alerts ADD COLUMN IF NOT EXISTS actor TEXT;
 
 -- 3. Enable Row Level Security (RLS) on both tables
 ALTER TABLE public.countries ENABLE ROW LEVEL SECURITY;
