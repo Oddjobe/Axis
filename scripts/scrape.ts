@@ -20,14 +20,11 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 const INTEL_SOURCES = [
     { url: "https://www.aljazeera.com/africa/", name: "Al Jazeera Africa" },
     { url: "https://www.africanews.com/business/", name: "Africanews Business" },
-    { url: "https://www.africanews.com/politics/", name: "Africanews Politics" },
     { url: "https://www.miningweekly.com/page/africa", name: "Mining Weekly Africa" },
     { url: "https://african.business/", name: "African Business Magazine" },
     { url: "https://www.reuters.com/world/africa/", name: "Reuters Africa" },
     { url: "https://theafricareport.com/", name: "The Africa Report" },
-    { url: "https://www.premiumtimesng.com/", name: "Premium Times Nigeria" },
     { url: "https://www.dailymaverick.co.za/", name: "Daily Maverick" },
-    { url: "https://www.businessdailyafrica.com/", name: "Business Daily Africa" },
 ];
 
 const EXTRACT_SCHEMA = {
