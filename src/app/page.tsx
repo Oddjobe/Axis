@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react";
-import { Globe, Users, Info, Menu, X } from "lucide-react";
+import { Globe, Users, Info, Menu, X, List, Map, ShieldAlert } from "lucide-react";
 import AfricaMap from "@/components/africa-map";
 import AfcftaMatrix from "@/components/afcfta-matrix";
 import FrictionEngine from "@/components/friction-engine";
@@ -83,30 +83,8 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Mobile Tab Bar */}
-      <div className="flex lg:hidden border-b border-border bg-panel">
-        <button
-          onClick={() => setMobilePanel("index")}
-          className={`flex-1 py-2 text-[10px] font-bold tracking-wider transition-all border-b-2 ${mobilePanel === "index" ? "border-cobalt text-cobalt" : "border-transparent text-slate-light"}`}
-        >
-          INDEX
-        </button>
-        <button
-          onClick={() => setMobilePanel("map")}
-          className={`flex-1 py-2 text-[10px] font-bold tracking-wider transition-all border-b-2 ${mobilePanel === "map" ? "border-green-500 text-green-500" : "border-transparent text-slate-light"}`}
-        >
-          MAP
-        </button>
-        <button
-          onClick={() => setMobilePanel("intel")}
-          className={`flex-1 py-2 text-[10px] font-bold tracking-wider transition-all border-b-2 ${mobilePanel === "intel" ? "border-orange-500 text-orange-500" : "border-transparent text-slate-light"}`}
-        >
-          INTEL
-        </button>
-      </div>
-
       {/* Main Grid Interface */}
-      <main className="flex-1 flex overflow-hidden">
+      <main className="flex-1 flex overflow-hidden pb-16 lg:pb-0">
         {/* Left Panel: 54-Nation Matrix — hidden on mobile unless selected */}
         <div className={`${mobilePanel === "index" ? "flex" : "hidden"} lg:flex`}>
           <AfcftaMatrix selectedCode={selectedCode} onSelectCode={setSelectedCode} />
@@ -172,7 +150,34 @@ export default function Home() {
       </main>
 
       {/* Bottom Ticker */}
-      <ContinentalGoalsTicker />
+      <div className="hidden lg:block">
+        <ContinentalGoalsTicker />
+      </div>
+
+      {/* Fixed Bottom Mobile Navigation */}
+      <div className="flex lg:hidden fixed bottom-0 left-0 right-0 h-16 border-t border-border bg-panel/95 backdrop-blur-md z-50">
+        <button
+          onClick={() => setMobilePanel("index")}
+          className={`flex flex-1 flex-col items-center justify-center gap-1 transition-all ${mobilePanel === "index" ? "text-cobalt" : "text-slate-light hover:text-foreground"}`}
+        >
+          <List className="w-5 h-5" />
+          <span className="text-[9px] font-bold tracking-wider">INDEX</span>
+        </button>
+        <button
+          onClick={() => setMobilePanel("map")}
+          className={`flex flex-1 flex-col items-center justify-center gap-1 transition-all ${mobilePanel === "map" ? "text-green-500" : "text-slate-light hover:text-foreground"}`}
+        >
+          <Map className="w-5 h-5" />
+          <span className="text-[9px] font-bold tracking-wider">MAP</span>
+        </button>
+        <button
+          onClick={() => setMobilePanel("intel")}
+          className={`flex flex-1 flex-col items-center justify-center gap-1 transition-all ${mobilePanel === "intel" ? "text-orange-500" : "text-slate-light hover:text-foreground"}`}
+        >
+          <ShieldAlert className="w-5 h-5" />
+          <span className="text-[9px] font-bold tracking-wider">INTEL</span>
+        </button>
+      </div>
 
       {/* Modals */}
       <MissionModal isOpen={missionOpen} onClose={() => setMissionOpen(false)} />

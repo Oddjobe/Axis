@@ -35,6 +35,17 @@ export default function AfcftaMatrix({ selectedCode, onSelectCode }: AfcftaMatri
         });
     };
 
+    const filterOptions = ["ALL", "OPTIMAL", "STABLE", "IMPROVING", "EXTRACTIVE"];
+    const statusCounts = useMemo(() => {
+        const counts: Record<string, number> = { ALL: ALL_SOVEREIGN_DATA.length, OPTIMAL: 0, STABLE: 0, IMPROVING: 0, EXTRACTIVE: 0 };
+        ALL_SOVEREIGN_DATA.forEach(c => {
+            if (counts[c.status] !== undefined) {
+                counts[c.status]++;
+            }
+        });
+        return counts;
+    }, []);
+
     const sortedAndFilteredData = useMemo(() => {
         let result = ALL_SOVEREIGN_DATA;
 
@@ -136,40 +147,47 @@ export default function AfcftaMatrix({ selectedCode, onSelectCode }: AfcftaMatri
             </div>
 
             {/* Controls */}
-            <div className="p-3 border-b border-border bg-black/5 dark:bg-white/5 space-y-3">
-                <div className="relative">
-                    <Search className="absolute left-2.5 top-2 w-4 h-4 text-slate-light" />
-                    <input
-                        type="text"
-                        placeholder="SEARCH NATION..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full bg-background border border-border rounded-lg pl-9 pr-3 py-1.5 text-xs font-mono text-foreground focus:outline-none focus:border-cobalt/50 transition-colors"
-                    />
-                </div>
-
+            <div className="p-3 border-b border-border bg-black/5 dark:bg-white/5 space-y-3 shrink-0">
                 <div className="flex gap-2">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-2.5 top-2 w-4 h-4 text-slate-light" />
+                        <input
+                            type="text"
+                            placeholder="SEARCH NATION..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full bg-background border border-border rounded-lg pl-9 pr-3 py-1.5 text-xs font-mono text-foreground focus:outline-none focus:border-cobalt/50 transition-colors"
+                        />
+                    </div>
                     <select
                         value={sortBy}
                         onChange={(e) => setSortBy(e.target.value as any)}
-                        className="flex-1 bg-background border border-border rounded-md px-2 py-1 text-xs font-mono text-slate-light focus:outline-none cursor-pointer hover:bg-white/5 transition-colors"
+                        className="bg-background border border-border rounded-md px-2 py-1.5 text-xs font-mono text-slate-light focus:outline-none cursor-pointer hover:bg-white/5 transition-colors"
                     >
                         <option value="name">SORT: A-Z</option>
-                        <option value="score">SORT: AXIS SCORE</option>
-                        <option value="wealth">SORT: WEALTH</option>
+                        <option value="score">SCORE</option>
+                        <option value="wealth">WEALTH</option>
                     </select>
+                </div>
 
-                    <select
-                        value={filterStatus}
-                        onChange={(e) => setFilterStatus(e.target.value)}
-                        className="flex-1 bg-background border border-border rounded-md px-2 py-1 text-xs font-mono text-slate-light focus:outline-none cursor-pointer hover:bg-white/5 transition-colors"
-                    >
-                        <option value="ALL">ALL STATUS</option>
-                        <option value="OPTIMAL">OPTIMAL</option>
-                        <option value="STABLE">STABLE</option>
-                        <option value="IMPROVING">IMPROVING</option>
-                        <option value="EXTRACTIVE">EXTRACTIVE</option>
-                    </select>
+                {/* Status Filter Chips */}
+                <div className="flex gap-2 pb-1 overflow-x-auto no-scrollbar scroll-smooth">
+                    {filterOptions.map(status => (
+                        <button
+                            key={status}
+                            onClick={() => setFilterStatus(status)}
+                            className={`whitespace-nowrap rounded-full px-3 py-1.5 text-[10px] font-bold font-mono transition-all border ${filterStatus === status
+                                    ? (status === 'OPTIMAL' ? 'bg-green-500 text-white border-green-500 shadow-[0_0_8px_rgba(34,197,94,0.3)]' :
+                                        status === 'EXTRACTIVE' ? 'bg-red-500 text-white border-red-500 shadow-[0_0_8px_rgba(239,68,68,0.3)]' :
+                                            status === 'IMPROVING' ? 'bg-yellow-500 text-white border-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.3)]' :
+                                                status === 'STABLE' ? 'bg-cobalt text-white border-cobalt shadow-[0_0_8px_rgba(37,99,235,0.3)]' :
+                                                    'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white border-slate-300 dark:border-slate-600')
+                                    : 'bg-background hover:bg-white/5 border-border text-slate-light'
+                                }`}
+                        >
+                            {status} <span className={`ml-1 font-normal ${filterStatus === status ? 'text-white/80' : 'opacity-50'}`}>({statusCounts[status]})</span>
+                        </button>
+                    ))}
                 </div>
             </div>
 

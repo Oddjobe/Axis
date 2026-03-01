@@ -125,16 +125,37 @@ export default function AfricaMap({ selectedCountryCode, onSelectCountry, timeVa
     }, []);
 
     const getCountryData = (geoName: string) => {
-        return countryDataMaster.find(c =>
+        // First try strict match or known overrides
+        const overrides: Record<string, string> = {
+            "Dem. Rep. Congo": "COD",
+            "Central African Rep.": "CAF",
+            "Côte d'Ivoire": "CIV",
+            "Eq. Guinea": "GNQ",
+            "S. Sudan": "SSD",
+            "W. Sahara": "ESH",
+            "The Gambia": "GMB",
+            "United Republic of Tanzania": "TZA",
+            "Republic of the Congo": "COG",
+            "Republic of Congo": "COG",
+            "Guinea-Bissau": "GNB",
+        };
+
+        const strictMatch = countryDataMaster.find(c =>
             c.name.toLowerCase() === geoName.toLowerCase() ||
-            c.name.toLowerCase().includes(geoName.toLowerCase()) ||
-            geoName.toLowerCase().includes(c.name.toLowerCase()) ||
-            (geoName === "Dem. Rep. Congo" && c.country === "COD") ||
-            (geoName === "Central African Rep." && c.country === "CAF") ||
-            (geoName === "Côte d'Ivoire" && c.country === "CIV") ||
-            (geoName === "Eq. Guinea" && c.country === "GNQ") ||
-            (geoName === "S. Sudan" && c.country === "SSD") ||
-            (geoName === "W. Sahara" && c.country === "ESH")
+            (overrides[geoName] && c.country === overrides[geoName])
+        );
+
+        if (strictMatch) return strictMatch;
+
+        // Fallback to fuzzy matching, but carefully exclude troublesome overlap names
+        return countryDataMaster.find(c =>
+            c.country !== "NER" && // Prevent Niger matching Nigeria
+            c.country !== "NGA" &&
+            c.country !== "GIN" && // Prevent Guinea matching Eq. Guinea or Guinea-Bissau
+            c.country !== "SDN" && // Prevent Sudan matching South Sudan
+            c.country !== "COG" && // Prevent Congo matching DR Congo
+            (c.name.toLowerCase().includes(geoName.toLowerCase()) ||
+                geoName.toLowerCase().includes(c.name.toLowerCase()))
         );
     };
 
