@@ -53,10 +53,12 @@ export default function Home() {
     .filter(Boolean) as CountryData[];
 
   // Function to parse strings like "35.6M" or "1.2B" to numbers
-  const parsePop = (popStr: string) => {
+  const parsePop = (popStr: any) => {
+    if (typeof popStr === 'number') return popStr;
+    if (!popStr || typeof popStr !== 'string') return 0;
     if (popStr.endsWith('B')) return parseFloat(popStr) * 1000;
     if (popStr.endsWith('M')) return parseFloat(popStr);
-    return 0;
+    return parseFloat(popStr) || 0;
   };
 
   const totalPopMillions = selectedCountries.reduce((sum, c) => sum + parsePop(c.population), 0);

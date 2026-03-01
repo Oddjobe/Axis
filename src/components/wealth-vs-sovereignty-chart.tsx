@@ -15,21 +15,24 @@ export default function WealthVsSovereigntyChart({ data }: WealthVsSovereigntyCh
 
     // Process data for the chart
     const chartData = useMemo(() => {
-        return data.map(country => ({
-            name: country.name,
-            iso: country.country,
-            wealth: country.resourceWealth,
-            sovereignty: country.axisScore,
-            // Map trend string like "++" to a numeric size for the ZAxis (bubble size)
-            fdiSize: country.trend.startsWith("++") ? 100 :
-                country.trend.startsWith("+") ? 80 :
-                    country.trend === "0" ? 60 :
-                        country.trend.startsWith("--") ? 30 :
-                            country.trend.startsWith("-") ? 40 : 50,
-            trendStr: country.trend,
-            resources: country.keyResources,
-            color: getSeverityColor(country.axisScore, isDark)
-        })).filter(d => d.wealth !== undefined && d.sovereignty !== undefined);
+        return data.map(country => {
+            const trendStr = typeof country.trend === 'string' ? country.trend : "0";
+            return {
+                name: country.name,
+                iso: country.country,
+                wealth: country.resourceWealth,
+                sovereignty: country.axisScore,
+                // Map trend string like "++" to a numeric size for the ZAxis (bubble size)
+                fdiSize: trendStr.startsWith("++") ? 100 :
+                    trendStr.startsWith("+") ? 80 :
+                        trendStr === "0" ? 60 :
+                            trendStr.startsWith("--") ? 30 :
+                                trendStr.startsWith("-") ? 40 : 50,
+                trendStr,
+                resources: country.keyResources,
+                color: getSeverityColor(country.axisScore, isDark)
+            }
+        }).filter(d => d.wealth !== undefined && d.sovereignty !== undefined);
     }, [data, isDark]);
 
     function getSeverityColor(score: number, dark: boolean) {
@@ -72,8 +75,8 @@ export default function WealthVsSovereigntyChart({ data }: WealthVsSovereigntyCh
     };
 
     return (
-        <div className="w-full h-full min-h-[400px]">
-            <div className="mb-4">
+        <div className="w-full h-full min-h-[400px] flex flex-col">
+            <div className="mb-4 shrink-0">
                 <h3 className="text-sm font-bold font-mono tracking-widest uppercase mb-1 flex items-center gap-2">
                     <span>The Extractivist Trap</span>
                 </h3>
@@ -82,41 +85,43 @@ export default function WealthVsSovereigntyChart({ data }: WealthVsSovereigntyCh
                 </p>
             </div>
 
-            <ResponsiveContainer width="100%" height="85%">
-                <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)"} />
-                    <XAxis
-                        type="number"
-                        dataKey="wealth"
-                        name="Resource Wealth"
-                        domain={[0, 100]}
-                        tick={{ fontSize: 10, fill: isDark ? '#94a3b8' : '#64748b' }}
-                        stroke={isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"}
-                        label={{ value: "RESOURCE WEALTH (Potential)", position: "bottom", offset: 0, fontSize: 10, fill: isDark ? '#64748b' : '#94a3b8', className: 'font-mono' }}
-                    />
-                    <YAxis
-                        type="number"
-                        dataKey="sovereignty"
-                        name="Sovereignty Score"
-                        domain={[0, 100]}
-                        tick={{ fontSize: 10, fill: isDark ? '#94a3b8' : '#64748b' }}
-                        stroke={isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"}
-                        label={{ value: "SOVEREIGNTY SCORE (Value Capture)", angle: -90, position: "insideLeft", fontSize: 10, fill: isDark ? '#64748b' : '#94a3b8', className: 'font-mono' }}
-                    />
-                    <ZAxis type="number" dataKey="fdiSize" range={[60, 400]} name="FDI Trend" />
-                    <Tooltip cursor={{ strokeDasharray: '3 3' }} content={<CustomTooltip />} />
+            <div className="flex-1 w-full min-h-0 relative">
+                <ResponsiveContainer width="100%" height="100%">
+                    <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)"} />
+                        <XAxis
+                            type="number"
+                            dataKey="wealth"
+                            name="Resource Wealth"
+                            domain={[0, 100]}
+                            tick={{ fontSize: 10, fill: isDark ? '#94a3b8' : '#64748b' }}
+                            stroke={isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"}
+                            label={{ value: "RESOURCE WEALTH (Potential)", position: "bottom", offset: 0, fontSize: 10, fill: isDark ? '#64748b' : '#94a3b8', className: 'font-mono' }}
+                        />
+                        <YAxis
+                            type="number"
+                            dataKey="sovereignty"
+                            name="Sovereignty Score"
+                            domain={[0, 100]}
+                            tick={{ fontSize: 10, fill: isDark ? '#94a3b8' : '#64748b' }}
+                            stroke={isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"}
+                            label={{ value: "SOVEREIGNTY SCORE (Value Capture)", angle: -90, position: "insideLeft", fontSize: 10, fill: isDark ? '#64748b' : '#94a3b8', className: 'font-mono' }}
+                        />
+                        <ZAxis type="number" dataKey="fdiSize" range={[60, 400]} name="FDI Trend" />
+                        <Tooltip cursor={{ strokeDasharray: '3 3' }} content={<CustomTooltip />} />
 
-                    {/* Quadrant lines */}
-                    <ReferenceLine x={50} stroke={isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"} />
-                    <ReferenceLine y={50} stroke={isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"} />
+                        {/* Quadrant lines */}
+                        <ReferenceLine x={50} stroke={isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"} />
+                        <ReferenceLine y={50} stroke={isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"} />
 
-                    <Scatter name="Nations" data={chartData} shape="circle">
-                        {chartData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                    </Scatter>
-                </ScatterChart>
-            </ResponsiveContainer>
+                        <Scatter name="Nations" data={chartData} shape="circle">
+                            {chartData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                        </Scatter>
+                    </ScatterChart>
+                </ResponsiveContainer>
+            </div>
         </div>
     );
 }
