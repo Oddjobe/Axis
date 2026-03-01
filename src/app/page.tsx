@@ -1,13 +1,15 @@
 "use client"
 
-import { useState } from "react";
-import { Globe, Users, Info, Menu, X, List, Map, ShieldAlert } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Globe, Users, Info, Menu, X, List, Map, ShieldAlert, Moon, Sun } from "lucide-react";
+import { useTheme } from "next-themes";
 import AfricaMap from "@/components/africa-map";
 import AfcftaMatrix from "@/components/afcfta-matrix";
 import FrictionEngine from "@/components/friction-engine";
 import ContinentalGoalsTicker from "@/components/continental-goals-ticker";
 import MissionModal from "@/components/mission-modal";
 import { ALL_SOVEREIGN_DATA } from "@/lib/mock-data";
+import { Language, useTranslation } from "@/lib/i18n";
 
 const TOTAL_POPULATION = 1_444; // ~1.44 billion
 
@@ -18,6 +20,15 @@ export default function Home() {
   const [mobilePanel, setMobilePanel] = useState<"map" | "index" | "intel">("map");
   const currentYear = new Date().getFullYear();
   const [timeValue, setTimeValue] = useState(currentYear);
+  const [language, setLanguage] = useState<Language>("en");
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  const t = useTranslation(language);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const selectedCountries = selectedCodes
     .map(code => ALL_SOVEREIGN_DATA.find(c => c.country === code))
@@ -43,11 +54,11 @@ export default function Home() {
         <div className="flex items-center gap-2 lg:gap-4">
           <Globe className="w-5 h-5 lg:w-6 lg:h-6 text-cobalt" />
           <h1 className="text-base lg:text-xl font-bold tracking-widest uppercase">
-            Axis <span className="text-cobalt">Africa</span>
+            {t("dashboard_title")}
           </h1>
           <div className="h-5 w-px bg-border mx-1 hidden sm:block" />
           <span className="text-[9px] lg:text-xs font-mono text-slate-light dark:text-zinc-400 tracking-wider hidden sm:inline">
-            AFRICAN X-RAY INTELLIGENCE SYSTEM · V1.0
+            {t("subtitle")}
           </span>
         </div>
 
@@ -56,7 +67,7 @@ export default function Home() {
           <div className="flex items-center gap-1.5 lg:gap-2 px-2 lg:px-3 py-1 lg:py-1.5 bg-background border border-border rounded-lg text-[10px] lg:text-xs font-mono">
             <Users className="w-3 h-3 lg:w-3.5 lg:h-3.5 text-green-500" />
             <span className="text-slate-light hidden sm:inline">
-              {selectedCountries.length === 1 ? selectedCountries[0].name.toUpperCase() : selectedCountries.length > 1 ? "SELECTED POPULATION" : "POPULATION"}
+              {selectedCountries.length === 1 ? selectedCountries[0].name.toUpperCase() : selectedCountries.length > 1 ? t("selected_population") : t("population")}
             </span>
             <span className="font-bold text-green-500 ml-0.5 lg:ml-1">{displayPop}</span>
           </div>
@@ -66,7 +77,7 @@ export default function Home() {
             onClick={() => setMissionOpen(true)}
             className="flex items-center gap-1.5 lg:gap-2 px-2 lg:px-3 py-1 lg:py-1.5 bg-cobalt/10 border border-cobalt/40 rounded-lg text-[10px] lg:text-xs font-bold text-cobalt hover:bg-cobalt/20 transition-all"
           >
-            <Info className="w-3 h-3 lg:w-3.5 lg:h-3.5" /> <span className="hidden sm:inline">ABOUT</span>
+            <Info className="w-3 h-3 lg:w-3.5 lg:h-3.5" /> <span className="hidden sm:inline">{t("about")}</span>
           </button>
 
           {/* Dashboard Mode Toggle */}
@@ -75,19 +86,42 @@ export default function Home() {
               onClick={() => setMode("SOVEREIGNTY")}
               className={`px-3 lg:px-4 py-1 text-[10px] lg:text-xs font-bold rounded-full transition-all ${mode === "SOVEREIGNTY" ? "bg-cobalt text-white shadow-[0_0_10px_rgba(37,99,235,0.5)]" : "text-slate-light hover:text-foreground"}`}
             >
-              SOVEREIGNTY
+              {t("sovereignty")}
             </button>
             <button
               onClick={() => setMode("OUTSIDE INFLUENCE")}
               className={`px-3 lg:px-4 py-1 text-[10px] lg:text-xs font-bold rounded-full transition-all ${mode === "OUTSIDE INFLUENCE" ? "bg-orange-500 text-white shadow-[0_0_10px_rgba(249,115,22,0.5)]" : "text-slate-light hover:text-foreground"}`}
             >
-              OUTSIDE INFLUENCE
+              {t("outside_influence")}
+            </button>
+          </div>
+
+          <div className="hidden md:flex items-center gap-2 border-l border-border pl-5">
+            {/* Language Switcher */}
+            <div className="flex bg-background border border-border rounded-lg overflow-hidden text-[10px] font-bold">
+              {(["en", "fr", "sw"] as Language[]).map(lang => (
+                <button
+                  key={lang}
+                  onClick={() => setLanguage(lang)}
+                  className={`px-2 py-1.5 transition-colors uppercase ${language === lang ? "bg-cobalt/20 text-cobalt" : "text-slate-light hover:bg-white/5"}`}
+                >
+                  {lang}
+                </button>
+              ))}
+            </div>
+
+            {/* Theme Toggle */}
+            <button
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="p-1.5 rounded-lg border border-border bg-background hover:bg-panel transition-colors text-slate-light hover:text-foreground"
+            >
+              {mounted && theme === "dark" ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
             </button>
           </div>
 
           <div className="hidden sm:flex items-center gap-2 text-xs font-mono">
             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-            LIVE
+            {t("live")}
           </div>
         </div>
       </header>
@@ -176,21 +210,21 @@ export default function Home() {
           className={`flex flex-1 flex-col items-center justify-center gap-1 transition-all ${mobilePanel === "index" ? "text-cobalt" : "text-slate-light hover:text-foreground"}`}
         >
           <List className="w-5 h-5" />
-          <span className="text-[9px] font-bold tracking-wider">INDEX</span>
+          <span className="text-[9px] font-bold tracking-wider">{t("index")}</span>
         </button>
         <button
           onClick={() => setMobilePanel("map")}
           className={`flex flex-1 flex-col items-center justify-center gap-1 transition-all ${mobilePanel === "map" ? "text-green-500" : "text-slate-light hover:text-foreground"}`}
         >
           <Map className="w-5 h-5" />
-          <span className="text-[9px] font-bold tracking-wider">MAP</span>
+          <span className="text-[9px] font-bold tracking-wider">{t("map")}</span>
         </button>
         <button
           onClick={() => setMobilePanel("intel")}
           className={`flex flex-1 flex-col items-center justify-center gap-1 transition-all ${mobilePanel === "intel" ? "text-orange-500" : "text-slate-light hover:text-foreground"}`}
         >
           <ShieldAlert className="w-5 h-5" />
-          <span className="text-[9px] font-bold tracking-wider">INTEL</span>
+          <span className="text-[9px] font-bold tracking-wider">{t("intel")}</span>
         </button>
       </div>
 
