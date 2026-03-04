@@ -22,15 +22,10 @@ export default function AnalyticsModal({ isOpen, onClose, data }: AnalyticsModal
     const [activeTab, setActiveTab] = useState<TabType>("SCATTER");
     const [contentReady, setContentReady] = useState(false);
 
-    // Delay chart rendering until the modal spring animation settles,
-    // preventing Recharts from measuring a -1px container mid-animation.
+    // Reset contentReady when modal closes; it will be set to true
+    // by onAnimationComplete on the modal container.
     useEffect(() => {
-        if (isOpen) {
-            const timer = setTimeout(() => setContentReady(true), 350);
-            return () => clearTimeout(timer);
-        } else {
-            setContentReady(false);
-        }
+        if (!isOpen) setContentReady(false);
     }, [isOpen]);
 
     return (
@@ -59,6 +54,7 @@ export default function AnalyticsModal({ isOpen, onClose, data }: AnalyticsModal
                         }}
                         exit={{ opacity: 0, y: 20, scale: 0.95 }}
                         transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                        onAnimationComplete={() => { if (isOpen) setContentReady(true); }}
                         className={`fixed ${isFullscreen ? "inset-y-auto inset-x-auto top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" : "top-[10%] left-0 right-0 mx-auto"} bg-panel border border-border shadow-2xl z-[100] flex flex-col overflow-hidden`}
                         style={{
                             borderRadius: isFullscreen ? "1rem" : "1.5rem",
