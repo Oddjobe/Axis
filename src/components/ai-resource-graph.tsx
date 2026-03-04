@@ -46,21 +46,29 @@ export default function AiResourceGraph() {
         const currentContainer = containerRef.current;
         if (!currentContainer) return;
 
-        let timeoutId: NodeJS.Timeout;
+        let animationFrameId: number;
         const resizeObserver = new ResizeObserver((entries) => {
-            clearTimeout(timeoutId);
-            timeoutId = setTimeout(() => {
-                for (const entry of entries) {
-                    const { width, height } = entry.contentRect;
-                    // Only update if the size difference is greater than 2px to prevent rounding loops
-                    setDimensions(prev => {
-                        if (Math.abs(prev.width - width) > 2 || Math.abs(prev.height - height) > 2) {
-                            return { width, height };
-                        }
-                        return prev;
-                    });
-                }
-            }, 150); // Debounce to prevent flickering
+            cancelAnimationFrame(animationFrameId);
+            animationFrameId = requestAnimationFrame(() => {
+                if (!entries || !entries.length) return;
+                const { width, height } = entries[0].contentRect;
+
+                setDimensions(prev => {
+                    // Use a slightly larger threshold (5px) to completely squash fractional layout loops
+                    if (Math.abs(prev.width - width) > 5 || Math.abs(prev.height - height) > 5) {
+
+                        // Recenter graph whenever container size drastically changes
+                        setTimeout(() => {
+                            if (fgRef.current) {
+                                fgRef.current.zoomToFit(400, 50);
+                            }
+                        }, 50);
+
+                        return { width, height };
+                    }
+                    return prev;
+                });
+            });
         });
 
         resizeObserver.observe(currentContainer);
