@@ -230,7 +230,7 @@ export default function AiResourceGraph() {
     }, [hoverNode, isDark, colors.text, colors.textSecondary]);
 
     return (
-        <div className="w-full h-full relative flex flex-col overflow-hidden" ref={containerRef}>
+        <div className="w-full h-full relative flex flex-col overflow-hidden">
 
             <div className="absolute top-4 left-6 z-10 pointer-events-none max-w-sm">
                 <div className="flex items-center gap-2 mb-2">
@@ -269,45 +269,48 @@ export default function AiResourceGraph() {
                 <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none mix-blend-overlay"
                     style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, currentColor 1px, transparent 0)', backgroundSize: '24px 24px' }} />
 
-                {mounted && (
-                    <ForceGraph2D
-                        ref={fgRef}
-                        width={dimensions.width}
-                        height={dimensions.height}
-                        graphData={graphData}
-                        nodeLabel="" // Custom label handled via UI overlay
-                        nodeCanvasObject={paintNode}
-                        nodeCanvasObjectMode={() => 'replace'}
-                        linkColor={(link: any) => {
-                            if (hoverNode) {
-                                return link.source.id === hoverNode.id || link.target.id === hoverNode.id
-                                    ? colors.edgeActive
-                                    : 'transparent'; // Hide non-connected edges when hovering
-                            }
-                            return link.source.group === 'country' ? `${colors.country}40` :
-                                link.source.group === 'resource' ? `${colors.resource}40` :
-                                    link.source.group === 'component' ? `${colors.component}40` : colors.edge;
-                        }}
-                        linkWidth={(link: any) => {
-                            if (hoverNode && (link.source.id === hoverNode.id || link.target.id === hoverNode.id)) return link.value / 2;
-                            return link.value / 4;
-                        }}
-                        linkDirectionalParticles={(link: any) => {
-                            if (hoverNode && (link.source.id === hoverNode.id || link.target.id === hoverNode.id)) return 4;
-                            return 1;
-                        }}
-                        linkDirectionalParticleWidth={(link: any) => {
-                            if (hoverNode && (link.source.id === hoverNode.id || link.target.id === hoverNode.id)) return 3;
-                            return 1.5;
-                        }}
-                        linkDirectionalParticleSpeed={0.005}
-                        d3AlphaDecay={0.02}
-                        d3VelocityDecay={0.3}
-                        onNodeHover={(node: any) => handleNodeHover(node)}
-                        cooldownTicks={100}
-                        onEngineStop={() => fgRef.current?.zoomToFit(400, 50)}
-                    />
-                )}
+                {/* Isolate ResizeObserver target to prevent flexbox layout loops */}
+                <div ref={containerRef} className="absolute inset-0">
+                    {mounted && (
+                        <ForceGraph2D
+                            ref={fgRef}
+                            width={dimensions.width}
+                            height={dimensions.height}
+                            graphData={graphData}
+                            nodeLabel="" // Custom label handled via UI overlay
+                            nodeCanvasObject={paintNode}
+                            nodeCanvasObjectMode={() => 'replace'}
+                            linkColor={(link: any) => {
+                                if (hoverNode) {
+                                    return link.source.id === hoverNode.id || link.target.id === hoverNode.id
+                                        ? colors.edgeActive
+                                        : 'transparent'; // Hide non-connected edges when hovering
+                                }
+                                return link.source.group === 'country' ? `${colors.country}40` :
+                                    link.source.group === 'resource' ? `${colors.resource}40` :
+                                        link.source.group === 'component' ? `${colors.component}40` : colors.edge;
+                            }}
+                            linkWidth={(link: any) => {
+                                if (hoverNode && (link.source.id === hoverNode.id || link.target.id === hoverNode.id)) return link.value / 2;
+                                return link.value / 4;
+                            }}
+                            linkDirectionalParticles={(link: any) => {
+                                if (hoverNode && (link.source.id === hoverNode.id || link.target.id === hoverNode.id)) return 4;
+                                return 1;
+                            }}
+                            linkDirectionalParticleWidth={(link: any) => {
+                                if (hoverNode && (link.source.id === hoverNode.id || link.target.id === hoverNode.id)) return 3;
+                                return 1.5;
+                            }}
+                            linkDirectionalParticleSpeed={0.005}
+                            d3AlphaDecay={0.02}
+                            d3VelocityDecay={0.3}
+                            onNodeHover={(node: any) => handleNodeHover(node)}
+                            cooldownTicks={100}
+                            onEngineStop={() => fgRef.current?.zoomToFit(400, 50)}
+                        />
+                    )}
+                </div>
 
                 {/* Floating Detail Card */}
                 {hoverNode && (
