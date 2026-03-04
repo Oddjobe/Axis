@@ -4,7 +4,6 @@ import { NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-const app = new FirecrawlApp({ apiKey: process.env.FIRECRAWL_API_KEY });
 let cachedData: unknown = null;
 let lastFetch: number = 0;
 
@@ -50,6 +49,8 @@ const EXTRACT_SCHEMA = {
 };
 
 export async function GET() {
+    const app = new FirecrawlApp({ apiKey: process.env.FIRECRAWL_API_KEY });
+
     // 5-minute cache
     if (cachedData && Date.now() - lastFetch < 1000 * 60 * 5) {
         return NextResponse.json(cachedData);

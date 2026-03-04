@@ -1,7 +1,6 @@
 import FirecrawlApp from "@mendable/firecrawl-js";
 import { NextResponse } from "next/server";
 
-const app = new FirecrawlApp({ apiKey: process.env.FIRECRAWL_API_KEY });
 let cachedData: unknown = null;
 let lastFetch: number = 0;
 
@@ -12,6 +11,8 @@ const MEDIUM_SOURCES = [
 ];
 
 export async function GET() {
+    const app = new FirecrawlApp({ apiKey: process.env.FIRECRAWL_API_KEY });
+
     // 10-minute cache for blogs
     if (cachedData && Date.now() - lastFetch < 1000 * 60 * 10) {
         return NextResponse.json(cachedData);
