@@ -85,8 +85,8 @@ export default function WealthVsSovereigntyChart({ data }: WealthVsSovereigntyCh
                 </p>
             </div>
 
-            <div className="flex-1 w-full min-h-0 relative">
-                <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
+            <div className="flex-1 w-full relative min-w-[1px] min-h-[1px]">
+                <ResponsiveContainer width="100%" height="100%">
                     <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)"} />
                         <XAxis

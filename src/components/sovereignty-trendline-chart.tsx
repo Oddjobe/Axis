@@ -98,8 +98,8 @@ export default function SovereigntyTrendlineChart({ data }: SovereigntyTrendline
                 </select>
             </div>
 
-            <div className="flex-1 w-full relative">
-                <ResponsiveContainer width="100%" height="90%" minWidth={1} minHeight={1}>
+            <div className="flex-1 w-full relative min-w-[1px] min-h-[1px]">
+                <ResponsiveContainer width="100%" height="90%">
                     <AreaChart data={chartData} margin={{ top: 20, right: 20, bottom: 20, left: 0 }}>
                         <defs>
                             <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">
