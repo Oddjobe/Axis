@@ -42,17 +42,29 @@ export default function AiResourceGraph() {
 
     useEffect(() => {
         setMounted(true);
-        const updateDimensions = () => {
-            if (containerRef.current) {
-                setDimensions({
-                    width: containerRef.current.clientWidth,
-                    height: containerRef.current.clientHeight
-                });
-            }
-        };
 
-        window.addEventListener('resize', updateDimensions);
-        updateDimensions();
+        const currentContainer = containerRef.current;
+        if (!currentContainer) return;
+
+        let timeoutId: NodeJS.Timeout;
+        const resizeObserver = new ResizeObserver((entries) => {
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => {
+                for (const entry of entries) {
+                    const { width, height } = entry.contentRect;
+                    // Only update if the size difference is greater than 2px to prevent rounding loops
+                    setDimensions(prev => {
+                        if (Math.abs(prev.width - width) > 2 || Math.abs(prev.height - height) > 2) {
+                            return { width, height };
+                        }
+                        return prev;
+                    });
+                }
+            }, 150); // Debounce to prevent flickering
+        });
+
+        resizeObserver.observe(currentContainer);
+
         // Give the graph time to settle before centering
         setTimeout(() => {
             if (fgRef.current) {
@@ -63,7 +75,12 @@ export default function AiResourceGraph() {
             }
         }, 100);
 
-        return () => window.removeEventListener('resize', updateDimensions);
+        return () => {
+            if (currentContainer) {
+                resizeObserver.unobserve(currentContainer);
+            }
+            resizeObserver.disconnect();
+        };
     }, []);
 
     const isDark = mounted ? (theme === "dark" || theme === "system" || !theme) : true;
