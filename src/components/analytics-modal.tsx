@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { X, ExternalLink, BarChart3, Maximize2, LineChart, Network } from "lucide-react"
 import WealthVsSovereigntyChart from "./wealth-vs-sovereignty-chart"
@@ -20,6 +20,18 @@ type TabType = "SCATTER" | "TRENDS" | "FLOWS" | "NEXUS";
 export default function AnalyticsModal({ isOpen, onClose, data }: AnalyticsModalProps) {
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [activeTab, setActiveTab] = useState<TabType>("SCATTER");
+    const [contentReady, setContentReady] = useState(false);
+
+    // Delay chart rendering until the modal spring animation settles,
+    // preventing Recharts from measuring a -1px container mid-animation.
+    useEffect(() => {
+        if (isOpen) {
+            const timer = setTimeout(() => setContentReady(true), 350);
+            return () => clearTimeout(timer);
+        } else {
+            setContentReady(false);
+        }
+    }, [isOpen]);
 
     return (
         <AnimatePresence>
@@ -118,114 +130,123 @@ export default function AnalyticsModal({ isOpen, onClose, data }: AnalyticsModal
                         <div className={`p-4 lg:p-6 overflow-y-auto ${isFullscreen ? "flex-1 flex flex-col" : "h-[500px]"}`}>
 
                             <AnimatePresence mode="wait">
-                                {activeTab === "SCATTER" && (
-                                    <motion.div
-                                        key="scatter"
-                                        initial={{ opacity: 0, x: -20 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        exit={{ opacity: 0, x: 20 }}
-                                        transition={{ duration: 0.2 }}
-                                        className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full"
-                                    >
-                                        <div className="lg:col-span-1 flex flex-col gap-4">
-                                            <div className="p-4 bg-background border border-border rounded-xl">
-                                                <h3 className="text-xs font-bold font-mono text-foreground mb-2 flex items-center gap-2">
-                                                    <span className="text-orange-500">▶</span> THE DATA STORY
-                                                </h3>
-                                                <p className="text-xs text-slate-light leading-relaxed mb-4">
-                                                    This scatter plot visualizes the core thesis of AXIS: The gap between Africa's natural endowment and its sovereign value capture.
-                                                </p>
+                                {!contentReady ? (
+                                    <div className="flex items-center justify-center h-full min-h-[300px]">
+                                        <div className="flex flex-col items-center gap-3">
+                                            <div className="w-6 h-6 border-2 border-cobalt/30 border-t-cobalt rounded-full animate-spin" />
+                                            <span className="text-[10px] font-mono text-slate-light tracking-widest uppercase">LOADING ANALYTICS</span>
+                                        </div>
+                                    </div>
+                                ) : (<>
+                                    {activeTab === "SCATTER" && (
+                                        <motion.div
+                                            key="scatter"
+                                            initial={{ opacity: 0, x: -20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            exit={{ opacity: 0, x: 20 }}
+                                            transition={{ duration: 0.2 }}
+                                            className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full"
+                                        >
+                                            <div className="lg:col-span-1 flex flex-col gap-4">
+                                                <div className="p-4 bg-background border border-border rounded-xl">
+                                                    <h3 className="text-xs font-bold font-mono text-foreground mb-2 flex items-center gap-2">
+                                                        <span className="text-orange-500">▶</span> THE DATA STORY
+                                                    </h3>
+                                                    <p className="text-xs text-slate-light leading-relaxed mb-4">
+                                                        This scatter plot visualizes the core thesis of AXIS: The gap between Africa's natural endowment and its sovereign value capture.
+                                                    </p>
 
-                                                <div className="space-y-3">
-                                                    <div className="p-3 bg-red-500/10 border border-red-500/20 rounded text-xs font-mono">
-                                                        <span className="font-bold text-red-500 block mb-1">BOTTOM RIGHT: EXTRACTIVIST TARGETS</span>
-                                                        High Resource Wealth, Low Sovereignty Score. These nations possess massive critical minerals but suffer from extreme capital flight, foreign debt dependency, or imbalanced trade agreements favoring external powers.
+                                                    <div className="space-y-3">
+                                                        <div className="p-3 bg-red-500/10 border border-red-500/20 rounded text-xs font-mono">
+                                                            <span className="font-bold text-red-500 block mb-1">BOTTOM RIGHT: EXTRACTIVIST TARGETS</span>
+                                                            High Resource Wealth, Low Sovereignty Score. These nations possess massive critical minerals but suffer from extreme capital flight, foreign debt dependency, or imbalanced trade agreements favoring external powers.
+                                                        </div>
+
+                                                        <div className="p-3 bg-green-500/10 border border-green-500/20 rounded text-xs font-mono">
+                                                            <span className="font-bold text-green-500 block mb-1">TOP RIGHT: OPTIMAL ANCHORS</span>
+                                                            High Resource Wealth, High Sovereignty. Nations leveraging their endowments for domestic industrialization, demanding fair tech-transfer, and securing diversified trade partnerships.
+                                                        </div>
                                                     </div>
+                                                </div>
 
-                                                    <div className="p-3 bg-green-500/10 border border-green-500/20 rounded text-xs font-mono">
-                                                        <span className="font-bold text-green-500 block mb-1">TOP RIGHT: OPTIMAL ANCHORS</span>
-                                                        High Resource Wealth, High Sovereignty. Nations leveraging their endowments for domestic industrialization, demanding fair tech-transfer, and securing diversified trade partnerships.
+                                                <div className="mt-auto p-4 bg-cobalt/5 border border-cobalt/20 rounded-xl">
+                                                    <p className="text-xs font-mono text-slate-light flex items-center gap-2">
+                                                        <ExternalLink className="w-3 h-3 text-cobalt" />
+                                                        Explore individual states on the map for deeper dossiers and live friction alerts.
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <div className="lg:col-span-3 bg-background border border-border rounded-xl p-4 flex flex-col min-h-[400px]">
+                                                <WealthVsSovereigntyChart data={data} />
+                                            </div>
+                                        </motion.div>
+                                    )}
+
+                                    {activeTab === "TRENDS" && (
+                                        <motion.div
+                                            key="trends"
+                                            initial={{ opacity: 0, x: -20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            exit={{ opacity: 0, x: 20 }}
+                                            transition={{ duration: 0.2 }}
+                                            className="h-full bg-background border border-border rounded-xl p-4 flex flex-col min-h-[400px]"
+                                        >
+                                            <SovereigntyTrendlineChart data={data} />
+                                        </motion.div>
+                                    )}
+
+                                    {activeTab === "FLOWS" && (
+                                        <motion.div
+                                            key="flows"
+                                            initial={{ opacity: 0, x: -20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            exit={{ opacity: 0, x: 20 }}
+                                            transition={{ duration: 0.2 }}
+                                            className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full"
+                                        >
+                                            <div className="lg:col-span-1 flex flex-col gap-4">
+                                                <div className="p-4 bg-background border border-border rounded-xl">
+                                                    <h3 className="text-xs font-bold font-mono text-foreground mb-2 flex items-center gap-2">
+                                                        <span className="text-orange-500">▶</span> INFLUENCE MAPPING
+                                                    </h3>
+                                                    <p className="text-xs text-slate-light leading-relaxed mb-4">
+                                                        Visualizing extractive structural influence from external actors into Africa's most vulnerable states.
+                                                    </p>
+
+                                                    <div className="space-y-3">
+                                                        <div className="p-3 border border-border rounded text-xs font-mono">
+                                                            <span className="font-bold text-red-500 block mb-1">🇨🇳 INFRASTRUCTURE & DEBT</span>
+                                                            High-interest bilateral loans exchanged for unrefined mineral export monopolies.
+                                                        </div>
+
+                                                        <div className="p-3 border border-border rounded text-xs font-mono">
+                                                            <span className="font-bold text-amber-500 block mb-1">🏦 STRUCTURAL ADJUSTMENTS</span>
+                                                            Forced privatization of state energy assets and currency devaluations.
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
 
-                                            <div className="mt-auto p-4 bg-cobalt/5 border border-cobalt/20 rounded-xl">
-                                                <p className="text-xs font-mono text-slate-light flex items-center gap-2">
-                                                    <ExternalLink className="w-3 h-3 text-cobalt" />
-                                                    Explore individual states on the map for deeper dossiers and live friction alerts.
-                                                </p>
+                                            <div className="lg:col-span-3 bg-background border border-border rounded-xl p-4 flex flex-col min-h-[400px]">
+                                                <InfluenceSankeyChart data={data} />
                                             </div>
-                                        </div>
+                                        </motion.div>
+                                    )}
 
-                                        <div className="lg:col-span-3 bg-background border border-border rounded-xl p-4 flex flex-col min-h-[400px]">
-                                            <WealthVsSovereigntyChart data={data} />
-                                        </div>
-                                    </motion.div>
-                                )}
-
-                                {activeTab === "TRENDS" && (
-                                    <motion.div
-                                        key="trends"
-                                        initial={{ opacity: 0, x: -20 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        exit={{ opacity: 0, x: 20 }}
-                                        transition={{ duration: 0.2 }}
-                                        className="h-full bg-background border border-border rounded-xl p-4 flex flex-col min-h-[400px]"
-                                    >
-                                        <SovereigntyTrendlineChart data={data} />
-                                    </motion.div>
-                                )}
-
-                                {activeTab === "FLOWS" && (
-                                    <motion.div
-                                        key="flows"
-                                        initial={{ opacity: 0, x: -20 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        exit={{ opacity: 0, x: 20 }}
-                                        transition={{ duration: 0.2 }}
-                                        className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full"
-                                    >
-                                        <div className="lg:col-span-1 flex flex-col gap-4">
-                                            <div className="p-4 bg-background border border-border rounded-xl">
-                                                <h3 className="text-xs font-bold font-mono text-foreground mb-2 flex items-center gap-2">
-                                                    <span className="text-orange-500">▶</span> INFLUENCE MAPPING
-                                                </h3>
-                                                <p className="text-xs text-slate-light leading-relaxed mb-4">
-                                                    Visualizing extractive structural influence from external actors into Africa's most vulnerable states.
-                                                </p>
-
-                                                <div className="space-y-3">
-                                                    <div className="p-3 border border-border rounded text-xs font-mono">
-                                                        <span className="font-bold text-red-500 block mb-1">🇨🇳 INFRASTRUCTURE & DEBT</span>
-                                                        High-interest bilateral loans exchanged for unrefined mineral export monopolies.
-                                                    </div>
-
-                                                    <div className="p-3 border border-border rounded text-xs font-mono">
-                                                        <span className="font-bold text-amber-500 block mb-1">🏦 STRUCTURAL ADJUSTMENTS</span>
-                                                        Forced privatization of state energy assets and currency devaluations.
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="lg:col-span-3 bg-background border border-border rounded-xl p-4 flex flex-col min-h-[400px]">
-                                            <InfluenceSankeyChart data={data} />
-                                        </div>
-                                    </motion.div>
-                                )}
-
-                                {activeTab === "NEXUS" && (
-                                    <motion.div
-                                        key="nexus"
-                                        initial={{ opacity: 0, x: -20 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        exit={{ opacity: 0, x: 20 }}
-                                        transition={{ duration: 0.2 }}
-                                        className="h-full bg-background border border-border rounded-xl p-4 flex flex-col min-h-[400px]"
-                                    >
-                                        <AiResourceGraph />
-                                    </motion.div>
-                                )}
+                                    {activeTab === "NEXUS" && (
+                                        <motion.div
+                                            key="nexus"
+                                            initial={{ opacity: 0, x: -20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            exit={{ opacity: 0, x: 20 }}
+                                            transition={{ duration: 0.2 }}
+                                            className="h-full bg-background border border-border rounded-xl p-4 flex flex-col min-h-[400px]"
+                                        >
+                                            <AiResourceGraph />
+                                        </motion.div>
+                                    )}
+                                </>)}
                             </AnimatePresence>
                         </div>
                     </motion.div>
