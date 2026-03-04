@@ -6,6 +6,7 @@ import { X, ExternalLink, BarChart3, Maximize2, LineChart, Network } from "lucid
 import WealthVsSovereigntyChart from "./wealth-vs-sovereignty-chart"
 import SovereigntyTrendlineChart from "./sovereignty-trendline-chart"
 import InfluenceSankeyChart from "./influence-sankey-chart"
+import AiResourceGraph from "./ai-resource-graph"
 import type { CountryData } from "./country-dossier-modal"
 
 interface AnalyticsModalProps {
@@ -14,7 +15,7 @@ interface AnalyticsModalProps {
     data: CountryData[];
 }
 
-type TabType = "SCATTER" | "TRENDS" | "FLOWS";
+type TabType = "SCATTER" | "TRENDS" | "FLOWS" | "NEXUS";
 
 export default function AnalyticsModal({ isOpen, onClose, data }: AnalyticsModalProps) {
     const [isFullscreen, setIsFullscreen] = useState(false);
@@ -54,38 +55,44 @@ export default function AnalyticsModal({ isOpen, onClose, data }: AnalyticsModal
                     >
                         {/* Header */}
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 lg:p-6 border-b border-border bg-background/50 gap-4 sm:gap-0">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-cobalt/10 rounded-lg border border-cobalt/20">
+                            <div className="flex items-center gap-3 w-full sm:w-auto overflow-hidden">
+                                <div className="p-2 bg-cobalt/10 rounded-lg border border-cobalt/20 shrink-0">
                                     <BarChart3 className="w-5 h-5 text-cobalt" />
                                 </div>
-                                <div>
-                                    <h2 className="text-sm lg:text-base font-bold tracking-widest uppercase">STRATEGIC ANALYTICS</h2>
-                                    <div className="flex items-center gap-2 mt-0.5">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                                        <span className="text-[10px] font-mono text-slate-light tracking-wider">LIVE PLATFORM DATA</span>
+                                <div className="min-w-0">
+                                    <h2 className="text-sm lg:text-base font-bold tracking-widest uppercase truncate">STRATEGIC ANALYTICS</h2>
+                                    <div className="flex items-center gap-2 mt-0.5 whitespace-nowrap">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse shrink-0" />
+                                        <span className="text-[10px] font-mono text-slate-light tracking-wider truncate">LIVE PLATFORM DATA</span>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Tab Navigation */}
-                            <div className="flex bg-background border border-border rounded-lg p-1 mx-auto sm:mx-0 order-3 sm:order-2 self-start sm:self-auto">
+                            <div className="flex bg-background border border-border rounded-lg p-1 w-full overflow-x-auto sm:w-auto order-3 sm:order-2">
                                 <button
                                     onClick={() => setActiveTab("SCATTER")}
-                                    className={`px-3 py-1.5 rounded flex items-center gap-1.5 text-[10px] sm:text-xs font-bold font-mono transition-colors ${activeTab === "SCATTER" ? "bg-cobalt text-white shadow" : "text-slate-light hover:text-foreground hover:bg-white/5"}`}
+                                    className={`shrink-0 px-3 py-1.5 rounded flex items-center gap-1.5 text-[10px] sm:text-xs font-bold font-mono transition-colors ${activeTab === "SCATTER" ? "bg-cobalt text-white shadow" : "text-slate-light hover:text-foreground hover:bg-white/5"}`}
                                 >
-                                    <BarChart3 className="w-3.5 h-3.5" /> <span className="hidden sm:inline">THE EXTRACTIVIST TRAP</span> <span className="sm:hidden">SCATTER</span>
+                                    <BarChart3 className="w-3.5 h-3.5" /> <span className="hidden lg:inline">THE EXTRACTIVIST TRAP</span> <span className="lg:hidden">SCATTER</span>
                                 </button>
                                 <button
                                     onClick={() => setActiveTab("TRENDS")}
-                                    className={`px-3 py-1.5 rounded flex items-center gap-1.5 text-[10px] sm:text-xs font-bold font-mono transition-colors ${activeTab === "TRENDS" ? "bg-blue-500 text-white shadow" : "text-slate-light hover:text-foreground hover:bg-white/5"}`}
+                                    className={`shrink-0 px-3 py-1.5 rounded flex items-center gap-1.5 text-[10px] sm:text-xs font-bold font-mono transition-colors ${activeTab === "TRENDS" ? "bg-blue-500 text-white shadow" : "text-slate-light hover:text-foreground hover:bg-white/5"}`}
                                 >
-                                    <LineChart className="w-3.5 h-3.5" /> <span className="hidden sm:inline">SOVEREIGNTY TRENDS</span> <span className="sm:hidden">TRENDS</span>
+                                    <LineChart className="w-3.5 h-3.5" /> <span className="hidden lg:inline">SOVEREIGNTY TRENDS</span> <span className="lg:hidden">TRENDS</span>
                                 </button>
                                 <button
                                     onClick={() => setActiveTab("FLOWS")}
-                                    className={`px-3 py-1.5 rounded flex items-center gap-1.5 text-[10px] sm:text-xs font-bold font-mono transition-colors ${activeTab === "FLOWS" ? "bg-orange-500 text-white shadow" : "text-slate-light hover:text-foreground hover:bg-white/5"}`}
+                                    className={`shrink-0 px-3 py-1.5 rounded flex items-center gap-1.5 text-[10px] sm:text-xs font-bold font-mono transition-colors ${activeTab === "FLOWS" ? "bg-orange-500 text-white shadow" : "text-slate-light hover:text-foreground hover:bg-white/5"}`}
                                 >
-                                    <Network className="w-3.5 h-3.5" /> <span className="hidden sm:inline">INFLUENCE FLOWS</span> <span className="sm:hidden">FLOWS</span>
+                                    <Network className="w-3.5 h-3.5" /> <span className="hidden lg:inline">INFLUENCE FLOWS</span> <span className="lg:hidden">FLOWS</span>
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab("NEXUS")}
+                                    className={`shrink-0 px-3 py-1.5 rounded flex items-center gap-1.5 text-[10px] sm:text-xs font-bold font-mono transition-colors ${activeTab === "NEXUS" ? "bg-emerald-500 text-white shadow" : "text-slate-light hover:text-foreground hover:bg-white/5"}`}
+                                >
+                                    <Network className="w-3.5 h-3.5" /> <span className="hidden lg:inline">AI NEXUS</span> <span className="lg:hidden">NEXUS</span>
                                 </button>
                             </div>
 
@@ -204,6 +211,19 @@ export default function AnalyticsModal({ isOpen, onClose, data }: AnalyticsModal
                                         <div className="lg:col-span-3 bg-background border border-border rounded-xl p-4 flex flex-col min-h-[400px]">
                                             <InfluenceSankeyChart data={data} />
                                         </div>
+                                    </motion.div>
+                                )}
+
+                                {activeTab === "NEXUS" && (
+                                    <motion.div
+                                        key="nexus"
+                                        initial={{ opacity: 0, x: -20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0, x: 20 }}
+                                        transition={{ duration: 0.2 }}
+                                        className="h-full bg-background border border-border rounded-xl p-4 flex flex-col min-h-[400px]"
+                                    >
+                                        <AiResourceGraph />
                                     </motion.div>
                                 )}
                             </AnimatePresence>
