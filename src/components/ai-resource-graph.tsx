@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import dynamic from 'next/dynamic';
 import { useTheme } from "next-themes";
 import { BrainCircuit, Pickaxe, Cpu, Globe, Battery, Database, Cpu as Microchip } from "lucide-react";
-import * as d3 from 'd3-force';
 
 // Dynamically import to avoid SSR issues with canvas
 const ForceGraph2D = dynamic(() => import('react-force-graph-2d'), { ssr: false });
