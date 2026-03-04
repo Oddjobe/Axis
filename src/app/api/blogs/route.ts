@@ -21,7 +21,7 @@ export async function GET() {
         const allPosts: unknown[] = [];
 
         const fetchPromises = MEDIUM_SOURCES.map(url => {
-            return (app as any).v1.scrapeUrl(url, {
+            return app.scrapeUrl(url, {
                 formats: ["extract"],
                 extract: {
                     prompt: "Extract the top 3 blog post titles, a 1-sentence summary, the author name, and what geopolitical topic it relates to (e.g. 'AfCFTA Trade', 'Resource Sovereignty', 'Foreign Influence', 'Infrastructure', 'Digital Economy'). Only include posts that directly relate to African geopolitics, economy, sovereignty, or continental development. Exclude unrelated content.",
@@ -44,7 +44,7 @@ export async function GET() {
                             }
                         },
                         required: ["posts"]
-                    }
+                    } as any
                 }
             }).then((response: any) => {
                 if (response.success && response.extract?.posts) {
