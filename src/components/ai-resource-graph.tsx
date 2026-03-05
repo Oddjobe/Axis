@@ -449,10 +449,10 @@ export default function AiResourceGraph({ selectedResource = null }: { selectedR
                                 return link.source?.color || colors.text;
                             }}
                             linkDirectionalParticleSpeed={0.005}
-                            d3AlphaDecay={0.06} // Settle very quickly
+                            d3AlphaDecay={0.1} // Settle even faster
                             d3VelocityDecay={0.92} // Maximum friction, zero bouncing
-                            warmupTicks={200} // Fully resolve layout before showing
-                            cooldownTicks={100}
+                            warmupTicks={40} // Show graph much sooner (was 200)
+                            cooldownTicks={50} // Settle physics faster (was 100)
                             onNodeHover={(node: any) => handleNodeHover(node)}
                             onNodeDragEnd={(node: any) => {
                                 // Pin node where user drops it but allow a little elastic settling
