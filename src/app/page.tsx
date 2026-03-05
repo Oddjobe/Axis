@@ -1,10 +1,15 @@
 "use client"
 
 import { useState, useEffect } from "react";
-import { Globe, Users, Info, Menu, X, List, Map, ShieldAlert, Moon, Sun, BarChart3 } from "lucide-react";
+import { Globe, Users, Info, X, List, Map, ShieldAlert, Moon, Sun, BarChart3, SlidersHorizontal, Check } from "lucide-react";
 import { useTheme } from "next-themes";
-import AfricaMap from "@/components/africa-map";
+import dynamic from "next/dynamic";
 import AfcftaMatrix from "@/components/afcfta-matrix";
+
+const AfricaMap = dynamic(() => import("@/components/africa-map"), {
+  ssr: false,
+  loading: () => <div className="w-full h-full flex flex-col gap-3 items-center justify-center text-cobalt font-mono text-[10px]"><div className="w-6 h-6 border-2 border-cobalt/30 border-t-cobalt rounded-full animate-spin" />INITIALIZING GEO ENGINE...</div>
+});
 import FrictionEngine from "@/components/friction-engine";
 import ContinentalGoalsTicker from "@/components/continental-goals-ticker";
 import MissionModal from "@/components/mission-modal";
@@ -12,6 +17,7 @@ import AnalyticsModal from "@/components/analytics-modal";
 import { ALL_SOVEREIGN_DATA } from "@/lib/mock-data";
 import { Language, useTranslation } from "@/lib/i18n";
 import type { CountryData } from "@/components/country-dossier-modal";
+import { AnimatePresence, motion } from "framer-motion";
 
 const TOTAL_POPULATION = 1_444; // ~1.44 billion
 
@@ -21,6 +27,7 @@ export default function Home() {
   const [missionOpen, setMissionOpen] = useState(false);
   const [analyticsOpen, setAnalyticsOpen] = useState(false);
   const [mobilePanel, setMobilePanel] = useState<"map" | "index" | "intel">("map");
+  const [mobileSettingsOpen, setMobileSettingsOpen] = useState(false);
   const currentYear = new Date().getFullYear();
   const [timeValue, setTimeValue] = useState(currentYear);
   const [language, setLanguage] = useState<Language>("en");
@@ -82,9 +89,9 @@ export default function Home() {
           </span>
         </div>
 
-        <div className="flex items-center gap-2 lg:gap-5">
-          {/* Population Counter */}
-          <div className="flex items-center gap-1.5 lg:gap-2 px-2 lg:px-3 py-1 lg:py-1.5 bg-background border border-border rounded-lg text-[10px] lg:text-xs font-mono">
+        <div className="flex items-center gap-2 lg:gap-4">
+          {/* Group 1: Population */}
+          <div className="flex items-center gap-1.5 lg:gap-2 px-2 lg:px-3 py-1 lg:py-1.5 bg-background border border-border rounded-lg text-[10px] lg:text-xs font-mono shadow-sm">
             <Users className="w-3 h-3 lg:w-3.5 lg:h-3.5 text-green-500" />
             <span className="text-slate-light hidden sm:inline">
               {selectedCountries.length === 1 ? selectedCountries[0].name.toUpperCase() : selectedCountries.length > 1 ? t("selected_population") : t("population")}
@@ -92,41 +99,51 @@ export default function Home() {
             <span className="font-bold text-green-500 ml-0.5 lg:ml-1">{displayPop}</span>
           </div>
 
-          {/* Info / Mission Button */}
-          <button
-            onClick={() => setMissionOpen(true)}
-            className="flex items-center gap-1.5 lg:gap-2 px-2 lg:px-3 py-1 lg:py-1.5 bg-cobalt/10 border border-cobalt/40 rounded-lg text-[10px] lg:text-xs font-bold text-cobalt hover:bg-cobalt/20 transition-all"
-          >
-            <Info className="w-3 h-3 lg:w-3.5 lg:h-3.5" /> <span className="hidden sm:inline">{t("about")}</span>
-          </button>
+          <div className="hidden md:block h-6 w-px bg-border/50" />
 
-          {/* Analytics Button */}
-          <button
-            onClick={() => setAnalyticsOpen(true)}
-            className="flex items-center gap-1.5 lg:gap-2 px-2 lg:px-3 py-1 lg:py-1.5 bg-green-500/10 border border-green-500/40 rounded-lg text-[10px] lg:text-xs font-bold text-green-500 hover:bg-green-500/20 transition-all"
-          >
-            <BarChart3 className="w-3 h-3 lg:w-3.5 lg:h-3.5" /> <span className="hidden sm:inline">ANALYTICS</span>
-          </button>
+          {/* Group 2: Tools/Modals */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setMissionOpen(true)}
+              className="flex items-center gap-1.5 px-2 py-1.5 lg:px-2.5 rounded-lg text-[10px] lg:text-xs font-bold text-slate-light hover:text-cobalt hover:bg-cobalt/10 transition-all border border-transparent hover:border-cobalt/20"
+              title={t("about")}
+            >
+              <Info className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
+              <span className="hidden xl:inline">{t("about")}</span>
+            </button>
+            <button
+              onClick={() => setAnalyticsOpen(true)}
+              className="flex items-center gap-1.5 px-2 py-1.5 lg:px-2.5 rounded-lg text-[10px] lg:text-xs font-bold text-slate-light hover:text-green-500 hover:bg-green-500/10 transition-all border border-transparent hover:border-green-500/20"
+              title="Analytics"
+            >
+              <BarChart3 className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
+              <span className="hidden xl:inline">ANALYTICS</span>
+            </button>
+          </div>
 
-          {/* Dashboard Mode Toggle */}
-          <div className="hidden md:flex items-center gap-3 bg-background border border-border rounded-full p-1 shadow-inner">
+          <div className="hidden xl:block h-6 w-px bg-border/50" />
+
+          {/* Group 3: Dashboard Mode Toggle (desktop only) */}
+          <div className="hidden md:flex items-center gap-1 bg-background border border-border rounded-full p-1 shadow-inner">
             <button
               onClick={() => setMode("SOVEREIGNTY")}
-              className={`px-3 lg:px-4 py-1 text-[10px] lg:text-xs font-bold rounded-full transition-all ${mode === "SOVEREIGNTY" ? "bg-cobalt text-white shadow-[0_0_10px_rgba(37,99,235,0.5)]" : "text-slate-light hover:text-foreground"}`}
+              className={`px-3 py-1 text-[10px] font-bold rounded-full transition-all ${mode === "SOVEREIGNTY" ? "bg-cobalt text-white shadow-[0_0_10px_rgba(37,99,235,0.4)]" : "text-slate-light hover:text-foreground"}`}
             >
               {t("sovereignty")}
             </button>
             <button
               onClick={() => setMode("OUTSIDE INFLUENCE")}
-              className={`px-3 lg:px-4 py-1 text-[10px] lg:text-xs font-bold rounded-full transition-all ${mode === "OUTSIDE INFLUENCE" ? "bg-orange-500 text-white shadow-[0_0_10px_rgba(249,115,22,0.5)]" : "text-slate-light hover:text-foreground"}`}
+              className={`px-3 py-1 text-[10px] font-bold rounded-full transition-all ${mode === "OUTSIDE INFLUENCE" ? "bg-orange-500 text-white shadow-[0_0_10px_rgba(249,115,22,0.4)]" : "text-slate-light hover:text-foreground"}`}
             >
               {t("outside_influence")}
             </button>
           </div>
 
-          <div className="hidden md:flex items-center gap-2 border-l border-border pl-5">
-            {/* Language Switcher */}
-            <div className="flex bg-background border border-border rounded-lg overflow-hidden text-[10px] font-bold">
+          <div className="hidden xl:block h-6 w-px bg-border/50" />
+
+          {/* Group 4: Settings & Locales (desktop only) */}
+          <div className="hidden md:flex items-center gap-2">
+            <div className="flex bg-background border border-border rounded-lg overflow-hidden text-[10px] font-bold shadow-sm">
               {(["en", "fr", "sw"] as Language[]).map(lang => (
                 <button
                   key={lang}
@@ -137,18 +154,29 @@ export default function Home() {
                 </button>
               ))}
             </div>
-
-            {/* Theme Toggle */}
             <button
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="p-1.5 rounded-lg border border-border bg-background hover:bg-panel transition-colors text-slate-light hover:text-foreground"
+              className="p-1.5 lg:p-2 rounded-lg border border-border bg-background hover:bg-panel transition-colors text-slate-light hover:text-foreground shadow-sm"
+              title="Toggle Theme"
             >
               {mounted && theme === "dark" ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
             </button>
           </div>
 
-          <div className="hidden sm:flex items-center gap-2 text-xs font-mono">
-            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+          {/* Mobile Settings Button */}
+          <button
+            onClick={() => setMobileSettingsOpen(true)}
+            className="flex md:hidden items-center justify-center p-1.5 rounded-lg border border-border bg-background text-slate-light hover:text-foreground hover:bg-panel transition-colors"
+            aria-label="Settings"
+          >
+            <SlidersHorizontal className="w-4 h-4" />
+          </button>
+
+          <div className="hidden lg:block h-6 w-px bg-border/50" />
+
+          {/* Group 5: Live Status */}
+          <div className="hidden sm:flex items-center gap-2 text-[10px] font-mono font-bold text-slate-light px-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-[pulse_2s_ease-in-out_infinite] shadow-[0_0_5px_rgba(34,197,94,0.8)]" />
             {t("live")}
           </div>
         </div>
@@ -162,12 +190,24 @@ export default function Home() {
         </div>
 
         {/* Center Panel: Map Engine */}
-        <section className={`flex-1 relative bg-slate-50 dark:bg-onyx-deep flex-col items-center justify-center p-2 lg:p-6 ${mobilePanel === "map" ? "flex" : "hidden lg:flex"}`}>
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(37,99,235,0.08)_0%,transparent_70%)] dark:bg-[radial-gradient(circle_at_center,rgba(37,99,235,0.15)_0%,transparent_70%)] pointer-events-none" />
+        <section className={`flex-1 relative bg-slate-50 dark:bg-onyx-deep flex-col items-center justify-center p-2 lg:p-4 ${mobilePanel === "map" ? "flex" : "hidden lg:flex"}`}>
+          {/* Atmospheric backdrop */}
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(37,99,235,0.12)_0%,rgba(0,10,30,0.3)_60%,transparent_100%)] dark:bg-[radial-gradient(ellipse_at_center,rgba(37,99,235,0.2)_0%,rgba(0,0,20,0.5)_60%,transparent_100%)] pointer-events-none" />
 
           {/* Map Area */}
-          <div className="w-full h-full border border-border/50 dark:border-border/30 rounded-xl flex items-center justify-center relative overflow-hidden backdrop-blur-sm shadow-sm dark:shadow-[0_0_30px_rgba(37,99,235,0.05)]">
-            <div className="absolute inset-0 bg-[linear-gradient(to_right,#0000000a_1px,transparent_1px),linear-gradient(to_bottom,#0000000a_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:24px_24px]"></div>
+          <div className="w-full h-full border border-cobalt/20 dark:border-cobalt/30 rounded-xl flex items-center justify-center relative overflow-hidden shadow-[0_0_0_1px_rgba(37,99,235,0.08),0_0_40px_rgba(37,99,235,0.12),inset_0_0_60px_rgba(37,99,235,0.04)] dark:shadow-[0_0_0_1px_rgba(37,99,235,0.15),0_0_60px_rgba(37,99,235,0.2),inset_0_0_80px_rgba(37,99,235,0.06)]">
+            {/* Grid overlay */}
+            <div className="absolute inset-0 bg-[linear-gradient(to_right,#0000000a_1px,transparent_1px),linear-gradient(to_bottom,#0000000a_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,rgba(37,99,235,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(37,99,235,0.04)_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
+            {/* Scanline overlay */}
+            <div className="absolute inset-0 bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(0,0,0,0.015)_2px,rgba(0,0,0,0.015)_4px)] dark:bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(255,255,255,0.01)_2px,rgba(255,255,255,0.01)_4px)] pointer-events-none" />
+            {/* Corner glow accents */}
+            <div className="absolute top-0 left-0 w-32 h-32 bg-cobalt/5 blur-2xl rounded-br-full pointer-events-none" />
+            <div className="absolute bottom-0 right-0 w-32 h-32 bg-cobalt/5 blur-2xl rounded-tl-full pointer-events-none" />
+            {/* Live engine badge */}
+            <div className="absolute top-3 right-3 flex items-center gap-1.5 px-2 py-1 bg-panel/80 dark:bg-black/40 backdrop-blur-sm border border-cobalt/30 rounded-full text-[9px] font-mono text-cobalt font-bold z-10">
+              <span className="w-1.5 h-1.5 rounded-full bg-cobalt animate-pulse" />
+              GEO ENGINE
+            </div>
 
             <AfricaMap
               selectedCountryCodes={selectedCodes}
@@ -177,14 +217,14 @@ export default function Home() {
               timeValue={timeValue}
             />
 
-            {/* Selected Country Banner */}
+            {/* Selected Country Banner — compact on mobile */}
             {selectedCountries.length > 0 && (
-              <div className="absolute top-4 left-4 px-3 py-2 bg-green-500/20 border border-green-500/60 rounded-lg text-[11px] font-mono backdrop-blur-md shadow-lg text-green-400 flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                FILTERING: <strong>{selectedCountries.length === 1 ? selectedCountries[0].name.toUpperCase() : `${selectedCountries.length} COUNTRIES`}</strong>
+              <div className="absolute top-2 left-2 sm:top-4 sm:left-4 px-2 sm:px-3 py-1.5 sm:py-2 bg-green-500/20 border border-green-500/60 rounded-lg text-[10px] font-mono backdrop-blur-md shadow-lg text-green-400 flex items-center gap-1.5 sm:gap-2 max-w-[calc(100%-1rem)]">
+                <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-green-500 animate-pulse shrink-0" />
+                <span className="truncate">FILTERING: <strong>{selectedCountries.length === 1 ? selectedCountries[0].name.toUpperCase() : `${selectedCountries.length} COUNTRIES`}</strong></span>
                 <button
                   onClick={() => setSelectedCodes([])}
-                  className="ml-2 px-1.5 py-0.5 rounded bg-green-500/20 text-green-500 hover:bg-green-500 hover:text-white transition-colors text-[9px] font-bold"
+                  className="ml-1 px-1.5 py-0.5 rounded bg-green-500/20 text-green-500 hover:bg-green-500 hover:text-white transition-colors text-[9px] font-bold shrink-0"
                 >CLEAR</button>
               </div>
             )}
@@ -197,9 +237,9 @@ export default function Home() {
               </div>
             )}
 
-            {/* Time Series Slider overlay */}
-            <div className="absolute bottom-20 inset-x-0 flex justify-center px-4 pointer-events-auto">
-              <div className="bg-panel/90 backdrop-blur-md border border-border rounded-xl p-3 shadow-2xl flex flex-col gap-2 w-full max-w-sm">
+            {/* Time Series Slider — positioned above bottom nav on mobile */}
+            <div className="absolute bottom-[4.5rem] lg:bottom-20 inset-x-0 flex justify-center px-3 lg:px-4 pointer-events-auto">
+              <div className="bg-panel/95 backdrop-blur-md border border-border rounded-xl p-2.5 lg:p-3 shadow-2xl flex flex-col gap-2 w-full max-w-sm">
                 <div className="flex justify-between items-center text-[10px] font-mono font-bold text-slate-light">
                   <span>2015</span>
                   <span className="text-cobalt bg-cobalt/10 px-2 py-0.5 rounded border border-cobalt/30">
@@ -232,29 +272,148 @@ export default function Home() {
       </div>
 
       {/* Fixed Bottom Mobile Navigation */}
-      <div className="flex lg:hidden fixed bottom-0 left-0 right-0 h-16 border-t border-border bg-panel/95 backdrop-blur-md z-50">
+      <div className="flex lg:hidden fixed bottom-0 left-0 right-0 h-16 border-t border-border bg-panel/95 backdrop-blur-md z-50 safe-area-inset-bottom">
         <button
           onClick={() => setMobilePanel("index")}
-          className={`flex flex-1 flex-col items-center justify-center gap-1 transition-all ${mobilePanel === "index" ? "text-cobalt" : "text-slate-light hover:text-foreground"}`}
+          className={`flex flex-1 flex-col items-center justify-center gap-1 transition-all relative ${mobilePanel === "index" ? "text-cobalt" : "text-slate-light"}`}
         >
+          {mobilePanel === "index" && (
+            <span className="absolute top-0 inset-x-4 h-0.5 bg-cobalt rounded-b-full" />
+          )}
           <List className="w-5 h-5" />
           <span className="text-[9px] font-bold tracking-wider">{t("index")}</span>
         </button>
         <button
           onClick={() => setMobilePanel("map")}
-          className={`flex flex-1 flex-col items-center justify-center gap-1 transition-all ${mobilePanel === "map" ? "text-green-500" : "text-slate-light hover:text-foreground"}`}
+          className={`flex flex-1 flex-col items-center justify-center gap-1 transition-all relative ${mobilePanel === "map" ? "text-green-500" : "text-slate-light"}`}
         >
+          {mobilePanel === "map" && (
+            <span className="absolute top-0 inset-x-4 h-0.5 bg-green-500 rounded-b-full" />
+          )}
           <Map className="w-5 h-5" />
           <span className="text-[9px] font-bold tracking-wider">{t("map")}</span>
         </button>
         <button
           onClick={() => setMobilePanel("intel")}
-          className={`flex flex-1 flex-col items-center justify-center gap-1 transition-all ${mobilePanel === "intel" ? "text-orange-500" : "text-slate-light hover:text-foreground"}`}
+          className={`flex flex-1 flex-col items-center justify-center gap-1 transition-all relative ${mobilePanel === "intel" ? "text-orange-500" : "text-slate-light"}`}
         >
+          {mobilePanel === "intel" && (
+            <span className="absolute top-0 inset-x-4 h-0.5 bg-orange-500 rounded-b-full" />
+          )}
           <ShieldAlert className="w-5 h-5" />
           <span className="text-[9px] font-bold tracking-wider">{t("intel")}</span>
         </button>
       </div>
+
+      {/* Mobile Settings Bottom Sheet */}
+      <AnimatePresence>
+        {mobileSettingsOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setMobileSettingsOpen(false)}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] lg:hidden"
+            />
+            {/* Sheet */}
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 30, stiffness: 300 }}
+              className="fixed bottom-0 left-0 right-0 z-[70] lg:hidden bg-panel border-t border-border rounded-t-2xl shadow-2xl pb-8"
+            >
+              {/* Handle */}
+              <div className="flex justify-center pt-3 pb-4">
+                <div className="w-10 h-1 bg-border rounded-full" />
+              </div>
+
+              <div className="px-5 space-y-6">
+                {/* Header */}
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-bold tracking-widest uppercase flex items-center gap-2">
+                    <SlidersHorizontal className="w-4 h-4 text-cobalt" /> Dashboard Controls
+                  </h3>
+                  <button
+                    onClick={() => setMobileSettingsOpen(false)}
+                    className="p-1.5 rounded-lg hover:bg-black/10 dark:hover:bg-white/10 text-slate-light hover:text-foreground transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Mode Toggle */}
+                <div>
+                  <p className="text-[10px] font-mono text-slate-light mb-2 tracking-wider">ANALYSIS MODE</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => { setMode("SOVEREIGNTY"); setMobileSettingsOpen(false); }}
+                      className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold text-sm transition-all border ${mode === "SOVEREIGNTY"
+                        ? "bg-cobalt text-white border-cobalt shadow-[0_0_20px_rgba(37,99,235,0.4)]"
+                        : "bg-background border-border text-slate-light hover:border-cobalt/40"}`}
+                    >
+                      {mode === "SOVEREIGNTY" && <Check className="w-4 h-4" />}
+                      SOVEREIGNTY
+                    </button>
+                    <button
+                      onClick={() => { setMode("OUTSIDE INFLUENCE"); setMobileSettingsOpen(false); }}
+                      className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold text-xs transition-all border ${mode === "OUTSIDE INFLUENCE"
+                        ? "bg-orange-500 text-white border-orange-500 shadow-[0_0_20px_rgba(249,115,22,0.4)]"
+                        : "bg-background border-border text-slate-light hover:border-orange-500/40"}`}
+                    >
+                      {mode === "OUTSIDE INFLUENCE" && <Check className="w-4 h-4" />}
+                      INFLUENCE
+                    </button>
+                  </div>
+                </div>
+
+                {/* Language */}
+                <div>
+                  <p className="text-[10px] font-mono text-slate-light mb-2 tracking-wider">LANGUAGE</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(["en", "fr", "sw"] as Language[]).map(lang => (
+                      <button
+                        key={lang}
+                        onClick={() => { setLanguage(lang); }}
+                        className={`py-2.5 rounded-xl uppercase font-bold text-sm transition-all border ${language === lang
+                          ? "bg-cobalt/20 text-cobalt border-cobalt/40"
+                          : "bg-background border-border text-slate-light"}`}
+                      >
+                        {lang}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Theme */}
+                <div>
+                  <p className="text-[10px] font-mono text-slate-light mb-2 tracking-wider">THEME</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => setTheme("light")}
+                      className={`flex items-center justify-center gap-2 py-2.5 rounded-xl font-bold text-sm transition-all border ${!mounted || theme === "light"
+                        ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/40"
+                        : "bg-background border-border text-slate-light"}`}
+                    >
+                      <Sun className="w-4 h-4" /> LIGHT
+                    </button>
+                    <button
+                      onClick={() => setTheme("dark")}
+                      className={`flex items-center justify-center gap-2 py-2.5 rounded-xl font-bold text-sm transition-all border ${mounted && theme === "dark"
+                        ? "bg-cobalt/10 text-cobalt border-cobalt/40"
+                        : "bg-background border-border text-slate-light"}`}
+                    >
+                      <Moon className="w-4 h-4" /> DARK
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Modals */}
       <MissionModal isOpen={missionOpen} onClose={() => setMissionOpen(false)} />

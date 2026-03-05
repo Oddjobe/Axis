@@ -441,7 +441,7 @@ export default function AfricaMap({ selectedCountryCodes, onToggleCountry, timeV
             </div>
 
             {/* Zoom Controls */}
-            <div className="absolute top-4 right-4 flex flex-col gap-1 bg-panel/80 p-1 border border-border backdrop-blur-md rounded-lg shadow-lg">
+            <div className="absolute top-14 right-4 flex flex-col gap-1 bg-panel/80 p-1 border border-border backdrop-blur-md rounded-lg shadow-lg pointer-events-auto">
                 <button
                     onClick={handleZoomIn}
                     className="p-1.5 hover:bg-background rounded-md transition-colors text-foreground group"
@@ -458,7 +458,7 @@ export default function AfricaMap({ selectedCountryCodes, onToggleCountry, timeV
             </div>
 
             {/* Map Theme Toggle Button */}
-            <div className="absolute top-24 right-4 group/theme z-50">
+            <div className="absolute top-36 right-4 group/theme z-50 pointer-events-auto">
                 <button className="flex items-center gap-2 bg-panel/80 p-2 border border-border backdrop-blur-md rounded-lg shadow-lg hover:bg-background transition-colors pointer-events-auto">
                     <span className="text-[10px] font-bold font-mono text-foreground hidden sm:block">THEME</span>
                     <Layers className="w-4 h-4 text-cobalt" />

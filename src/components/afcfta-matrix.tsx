@@ -99,7 +99,7 @@ export default function AfcftaMatrix({ selectedCodes }: AfcftaMatrixProps) {
 
 
     return (
-        <aside className="w-full lg:w-80 border-r border-border bg-panel backdrop-blur-sm flex flex-col shrink-0">
+        <aside className="w-full lg:w-80 border-r border-border bg-panel backdrop-blur-sm flex flex-col shrink-0 overflow-hidden">
             <div className="p-4 border-b border-border">
                 <h2 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
                     <Activity className="w-4 h-4 text-cobalt" />
@@ -190,20 +190,23 @@ export default function AfcftaMatrix({ selectedCodes }: AfcftaMatrixProps) {
                 </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 font-mono text-sm">
+            <div className="flex-1 overflow-y-auto p-2 sm:p-4 space-y-2 sm:space-y-4 font-mono text-sm">
                 {sortedAndFilteredData.map((data, i) => (
                     <div
                         key={i}
                         onClick={() => {
                             setSelectedCountry(data);
                         }}
-                        className={`p-3 border rounded-md transition-colors cursor-pointer group ${selectedCodes.includes(data.country)
-                            ? "border-green-500 bg-green-50 dark:border-green-500/60 dark:bg-green-500/10"
-                            : "border-border bg-white hover:bg-slate-50 dark:border-border/50 dark:bg-background/50 dark:hover:bg-background/80"
+                        className={`p-2 sm:p-3 border rounded-md transition-all duration-300 cursor-pointer group relative overflow-hidden flex-shrink-0 hover:shadow-md hover:-translate-y-0.5 ${selectedCodes.includes(data.country)
+                            ? "border-green-500 bg-green-50/50 dark:border-green-500/60 dark:bg-green-500/10 shadow-[0_0_15px_rgba(34,197,94,0.15)]"
+                            : "border-border bg-white hover:bg-slate-50 hover:border-cobalt/30 dark:border-border/50 dark:bg-background/50 dark:hover:bg-slate-800/80 dark:hover:border-cobalt/40"
                             }`}
                     >
+                        {/* Animated left border highlight on hover */}
+                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-cobalt opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="absolute inset-0 bg-gradient-to-r from-cobalt/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                         <div className="flex justify-between items-center mb-1">
-                            <span className="font-bold flex items-center gap-2">
+                            <span className="font-bold flex items-center gap-2 group-hover:text-cobalt transition-colors">
                                 <button
                                     onClick={(e) => toggleWatchlist(e, data.country)}
                                     className={`transition-colors hover:scale-110 ${watchlist.includes(data.country) ? 'text-yellow-500' : 'text-slate-light/30 hover:text-yellow-500/50'}`}
@@ -215,35 +218,40 @@ export default function AfcftaMatrix({ selectedCodes }: AfcftaMatrixProps) {
                                     {data.status}
                                 </span>
                             </span>
-                            <span className={`text-xs ${data.trend.startsWith('+') ? 'text-green-500' : 'text-red-500'}`}>
+                            <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded font-black border flex items-center gap-0.5 ${data.trend.startsWith('+') ? 'text-green-500 bg-green-500/10 border-green-500/30' : 'text-red-500 bg-red-500/10 border-red-500/30'}`}>
+                                {data.trend.startsWith('+') ? <TrendingUp className="w-2.5 h-2.5" /> : <TrendingUp className="w-2.5 h-2.5 rotate-180" />}
                                 {data.trend}
                             </span>
                         </div>
 
-                        <div className="text-[10px] text-slate-light mb-3 tracking-wide">
+                        <div className="text-[10px] text-slate-light mb-1.5 sm:mb-3 tracking-wide">
                             {data.name.toUpperCase()}
                         </div>
 
                         <div className="flex justify-between items-center text-[10px] mb-1">
                             <span>AXIS SCORE</span>
-                            <span>{data.axisScore}/100</span>
+                            <span className="font-mono text-xs">{data.axisScore}/100</span>
                         </div>
-                        <div className="h-1.5 bg-border rounded-full overflow-hidden mb-2">
+                        <div className="h-1.5 bg-border rounded-full overflow-hidden mb-1.5 sm:mb-2 relative">
                             <div
-                                className={`h-full transition-all duration-1000 ${getScoreColor(data.axisScore)}`}
+                                className={`absolute top-0 left-0 h-full transition-all duration-1000 ${getScoreColor(data.axisScore)}`}
                                 style={{ width: `${data.axisScore}%` }}
-                            ></div>
+                            />
+                            {/* Inner glow on progress bar */}
+                            <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent mix-blend-overlay" />
                         </div>
 
                         <div className="flex justify-between items-center text-[10px] mb-1">
                             <span>RESOURCE WEALTH</span>
-                            <span>{data.resourceWealth}/100</span>
+                            <span className="font-mono text-xs">{data.resourceWealth}/100</span>
                         </div>
-                        <div className="h-1.5 bg-border rounded-full overflow-hidden mb-2">
+                        <div className="h-1.5 bg-border rounded-full overflow-hidden mb-2 relative">
                             <div
-                                className="h-full transition-all duration-1000 bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]"
+                                className="absolute top-0 left-0 h-full transition-all duration-1000 bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]"
                                 style={{ width: `${data.resourceWealth}%` }}
-                            ></div>
+                            />
+                            {/* Inner glow on progress bar */}
+                            <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent mix-blend-overlay" />
                         </div>
 
                         <div className="flex flex-wrap gap-1 mb-1">

@@ -38,7 +38,7 @@ export default function AnalyticsModal({ isOpen, onClose, data }: AnalyticsModal
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={onClose}
-                        className="fixed inset-0 bg-background/80 backdrop-blur-sm z-[90]"
+                        className="fixed inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-xl z-[90]"
                     />
 
                     {/* Modal Container */}

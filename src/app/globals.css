@@ -62,3 +62,18 @@ body {
 .animate-ticker {
   animation: ticker-marquee 40s linear infinite;
 }
+
+/* Mobile utilities */
+.no-scrollbar::-webkit-scrollbar,
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar,
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+button, a, [role="button"] {
+  touch-action: manipulation;
+}

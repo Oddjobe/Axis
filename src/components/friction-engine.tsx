@@ -317,7 +317,7 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
     }, []);
 
     return (
-        <aside className="w-full lg:w-96 border-l border-border bg-panel backdrop-blur-sm flex flex-col shrink-0 transition-colors">
+        <aside className="w-full lg:w-96 border-l border-border bg-panel backdrop-blur-sm flex flex-col shrink-0 transition-colors overflow-hidden">
 
             {/* Panel Tabs Header */}
             <div className="flex border-b border-border text-xs font-bold tracking-wider pt-2 px-1 gap-0.5">
@@ -452,7 +452,7 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
                                 <span className="w-2 h-2 rounded-full bg-cobalt animate-pulse shadow-[0_0_10px_rgba(37,99,235,0.8)]" />
                                 <span className="text-[10px] font-mono text-cobalt font-bold tracking-widest">TOP STORY</span>
                             </div>
-                            <h2 className="text-lg font-bold text-foreground group-hover:text-white transition-colors leading-tight mb-2 relative z-10 w-[85%]">
+                            <h2 className="text-[17px] sm:text-lg font-bold text-foreground group-hover:text-white transition-colors leading-tight mb-2 relative z-10 w-[85%] line-clamp-2">
                                 {filterCountries && filterCountries.length > 0 ? `${filterCountries.length === 1 ? filterCountries[0].toUpperCase() : 'MULTI-NATION'}: Strategic Resource Agreements Restructure Regional Supply Chains` : "PAPSS processes over $2.8B in intra-African payments since launch."}
                             </h2>
                             <p className="text-xs text-slate-light font-mono line-clamp-2 mb-4 relative z-10">
@@ -558,8 +558,8 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
                                 className="flex items-start gap-3 p-3 border border-red-500/20 bg-red-500/5 rounded-md transition-all hover:bg-red-500/10 hover:border-red-500/40 group cursor-pointer"
                             >
                                 <div className="text-red-500 mt-0.5"><YouTubeIcon /></div>
-                                <div className="flex-1 min-w-0">
-                                    <h3 className="text-sm font-bold leading-tight group-hover:text-red-500 transition-colors mb-0.5">
+                                <div className="flex-1 min-w-0 overflow-hidden">
+                                    <h3 className="text-sm font-bold leading-tight group-hover:text-red-500 transition-colors mb-0.5 truncate">
                                         {channel.name} <span className="text-xs text-red-500/70 inline-block ml-1 opacity-0 group-hover:opacity-100 transition-opacity">↗</span>
                                     </h3>
                                     <div className="text-[10px] font-mono text-slate-light mb-2">

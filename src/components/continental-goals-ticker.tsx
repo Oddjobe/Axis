@@ -44,7 +44,7 @@ export default function ContinentalGoalsTicker() {
     }, []);
 
     return (
-        <footer className="h-10 border-t border-border bg-panel flex items-center overflow-hidden shrink-0 font-mono relative group transition-all">
+        <footer className="h-10 border-t-[1.5px] border-cobalt/40 bg-black/5 dark:bg-black/40 flex items-center overflow-hidden shrink-0 font-mono relative group transition-all shadow-[0_-5px_20px_rgba(37,99,235,0.05)]">
             {/* Fixed Title Box on the Left */}
             <div className="absolute left-0 top-0 bottom-0 bg-cobalt text-white text-[10px] font-bold px-4 flex items-center z-10 shadow-[5px_0_15px_rgba(0,0,0,0.5)] whitespace-nowrap">
                 LIVE COMMODITIES & STRATEGIC EXPORTS //
