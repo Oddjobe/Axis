@@ -90,30 +90,30 @@ export default function AiResourceGraph() {
             const fg = fgRef.current;
             if (!fg) return;
 
-            // Strong charge to push nodes apart
-            fg.d3Force('charge')?.strength(-800).distanceMax(500);
+            // Disable chaotic electrostatic repulsion completely for an IDE-like structured feel
+            fg.d3Force('charge', null);
 
-            // Reasonable link distance
-            fg.d3Force('link')?.distance(120).strength(0.3);
+            // Extremely rigid links so nodes don't rubber-band
+            fg.d3Force('link')?.distance(70).strength(1);
 
             // Remove the default center force (we use custom X/Y)
             fg.d3Force('center', null);
 
             // Import d3-force inline for custom positional forces
             import('d3-force').then(d3 => {
-                // X-axis: push nodes into their column positions (left-to-right flow)
+                // X-axis: rigidly lock nodes into their columns
                 const spread = dimensions.width * 0.32;
                 fg.d3Force('x', d3.forceX((node: GraphNode) => {
                     return -spread + (node.column / 3) * spread * 2;
-                }).strength(0.5));
+                }).strength(1.5));
 
-                // Y-axis: gentle centering
-                fg.d3Force('y', d3.forceY(0).strength(0.1));
+                // Y-axis: stronger centering to maintain a neat horizontal band
+                fg.d3Force('y', d3.forceY(0).strength(0.5));
 
-                // Collision to prevent overlap
+                // Strict collision to prevent any overlap
                 fg.d3Force('collision', d3.forceCollide((node: GraphNode) => {
-                    return Math.sqrt(node.val) * 2.5 + 8;
-                }));
+                    return Math.sqrt(node.val) * 3 + 20;
+                }).iterations(4));
 
                 fg.d3ReheatSimulation();
             });
@@ -222,6 +222,9 @@ export default function AiResourceGraph() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const paintNode = useCallback((node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
         const { id, x, y, val, color, name, group } = node as GraphNode & { x: number, y: number };
+
+        if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+
         const isHovered = hoverNode?.id === id;
         const isConnected = hoverNode ? graphData.links.some(l => {
             const src = typeof l.source === 'string' ? l.source : (l.source as any).id;
@@ -276,13 +279,18 @@ export default function AiResourceGraph() {
             const pillW = textWidth + padding * 3;
             const pillR = pillH / 2;
 
-            ctx.fillStyle = isDark ? 'rgba(15, 23, 42, 0.75)' : 'rgba(255, 255, 255, 0.8)';
+            ctx.fillStyle = isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)';
             ctx.beginPath();
             ctx.roundRect(x - pillW / 2, labelY - padding, pillW, pillH, pillR);
             ctx.fill();
 
+            // Add subtle stroke to the pill itself for more definition
+            ctx.lineWidth = 0.5 / globalScale;
+            ctx.strokeStyle = isDark ? 'rgba(148, 163, 184, 0.2)' : 'rgba(100, 116, 139, 0.2)';
+            ctx.stroke();
+
             // Text
-            ctx.fillStyle = isHovered ? (isDark ? '#fff' : '#0f172a') : (isDark ? '#cbd5e1' : '#334155');
+            ctx.fillStyle = isHovered ? (isDark ? '#fff' : '#0f172a') : (isDark ? '#f8fafc' : '#334155');
             ctx.fillText(text, x, labelY);
         }
 
@@ -293,7 +301,7 @@ export default function AiResourceGraph() {
     const paintLink = useCallback((link: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
         const source = link.source;
         const target = link.target;
-        if (!source || !target || source.x === undefined) return;
+        if (!source || !target || !Number.isFinite(source.x) || !Number.isFinite(source.y) || !Number.isFinite(target.x) || !Number.isFinite(target.y)) return;
 
         const isConnected = hoverNode && (source.id === hoverNode.id || target.id === hoverNode.id);
         const isFaded = hoverNode && !isConnected;
@@ -404,16 +412,17 @@ export default function AiResourceGraph() {
                             linkDirectionalParticleColor={(link: any) => {
                                 return link.source?.color || colors.text;
                             }}
-                            linkDirectionalParticleSpeed={0.004}
-                            d3AlphaDecay={0.025}
-                            d3VelocityDecay={0.4}
+                            linkDirectionalParticleSpeed={0.005}
+                            d3AlphaDecay={0.06} // Settle very quickly
+                            d3VelocityDecay={0.92} // Maximum friction, zero bouncing (feels like dragging in heavy liquid)
+                            warmupTicks={200} // Fully resolve layout before showing
+                            cooldownTicks={100}
                             onNodeHover={(node: any) => handleNodeHover(node)}
                             onNodeDragEnd={(node: any) => {
-                                // Pin node where user drops it
+                                // Pin node where user drops it but allow a little elastic settling
                                 node.fx = node.x;
                                 node.fy = node.y;
                             }}
-                            cooldownTicks={200}
                             onEngineStop={handleEngineStop}
                         />
                     )}
