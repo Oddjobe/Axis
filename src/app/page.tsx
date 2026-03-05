@@ -224,7 +224,7 @@ export default function Home() {
             />
 
             {/* Resource Filter Pills */}
-            <div className="absolute top-2 right-14 sm:top-4 sm:right-16 flex items-center gap-1.5 z-20 overflow-x-auto no-scrollbar max-w-[50vw] sm:max-w-none px-2 py-1">
+            <div className="absolute top-3 left-3 sm:top-4 sm:left-4 flex items-center gap-1.5 z-20 overflow-x-auto no-scrollbar max-w-[50vw] sm:max-w-none px-2 py-1">
               {["Copper", "Cobalt", "Lithium", "Bauxite", "Graphite", "Coltan"].map(res => (
                 <button
                   key={res}
