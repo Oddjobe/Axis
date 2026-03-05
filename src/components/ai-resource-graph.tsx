@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import { useTheme } from "next-themes";
 import { BrainCircuit, Pickaxe, Cpu, Globe } from "lucide-react";
 import * as d3 from 'd3-force';
+import { ALL_SOVEREIGN_DATA } from "@/lib/mock-data";
 
 // Dynamically import to avoid SSR issues with canvas
 const ForceGraph2D = dynamic(() => import('react-force-graph-2d'), { ssr: false });
@@ -139,73 +140,86 @@ export default function AiResourceGraph() {
         nodeBg: isDark ? "rgba(15, 23, 42, 0.85)" : "rgba(255, 255, 255, 0.85)",
     }), [isDark]);
 
-    const graphData = useMemo(() => ({
-        nodes: [
-            // Level 1: African Countries (The Foundation)
-            { id: "COD", group: "country" as NodeType, name: "DR Congo", val: 28, column: 0, color: colors.country, desc: "70% of global Cobalt supply. Massive untapped Lithium and Copper reserves." },
-            { id: "ZMB", group: "country" as NodeType, name: "Zambia", val: 22, column: 0, color: colors.country, desc: "World-class Copper deposits, essential for electrical wiring and cooling systems." },
-            { id: "GIN", group: "country" as NodeType, name: "Guinea", val: 20, column: 0, color: colors.country, desc: "Controls 25% of global Bauxite (aluminum) reserves." },
-            { id: "ZAF", group: "country" as NodeType, name: "South Africa", val: 24, column: 0, color: colors.country, desc: "Primary source of Platinum Group Metals (PGMs) and Manganese." },
-            { id: "ZWE", group: "country" as NodeType, name: "Zimbabwe", val: 18, column: 0, color: colors.country, desc: "Largest Lithium producing nation in Africa." },
-            { id: "MDG", group: "country" as NodeType, name: "Madagascar", val: 16, column: 0, color: colors.country, desc: "Major supplier of flaked Graphite, crucial for battery anodes." },
+    const graphData = useMemo(() => {
+        // Build nodes from all 54 African nations
+        const countryNodes = ALL_SOVEREIGN_DATA.map(c => ({
+            id: c.country,
+            group: 'country' as NodeType,
+            name: c.name,
+            val: Math.max(15, (c.axisScore / 100) * 30),
+            column: 0,
+            color: colors.country,
+            desc: `${c.highlights.join(' | ')}. ${c.keyResources.join(', ')} reserves.`
+        }));
 
-            // Level 2: Critical Minerals
+        const resourceNodes = [
             { id: "Cobalt", group: "resource" as NodeType, name: "Cobalt", val: 20, column: 1, color: colors.resource, desc: "Stabilizes high-density lithium-ion batteries. Prevents thermal runaway." },
             { id: "Copper", group: "resource" as NodeType, name: "Copper", val: 22, column: 1, color: colors.resource, desc: "The nervous system of AI — data center wiring, busbars, chip substrates." },
             { id: "Lithium", group: "resource" as NodeType, name: "Lithium", val: 20, column: 1, color: colors.resource, desc: "Core element for energy storage and backup power systems." },
             { id: "Bauxite", group: "resource" as NodeType, name: "Bauxite", val: 16, column: 1, color: colors.resource, desc: "Refined into Aluminum for server racks, heat sinks, and casings." },
             { id: "Graphite", group: "resource" as NodeType, name: "Graphite", val: 18, column: 1, color: colors.resource, desc: "Largest mineral component by weight in modern battery cells." },
             { id: "Coltan", group: "resource" as NodeType, name: "Coltan", val: 16, column: 1, color: colors.resource, desc: "Refined into Tantalum for high-performance capacitors." },
+        ];
 
-            // Level 3: Refined Components
+        const componentNodes = [
             { id: "Batteries", group: "component" as NodeType, name: "Energy Storage", val: 22, column: 2, color: colors.component, desc: "Grid stabilization and UPS for AI compute facilities." },
             { id: "Semiconductors", group: "component" as NodeType, name: "Semiconductors", val: 24, column: 2, color: colors.component, desc: "Tantalum capacitors and copper interconnects enable nanoscale logic." },
             { id: "Thermal", group: "component" as NodeType, name: "Thermal Systems", val: 18, column: 2, color: colors.component, desc: "Copper and Aluminum heat sinks for cooling AI accelerators." },
             { id: "Grid", group: "component" as NodeType, name: "Power Grid", val: 20, column: 2, color: colors.component, desc: "Massive copper cabling to deliver gigawatts to server farms." },
+        ];
 
-            // Level 4: AI End Products
+        const productNodes = [
             { id: "DataCenters", group: "endProduct" as NodeType, name: "Data Centers", val: 30, column: 3, color: colors.endProduct, desc: "The physical substrate of the cloud — massive power, cooling, raw materials." },
             { id: "GPUs", group: "endProduct" as NodeType, name: "AI Accelerators", val: 28, column: 3, color: colors.endProduct, desc: "GPUs/TPUs — densely packed logic requiring pristine conductive metals." },
             { id: "EdgeAI", group: "endProduct" as NodeType, name: "Edge AI", val: 22, column: 3, color: colors.endProduct, desc: "Autonomous endpoint devices reliant on compact high-density batteries." },
             { id: "LLMs", group: "endProduct" as NodeType, name: "Frontier LLMs", val: 34, column: 3, color: colors.endProduct, desc: "Emergent intelligence — entirely dependent on the physical layers below." }
-        ] as GraphNode[],
-        links: [
-            // Countries -> Resources
-            { source: "COD", target: "Cobalt", value: 8, label: "70% Global" },
-            { source: "COD", target: "Copper", value: 4 },
-            { source: "COD", target: "Coltan", value: 6 },
-            { source: "ZMB", target: "Copper", value: 5 },
-            { source: "GIN", target: "Bauxite", value: 7 },
-            { source: "ZAF", target: "Bauxite", value: 3 },
-            { source: "ZWE", target: "Lithium", value: 6 },
-            { source: "MDG", target: "Graphite", value: 5 },
+        ];
 
-            // Resources -> Components
-            { source: "Cobalt", target: "Batteries", value: 7 },
-            { source: "Lithium", target: "Batteries", value: 7 },
-            { source: "Graphite", target: "Batteries", value: 6 },
-            { source: "Copper", target: "Grid", value: 8 },
-            { source: "Copper", target: "Semiconductors", value: 5 },
-            { source: "Copper", target: "Thermal", value: 4 },
-            { source: "Bauxite", target: "Thermal", value: 5 },
-            { source: "Bauxite", target: "Grid", value: 3 },
-            { source: "Coltan", target: "Semiconductors", value: 6 },
+        // Dynamic links from countries to resources based on actual mock data
+        const dynamicCountryLinks: GraphLink[] = [];
+        ALL_SOVEREIGN_DATA.forEach(c => {
+            const res = c.keyResources.map(r => r.toLowerCase());
+            if (res.some(r => r.includes('cobalt'))) dynamicCountryLinks.push({ source: c.country, target: "Cobalt", value: 6 });
+            if (res.some(r => r.includes('copper'))) dynamicCountryLinks.push({ source: c.country, target: "Copper", value: 6 });
+            if (res.some(r => r.includes('lithium'))) dynamicCountryLinks.push({ source: c.country, target: "Lithium", value: 6 });
+            if (res.some(r => r.includes('bauxite'))) dynamicCountryLinks.push({ source: c.country, target: "Bauxite", value: 6 });
+            if (res.some(r => r.includes('graphite'))) dynamicCountryLinks.push({ source: c.country, target: "Graphite", value: 6 });
+            if (res.some(r => r.includes('coltan') || r.includes('tantalum'))) dynamicCountryLinks.push({ source: c.country, target: "Coltan", value: 6 });
+            // Add a few manual labels for major flows
+            if (c.country === "COD" && res.some(r => r.includes('cobalt'))) dynamicCountryLinks[dynamicCountryLinks.length - 1].label = "70% GLOBAL";
+        });
 
-            // Components -> AI
-            { source: "Batteries", target: "DataCenters", value: 6, label: "UPS" },
-            { source: "Batteries", target: "EdgeAI", value: 8 },
-            { source: "Grid", target: "DataCenters", value: 9, label: "GW Power" },
-            { source: "Semiconductors", target: "GPUs", value: 10 },
-            { source: "Semiconductors", target: "EdgeAI", value: 6 },
-            { source: "Thermal", target: "DataCenters", value: 7 },
-            { source: "Thermal", target: "GPUs", value: 8 },
+        return {
+            nodes: [...countryNodes, ...resourceNodes, ...componentNodes, ...productNodes],
+            links: [
+                ...dynamicCountryLinks,
+                // Resources -> Components
+                { source: "Cobalt", target: "Batteries", value: 7 },
+                { source: "Lithium", target: "Batteries", value: 7 },
+                { source: "Graphite", target: "Batteries", value: 6 },
+                { source: "Copper", target: "Grid", value: 8 },
+                { source: "Copper", target: "Semiconductors", value: 5 },
+                { source: "Copper", target: "Thermal", value: 4 },
+                { source: "Bauxite", target: "Thermal", value: 5 },
+                { source: "Bauxite", target: "Grid", value: 3 },
+                { source: "Coltan", target: "Semiconductors", value: 6 },
 
-            // Top Level
-            { source: "DataCenters", target: "LLMs", value: 10, label: "Compute" },
-            { source: "GPUs", target: "DataCenters", value: 9 },
-            { source: "GPUs", target: "LLMs", value: 8 }
-        ] as GraphLink[]
-    }), [colors]);
+                // Components -> AI
+                { source: "Batteries", target: "DataCenters", value: 6, label: "UPS" },
+                { source: "Batteries", target: "EdgeAI", value: 8 },
+                { source: "Grid", target: "DataCenters", value: 9, label: "GW Power" },
+                { source: "Semiconductors", target: "GPUs", value: 10 },
+                { source: "Semiconductors", target: "EdgeAI", value: 6 },
+                { source: "Thermal", target: "DataCenters", value: 7 },
+                { source: "Thermal", target: "GPUs", value: 8 },
+
+                // Top Level
+                { source: "DataCenters", target: "LLMs", value: 10, label: "Compute" },
+                { source: "GPUs", target: "DataCenters", value: 9 },
+                { source: "GPUs", target: "LLMs", value: 8 }
+            ] as GraphLink[]
+        };
+    }, [colors]);
 
     // X-position target for each column (fraction of width, centered around 0)
     const getColumnX = useCallback((column: number) => {
@@ -451,7 +465,7 @@ export default function AiResourceGraph() {
                         <p className={`text-xs leading-relaxed ${isDark ? 'text-zinc-300' : 'text-zinc-600'}`}>{hoverNode.desc}</p>
                         <div className="mt-2.5 pt-2.5 flex justify-between" style={{ borderTop: `1px solid ${isDark ? '#27272a' : '#e4e4e7'}` }}>
                             <div className="flex flex-col">
-                                <span className={`text-[7px] font-mono uppercase ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>Flow Weight</span>
+                                <span className={`text-[7px] font-mono uppercase ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>Sovereign Score</span>
                                 <span className={`text-xs font-mono font-bold ${isDark ? 'text-white' : 'text-zinc-900'}`}>{hoverNode.val.toFixed(0)}</span>
                             </div>
                             <div className="flex flex-col text-right">
