@@ -10,8 +10,9 @@ import type { CountryData } from "@/components/country-dossier-modal"
 
 interface AfricaMapProps {
     selectedCountryCodes: string[];
-    onToggleCountry: (code: string) => void;
+    onToggleCountry: (code: string, isShift?: boolean) => void;
     timeValue?: number;
+    selectedResource?: string | null;
 }
 
 export type MapTheme = "SOVEREIGNTY" | "RESOURCE_WEALTH" | "FDI_TREND" | "BASE";
@@ -94,7 +95,7 @@ const getSeverity = (score: number): "high" | "medium" | "low" => {
 
 const geoUrl = "/world.json";
 
-export default function AfricaMap({ selectedCountryCodes, onToggleCountry, timeValue }: AfricaMapProps) {
+export default function AfricaMap({ selectedCountryCodes, onToggleCountry, timeValue, selectedResource }: AfricaMapProps) {
     const { theme } = useTheme();
     const [tooltip, setTooltip] = useState({ show: false, content: "", data: null as CountryData | null, x: 0, y: 0 });
     const [position, setPosition] = useState({ coordinates: [0, 0], zoom: 1 });
@@ -291,16 +292,17 @@ export default function AfricaMap({ selectedCountryCodes, onToggleCountry, timeV
                                 const cData = getCountryData(geo.properties.name);
                                 const isSelected = cData ? selectedCountryCodes.includes(cData.country) : false;
                                 const heatFill = getThemeColor(cData, isDark);
+                                const isResourceMatch = selectedResource && cData?.keyResources?.some(r => r.toLowerCase().includes(selectedResource.toLowerCase()));
 
                                 return (
                                     <Geography
                                         key={geo.rsmKey}
                                         geography={geo}
-                                        stroke={isSelected ? "rgba(0, 255, 128, 1)" : mapConfig.stroke}
-                                        strokeWidth={isSelected ? 1.5 : 0.5}
-                                        onClick={() => {
+                                        stroke={isSelected ? "rgba(0, 255, 128, 1)" : (isResourceMatch ? "rgba(245, 158, 11, 1)" : mapConfig.stroke)}
+                                        strokeWidth={isSelected ? 1.5 : (isResourceMatch ? 1.2 : 0.5)}
+                                        onClick={(e) => {
                                             if (cData) {
-                                                onToggleCountry(cData.country);
+                                                onToggleCountry(cData.country, e.shiftKey);
                                             }
                                         }}
                                         onMouseEnter={(e) => {
@@ -321,7 +323,7 @@ export default function AfricaMap({ selectedCountryCodes, onToggleCountry, timeV
                                                 fill: isSelected ? mapConfig.active : heatFill,
                                                 outline: "none",
                                                 transition: "all 250ms",
-                                                filter: isSelected ? `drop-shadow(0px 0px 8px ${mapConfig.glowInfo})` : "none",
+                                                filter: isSelected ? `drop-shadow(0px 0px 8px ${mapConfig.glowInfo})` : (isResourceMatch ? "drop-shadow(0px 0px 4px rgba(245, 158, 11, 0.4))" : "none"),
                                             },
                                             hover: {
                                                 fill: mapConfig.hover,

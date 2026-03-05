@@ -28,6 +28,7 @@ export default function Home() {
   const [analyticsOpen, setAnalyticsOpen] = useState(false);
   const [mobilePanel, setMobilePanel] = useState<"map" | "index" | "intel">("map");
   const [mobileSettingsOpen, setMobileSettingsOpen] = useState(false);
+  const [selectedResource, setSelectedResource] = useState<string | null>(null);
   const currentYear = new Date().getFullYear();
   const [timeValue, setTimeValue] = useState(currentYear);
   const [language, setLanguage] = useState<Language>("en");
@@ -211,11 +212,39 @@ export default function Home() {
 
             <AfricaMap
               selectedCountryCodes={selectedCodes}
-              onToggleCountry={(code) => {
-                setSelectedCodes(prev => prev.includes(code) ? prev.filter(c => c !== code) : [...prev, code]);
+              onToggleCountry={(code, isShift) => {
+                if (isShift) {
+                  setSelectedCodes(prev => prev.includes(code) ? prev.filter(c => c !== code) : [...prev, code]);
+                } else {
+                  setSelectedCodes(prev => prev.length === 1 && prev[0] === code ? [] : [code]);
+                }
               }}
               timeValue={timeValue}
+              selectedResource={selectedResource}
             />
+
+            {/* Resource Filter Pills */}
+            <div className="absolute top-2 right-14 sm:top-4 sm:right-16 flex items-center gap-1.5 z-20 overflow-x-auto no-scrollbar max-w-[50vw] sm:max-w-none px-2 py-1">
+              {["Copper", "Cobalt", "Lithium", "Bauxite", "Graphite", "Coltan"].map(res => (
+                <button
+                  key={res}
+                  onClick={() => setSelectedResource(prev => prev === res ? null : res)}
+                  className={`px-2 py-1 rounded-full text-[9px] font-bold border transition-all whitespace-nowrap shadow-sm ${selectedResource === res
+                    ? "bg-amber-500 text-white border-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.4)]"
+                    : "bg-panel/80 border-border text-slate-light hover:border-amber-500/40 hover:text-amber-500 backdrop-blur-md"}`}
+                >
+                  {res.toUpperCase()}
+                </button>
+              ))}
+              {selectedResource && (
+                <button
+                  onClick={() => setSelectedResource(null)}
+                  className="p-1 rounded-full bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500 hover:text-white transition-colors"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+            </div>
 
             {/* Selected Country Banner — compact on mobile */}
             {selectedCountries.length > 0 && (
@@ -417,7 +446,12 @@ export default function Home() {
 
       {/* Modals */}
       <MissionModal isOpen={missionOpen} onClose={() => setMissionOpen(false)} />
-      <AnalyticsModal isOpen={analyticsOpen} onClose={() => setAnalyticsOpen(false)} data={countryDataMaster} />
+      <AnalyticsModal
+        isOpen={analyticsOpen}
+        onClose={() => setAnalyticsOpen(false)}
+        data={countryDataMaster}
+        selectedResource={selectedResource}
+      />
     </div>
   );
 }

@@ -43,7 +43,7 @@ const COLUMN_MAP: Record<NodeType, number> = {
     endProduct: 3,
 };
 
-export default function AiResourceGraph() {
+export default function AiResourceGraph({ selectedResource = null }: { selectedResource?: string | null }) {
     const { theme } = useTheme();
     const containerRef = useRef<HTMLDivElement>(null);
     const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
@@ -141,8 +141,13 @@ export default function AiResourceGraph() {
     }), [isDark]);
 
     const graphData = useMemo(() => {
-        // Build nodes from all 54 African nations
-        const countryNodes = ALL_SOVEREIGN_DATA.map(c => ({
+        // Filter logic: if a resource is selected, only show countries that produce it
+        // and the path through that specific resource.
+        const filteredAllSovereign = selectedResource
+            ? ALL_SOVEREIGN_DATA.filter(c => c.keyResources.some(r => r.toLowerCase().includes(selectedResource.toLowerCase())))
+            : ALL_SOVEREIGN_DATA;
+
+        const countryNodes = filteredAllSovereign.map(c => ({
             id: c.country,
             group: 'country' as NodeType,
             name: c.name,
@@ -152,7 +157,7 @@ export default function AiResourceGraph() {
             desc: `${c.highlights.join(' | ')}. ${c.keyResources.join(', ')} reserves.`
         }));
 
-        const resourceNodes = [
+        const allResourceNodes = [
             { id: "Cobalt", group: "resource" as NodeType, name: "Cobalt", val: 20, column: 1, color: colors.resource, desc: "Stabilizes high-density lithium-ion batteries. Prevents thermal runaway." },
             { id: "Copper", group: "resource" as NodeType, name: "Copper", val: 22, column: 1, color: colors.resource, desc: "The nervous system of AI — data center wiring, busbars, chip substrates." },
             { id: "Lithium", group: "resource" as NodeType, name: "Lithium", val: 20, column: 1, color: colors.resource, desc: "Core element for energy storage and backup power systems." },
@@ -160,6 +165,10 @@ export default function AiResourceGraph() {
             { id: "Graphite", group: "resource" as NodeType, name: "Graphite", val: 18, column: 1, color: colors.resource, desc: "Largest mineral component by weight in modern battery cells." },
             { id: "Coltan", group: "resource" as NodeType, name: "Coltan", val: 16, column: 1, color: colors.resource, desc: "Refined into Tantalum for high-performance capacitors." },
         ];
+
+        const resourceNodes = selectedResource
+            ? allResourceNodes.filter(n => n.id.toLowerCase().includes(selectedResource.toLowerCase()))
+            : allResourceNodes;
 
         const componentNodes = [
             { id: "Batteries", group: "component" as NodeType, name: "Energy Storage", val: 22, column: 2, color: colors.component, desc: "Grid stabilization and UPS for AI compute facilities." },
@@ -175,9 +184,9 @@ export default function AiResourceGraph() {
             { id: "LLMs", group: "endProduct" as NodeType, name: "Frontier LLMs", val: 34, column: 3, color: colors.endProduct, desc: "Emergent intelligence — entirely dependent on the physical layers below." }
         ];
 
-        // Dynamic links from countries to resources based on actual mock data
+        // Dynamic links from countries to resources
         const dynamicCountryLinks: GraphLink[] = [];
-        ALL_SOVEREIGN_DATA.forEach(c => {
+        filteredAllSovereign.forEach(c => {
             const res = c.keyResources.map(r => r.toLowerCase());
             if (res.some(r => r.includes('cobalt'))) dynamicCountryLinks.push({ source: c.country, target: "Cobalt", value: 6 });
             if (res.some(r => r.includes('copper'))) dynamicCountryLinks.push({ source: c.country, target: "Copper", value: 6 });
@@ -185,41 +194,53 @@ export default function AiResourceGraph() {
             if (res.some(r => r.includes('bauxite'))) dynamicCountryLinks.push({ source: c.country, target: "Bauxite", value: 6 });
             if (res.some(r => r.includes('graphite'))) dynamicCountryLinks.push({ source: c.country, target: "Graphite", value: 6 });
             if (res.some(r => r.includes('coltan') || r.includes('tantalum'))) dynamicCountryLinks.push({ source: c.country, target: "Coltan", value: 6 });
-            // Add a few manual labels for major flows
             if (c.country === "COD" && res.some(r => r.includes('cobalt'))) dynamicCountryLinks[dynamicCountryLinks.length - 1].label = "70% GLOBAL";
         });
 
+        // Further filter dynamicCountryLinks if selectedResource is set
+        const finalCountryLinks = selectedResource
+            ? dynamicCountryLinks.filter(l => l.target.toLowerCase().includes(selectedResource.toLowerCase()))
+            : dynamicCountryLinks;
+
+        const baseLinks = [
+            // Resources -> Components
+            { source: "Cobalt", target: "Batteries", value: 7 },
+            { source: "Lithium", target: "Batteries", value: 7 },
+            { source: "Graphite", target: "Batteries", value: 6 },
+            { source: "Copper", target: "Grid", value: 8 },
+            { source: "Copper", target: "Semiconductors", value: 5 },
+            { source: "Copper", target: "Thermal", value: 4 },
+            { source: "Bauxite", target: "Thermal", value: 5 },
+            { source: "Bauxite", target: "Grid", value: 3 },
+            { source: "Coltan", target: "Semiconductors", value: 6 },
+
+            // Components -> AI
+            { source: "Batteries", target: "DataCenters", value: 6, label: "UPS" },
+            { source: "Batteries", target: "EdgeAI", value: 8 },
+            { source: "Grid", target: "DataCenters", value: 9, label: "GW Power" },
+            { source: "Semiconductors", target: "GPUs", value: 10 },
+            { source: "Semiconductors", target: "EdgeAI", value: 6 },
+            { source: "Thermal", target: "DataCenters", value: 7 },
+            { source: "Thermal", target: "GPUs", value: 8 },
+
+            // Top Level
+            { source: "DataCenters", target: "LLMs", value: 10, label: "Compute" },
+            { source: "GPUs", target: "DataCenters", value: 9 },
+            { source: "GPUs", target: "LLMs", value: 8 }
+        ] as GraphLink[];
+
+        // Filter baseLinks if selectedResource is set
+        const finalBaseLinks = selectedResource
+            ? baseLinks.filter(l => l.source.toLowerCase().includes(selectedResource.toLowerCase()) ||
+                // Keep all downstream links if the source is one of the resource's targets
+                baseLinks.some(prevL => prevL.source.toLowerCase().includes(selectedResource.toLowerCase()) && prevL.target === l.source))
+            : baseLinks;
+
         return {
             nodes: [...countryNodes, ...resourceNodes, ...componentNodes, ...productNodes],
-            links: [
-                ...dynamicCountryLinks,
-                // Resources -> Components
-                { source: "Cobalt", target: "Batteries", value: 7 },
-                { source: "Lithium", target: "Batteries", value: 7 },
-                { source: "Graphite", target: "Batteries", value: 6 },
-                { source: "Copper", target: "Grid", value: 8 },
-                { source: "Copper", target: "Semiconductors", value: 5 },
-                { source: "Copper", target: "Thermal", value: 4 },
-                { source: "Bauxite", target: "Thermal", value: 5 },
-                { source: "Bauxite", target: "Grid", value: 3 },
-                { source: "Coltan", target: "Semiconductors", value: 6 },
-
-                // Components -> AI
-                { source: "Batteries", target: "DataCenters", value: 6, label: "UPS" },
-                { source: "Batteries", target: "EdgeAI", value: 8 },
-                { source: "Grid", target: "DataCenters", value: 9, label: "GW Power" },
-                { source: "Semiconductors", target: "GPUs", value: 10 },
-                { source: "Semiconductors", target: "EdgeAI", value: 6 },
-                { source: "Thermal", target: "DataCenters", value: 7 },
-                { source: "Thermal", target: "GPUs", value: 8 },
-
-                // Top Level
-                { source: "DataCenters", target: "LLMs", value: 10, label: "Compute" },
-                { source: "GPUs", target: "DataCenters", value: 9 },
-                { source: "GPUs", target: "LLMs", value: 8 }
-            ] as GraphLink[]
+            links: [...finalCountryLinks, ...finalBaseLinks]
         };
-    }, [colors]);
+    }, [colors, selectedResource]);
 
     // X-position target for each column (fraction of width, centered around 0)
     const getColumnX = useCallback((column: number) => {

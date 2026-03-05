@@ -13,11 +13,12 @@ interface AnalyticsModalProps {
     isOpen: boolean;
     onClose: () => void;
     data: CountryData[];
+    selectedResource?: string | null;
 }
 
 type TabType = "SCATTER" | "TRENDS" | "FLOWS" | "NEXUS";
 
-export default function AnalyticsModal({ isOpen, onClose, data }: AnalyticsModalProps) {
+export default function AnalyticsModal({ isOpen, onClose, data, selectedResource }: AnalyticsModalProps) {
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [activeTab, setActiveTab] = useState<TabType>("SCATTER");
     const [contentReady, setContentReady] = useState(false);
@@ -239,7 +240,7 @@ export default function AnalyticsModal({ isOpen, onClose, data }: AnalyticsModal
                                             transition={{ duration: 0.2 }}
                                             className="h-full bg-background border border-border rounded-xl p-4 flex flex-col min-h-[400px]"
                                         >
-                                            <AiResourceGraph />
+                                            <AiResourceGraph selectedResource={selectedResource} />
                                         </motion.div>
                                     )}
                                 </>)}
