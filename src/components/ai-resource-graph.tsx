@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import dynamic from 'next/dynamic';
 import { useTheme } from "next-themes";
 import { BrainCircuit, Pickaxe, Cpu, Globe } from "lucide-react";
+import * as d3 from 'd3-force';
 
 // Dynamically import to avoid SSR issues with canvas
 const ForceGraph2D = dynamic(() => import('react-force-graph-2d'), { ssr: false });
@@ -48,6 +49,7 @@ export default function AiResourceGraph() {
     const [mounted, setMounted] = useState(false);
     const [hoverNode, setHoverNode] = useState<GraphNode | null>(null);
     const [isStabilized, setIsStabilized] = useState(false);
+    const [forcesReady, setForcesReady] = useState(false);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const fgRef = useRef<any>(null);
@@ -84,43 +86,42 @@ export default function AiResourceGraph() {
 
     // Configure forces after the graph engine is available
     useEffect(() => {
-        if (!mounted || !fgRef.current) return;
+        if (!mounted || !fgRef.current || !forcesReady) return;
 
-        const timer = setTimeout(() => {
-            const fg = fgRef.current;
-            if (!fg) return;
+        const fg = fgRef.current;
 
-            // Disable chaotic electrostatic repulsion completely for an IDE-like structured feel
-            fg.d3Force('charge', null);
+        // Robustly disable default forces by setting strength to 0
+        // Some versions of react-force-graph/d3-force might not handle null well
+        fg.d3Force('charge', d3.forceManyBody().strength(0));
+        fg.d3Force('center', d3.forceCenter(0, 0).strength(0));
 
-            // Extremely rigid links so nodes don't rubber-band
-            fg.d3Force('link')?.distance(70).strength(1);
+        // Extremely rigid links so nodes don't rubber-band
+        fg.d3Force('link')?.distance(80).strength(1);
 
-            // Remove the default center force (we use custom X/Y)
-            fg.d3Force('center', null);
+        // X-axis: rigidly lock nodes into their columns with high strength
+        const spread = dimensions.width * 0.35;
+        fg.d3Force('x', d3.forceX((node: any) => {
+            return -spread + ((node.column || 0) / 3) * spread * 2;
+        }).strength(2.0));
 
-            // Import d3-force inline for custom positional forces
-            import('d3-force').then(d3 => {
-                // X-axis: rigidly lock nodes into their columns
-                const spread = dimensions.width * 0.32;
-                fg.d3Force('x', d3.forceX((node: GraphNode) => {
-                    return -spread + (node.column / 3) * spread * 2;
-                }).strength(1.5));
+        // Y-axis: medium centering to maintain a neat horizontal band
+        fg.d3Force('y', d3.forceY(0).strength(0.6));
 
-                // Y-axis: stronger centering to maintain a neat horizontal band
-                fg.d3Force('y', d3.forceY(0).strength(0.5));
+        // Strict collision to prevent any overlap
+        fg.d3Force('collision', d3.forceCollide((node: any) => {
+            return Math.sqrt(node.val || 10) * 3 + 25;
+        }).iterations(4));
 
-                // Strict collision to prevent any overlap
-                fg.d3Force('collision', d3.forceCollide((node: GraphNode) => {
-                    return Math.sqrt(node.val) * 3 + 20;
-                }).iterations(4));
+        // Important: Reheat to apply these changes to the internal simulation state
+        fg.d3ReheatSimulation();
+    }, [mounted, dimensions.width, forcesReady]);
 
-                fg.d3ReheatSimulation();
-            });
-        }, 300);
-
-        return () => clearTimeout(timer);
-    }, [mounted, dimensions.width]);
+    // Initial mount to signal we are ready to set forces
+    useEffect(() => {
+        if (mounted && fgRef.current) {
+            setForcesReady(true);
+        }
+    }, [mounted]);
 
     const isDark = mounted ? (theme === "dark" || theme === "system" || !theme) : true;
 
@@ -395,7 +396,7 @@ export default function AiResourceGraph() {
                             ref={fgRef}
                             width={dimensions.width}
                             height={dimensions.height}
-                            graphData={graphData}
+                            graphData={forcesReady ? graphData : { nodes: [], links: [] }}
                             nodeLabel=""
                             nodeCanvasObject={paintNode}
                             nodeCanvasObjectMode={() => 'replace'}
@@ -414,7 +415,7 @@ export default function AiResourceGraph() {
                             }}
                             linkDirectionalParticleSpeed={0.005}
                             d3AlphaDecay={0.06} // Settle very quickly
-                            d3VelocityDecay={0.92} // Maximum friction, zero bouncing (feels like dragging in heavy liquid)
+                            d3VelocityDecay={0.92} // Maximum friction, zero bouncing
                             warmupTicks={200} // Fully resolve layout before showing
                             cooldownTicks={100}
                             onNodeHover={(node: any) => handleNodeHover(node)}
