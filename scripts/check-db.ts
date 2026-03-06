@@ -12,8 +12,13 @@ async function check() {
     const { count: intelCount, error: err1 } = await supabase.from('intelligence_alerts').select('*', { count: 'exact', head: true });
     const { count: blogCount, error: err2 } = await supabase.from('blog_posts').select('*', { count: 'exact', head: true });
 
+    const { data: alerts } = await supabase.from('intelligence_alerts').select('*').limit(3);
+    const { data: blogs } = await supabase.from('blog_posts').select('*').limit(3);
+
     console.log(`Intel count: ${intelCount}`);
     console.log(`Blog count: ${blogCount}`);
+    console.log('Sample Alerts:', JSON.stringify(alerts, null, 2));
+    console.log('Sample Blogs:', JSON.stringify(blogs, null, 2));
 }
 
 check();

@@ -70,10 +70,10 @@ export default function AiBriefingModal({ isOpen, onClose }: AiBriefingModalProp
                                     <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse border-2 border-black" />
                                 </div>
                                 <div>
-                                    <h2 className="text-sm font-bold tracking-[0.2em] text-foreground">EXECUTIVE SITREP // v2.4</h2>
+                                    <h2 className="text-sm font-bold tracking-[0.2em] text-foreground uppercase">Continental Sovereignty Report</h2>
                                     <div className="flex items-center gap-2 mt-0.5">
                                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                        <span className="text-[9px] text-emerald-500/80 font-bold uppercase tracking-widest">{data?.status || 'INITIALIZING...'}</span>
+                                        <span className="text-[9px] text-emerald-500/80 font-bold uppercase tracking-widest">{data?.status || 'Active Continental Analysis'}</span>
                                         <span className="text-[9px] text-slate-light ml-2 uppercase opacity-50 flex items-center gap-1">
                                             <Clock className="w-2.5 h-2.5" />
                                             {data?.timestamp ? new Date(data.timestamp).toLocaleTimeString() : '--:--'}
@@ -93,7 +93,7 @@ export default function AiBriefingModal({ isOpen, onClose }: AiBriefingModalProp
                             {loading ? (
                                 <div className="flex flex-col items-center justify-center py-20 gap-4">
                                     <div className="w-10 h-10 border-2 border-cobalt/20 border-t-cobalt rounded-full animate-spin" />
-                                    <span className="text-[10px] text-cobalt tracking-[0.3em] font-bold animate-pulse">SYNTHESIZING VETTED INTEL...</span>
+                                    <span className="text-[10px] text-cobalt tracking-[0.3em] font-bold animate-pulse">SYNTHESIZING CONTINENTAL DATA...</span>
                                 </div>
                             ) : (
                                 <>
@@ -103,10 +103,10 @@ export default function AiBriefingModal({ isOpen, onClose }: AiBriefingModalProp
                                         <div className="relative p-4 bg-background/40 border border-border rounded-xl">
                                             <div className="flex items-center gap-2 mb-3">
                                                 <Zap className="w-4 h-4 text-amber-500" />
-                                                <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest">STRATEGIC OVERVIEW</span>
+                                                <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest">Strategic Pan-African Overview</span>
                                             </div>
-                                            <p className="text-xs leading-relaxed text-slate-light/90 italic">
-                                                "{data?.overview}"
+                                            <p className="text-xs leading-relaxed text-slate-light/90">
+                                                {data?.overview}
                                             </p>
                                         </div>
                                     </div>
@@ -134,9 +134,9 @@ export default function AiBriefingModal({ isOpen, onClose }: AiBriefingModalProp
 
                                     {/* Risks & Threats */}
                                     <div className="space-y-4">
-                                        <h3 className="text-[10px] font-bold text-red-500 flex items-center gap-2 tracking-[0.2em] mb-4">
+                                        <h3 className="text-[10px] font-bold text-red-500 flex items-center gap-2 tracking-[0.2em] mb-4 uppercase">
                                             <AlertTriangle className="w-4 h-4" />
-                                            CRITICAL THREAT VECTORS
+                                            Continental Development Risks
                                         </h3>
                                         <div className="grid grid-cols-1 gap-3">
                                             {data?.risks.map((risk, i) => (
@@ -157,7 +157,7 @@ export default function AiBriefingModal({ isOpen, onClose }: AiBriefingModalProp
                                     <div className="space-y-4">
                                         <h3 className="text-[10px] font-bold text-emerald-500 flex items-center gap-2 tracking-[0.2em] mb-4 uppercase">
                                             <ShieldCheck className="w-4 h-4" />
-                                            Sovereignty Growth Markers
+                                            Sovereignty & AfCFTA Growth Markers
                                         </h3>
                                         <div className="grid grid-cols-1 gap-3">
                                             {data?.opportunities.map((opp, i) => (
