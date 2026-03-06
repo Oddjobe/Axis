@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState, useRef } from "react"
-import { ShieldAlert, Newspaper, Video, BookOpen, Lightbulb, Globe, Play, Square, Pause, Star } from "lucide-react"
+import { ShieldAlert, Newspaper, Video, BookOpen, Lightbulb, Globe, Play, Square, Pause, Star, ChevronRight } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { supabase } from "@/lib/supabase"
 import { useWatchlist } from "@/lib/use-watchlist"
@@ -58,6 +58,8 @@ interface Article {
     timeAgo: string
     source?: string
     timestamp?: string
+    url?: string
+    imageUrl?: string
 }
 
 interface BlogPost {
@@ -66,6 +68,7 @@ interface BlogPost {
     author: string
     tag: string
     url: string
+    imageUrl?: string
 }
 
 export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVEREIGNTY" | "OUTSIDE INFLUENCE"; filterCountries: string[] | null }) {
@@ -394,26 +397,18 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
                                             initial={{ opacity: 0, x: 20 }}
                                             animate={{ opacity: 1, x: 0 }}
                                             transition={{ delay: idx * 0.1, duration: 0.3 }}
-                                            className="p-3 border border-orange-500/20 bg-white hover:bg-orange-50 dark:bg-orange-500/5 rounded-md transition-all dark:hover:bg-orange-500/10 hover:shadow-[0_0_15px_rgba(249,115,22,0.1)] cursor-default"
+                                            className="p-3 border border-orange-500/20 bg-white hover:bg-orange-50 dark:bg-orange-500/5 rounded-md transition-all dark:hover:bg-orange-500/10 hover:shadow-[0_0_15px_rgba(249,115,22,0.1)] group relative overflow-hidden"
                                         >
-                                            <div className="text-[10px] font-mono text-orange-400 mb-1 flex justify-between items-start gap-4">
+                                            <div className="text-[10px] font-mono text-orange-400 mb-1 flex justify-between items-start gap-4 relaitve z-10">
                                                 <span className="leading-tight">{alert.title}</span>
                                                 <div className="flex flex-col items-end text-right shrink-0">
                                                     <span className="opacity-80 font-bold text-orange-500">
-                                                        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                                                         {getLiveTimeAgo((alert as any).timestamp)}
                                                     </span>
-                                                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                                                    {isMounted && (alert as any).timestamp && (
-                                                        <span className="opacity-40 text-[8.5px] mt-0.5 whitespace-nowrap">
-                                                            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                                                            {new Date((alert as any).timestamp).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                                                        </span>
-                                                    )}
                                                 </div>
                                             </div>
-                                            <p className="text-sm text-foreground/90">{alert.summary}</p>
-                                            <div className="mt-3 flex gap-2">
+                                            <p className="text-sm text-foreground/90 relative z-10">{alert.summary}</p>
+                                            <div className="mt-3 flex gap-2 relative z-10">
                                                 <span className={`text-[10px] px-2 py-0.5 bg-background border rounded font-bold ${alert.severity === "HIGH" ? "border-red-500/50 text-red-500 shadow-[0_0_8px_rgba(239,68,68,0.3)]" :
                                                     alert.severity === "MEDIUM" ? "border-orange-500/50 text-orange-500" :
                                                         "border-yellow-500/50 text-yellow-500"
@@ -425,6 +420,16 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
                                                     {alert.isoCode}
                                                 </span>
                                             </div>
+                                            {alert.url && (
+                                                <a
+                                                    href={alert.url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="absolute top-2 right-2 p-1.5 rounded bg-orange-500/10 text-orange-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                >
+                                                    <Globe className="w-3 h-3" />
+                                                </a>
+                                            )}
                                         </motion.div>
                                     );
                                 })}
@@ -469,22 +474,29 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
                         <div className="text-[10px] font-mono text-slate-light border-b border-border pb-1 mt-6 mb-2">MACROECONOMIC CONTEXT & FORESIGHT</div>
 
                         {filteredAlerts.slice(1, 8).map((news, idx) => (
-                            <div
+                            <a
                                 key={idx}
-                                className="flex items-start gap-3 p-3 border border-border/50 bg-white dark:bg-background/30 rounded-md transition-all hover:bg-slate-50 dark:hover:bg-background/80 hover:border-cobalt/40 group cursor-default"
+                                href={news.url || "#"}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-start gap-3 p-3 border border-border/50 bg-white dark:bg-background/30 rounded-md transition-all hover:bg-slate-50 dark:hover:bg-background/80 hover:border-cobalt/40 group overflow-hidden"
                             >
-                                <div className={`mt-0.5 text-cobalt`}><Newspaper className="w-4 h-4" /></div>
-                                <div className="flex-1 min-w-0">
-                                    <h3 className="text-sm font-bold mb-1 leading-tight text-foreground/90 group-hover:text-cobalt transition-colors">{news.title}</h3>
-                                    <div className="flex justify-between items-center text-[10px] font-mono text-slate-light mt-2">
-                                        <span className="text-cobalt">{news.source || "OSINT WIRE"}</span>
-                                        <span>{getLiveTimeAgo((news as any).timestamp)}</span>
+                                {news.imageUrl && (
+                                    <div className="h-16 w-16 shrink-0 rounded overflow-hidden border border-border bg-onyx-light">
+                                        <img src={news.imageUrl} alt="" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" />
                                     </div>
-                                    <div className="mt-2 text-[9px] px-1.5 py-0.5 bg-border/30 rounded border border-border/50 inline-block font-mono bg-white/5 dark:bg-black/20">
-                                        TAG: {news.isoCode}
+                                )}
+                                <div className="flex-1 min-w-0">
+                                    <h3 className="text-[13px] font-bold mb-1 leading-tight text-foreground/90 group-hover:text-cobalt transition-colors line-clamp-2">{news.title}</h3>
+                                    <div className="flex justify-between items-center text-[9px] font-mono text-slate-light mt-2">
+                                        <span className="text-cobalt font-bold uppercase tracking-tighter">{news.source || "OSINT WIRE"}</span>
+                                        <span className="opacity-60">{getLiveTimeAgo((news as any).timestamp)}</span>
                                     </div>
                                 </div>
-                            </div>
+                                <div className="opacity-0 group-hover:opacity-100 transition-opacity self-center text-cobalt translate-x-1 group-hover:translate-x-0">
+                                    <ChevronRight className="w-4 h-4" />
+                                </div>
+                            </a>
                         ))}
                     </div>
                 )}
@@ -511,15 +523,24 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
                                     href={post.url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="flex items-start gap-3 p-3 border border-green-500/20 bg-white hover:bg-green-50 dark:bg-green-500/5 rounded-md transition-all dark:hover:bg-green-500/10 hover:border-green-500/40 group cursor-pointer"
+                                    className="flex items-start gap-4 p-4 border border-green-500/20 bg-white hover:bg-green-50 dark:bg-green-500/5 rounded-xl transition-all dark:hover:bg-green-500/10 hover:border-green-500/40 group overflow-hidden"
                                 >
-                                    <div className="text-green-500 mt-0.5"><MediumIcon /></div>
+                                    {post.imageUrl && (
+                                        <div className="h-10 w-10 shrink-0 rounded-lg overflow-hidden border border-green-500/20">
+                                            <img src={post.imageUrl} alt="" className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" />
+                                        </div>
+                                    )}
                                     <div className="flex-1 min-w-0">
-                                        <h3 className="text-sm font-bold leading-tight group-hover:text-green-500 transition-colors mb-1">{post.title}</h3>
-                                        <p className="text-[10px] text-slate-light leading-relaxed mb-2">{post.summary}</p>
+                                        <h3 className="text-sm font-bold leading-tight group-hover:text-green-500 transition-colors mb-1 line-clamp-1">{post.title}</h3>
+                                        <p className="text-[10px] text-slate-light leading-relaxed mb-3 line-clamp-2">{post.summary}</p>
                                         <div className="flex items-center justify-between text-[9px] font-mono">
-                                            <span className="text-green-500">{post.author}</span>
-                                            <span className="px-1.5 py-0.5 bg-background border border-border/50 rounded bg-white/5 dark:bg-black/20">{post.tag}</span>
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center text-green-500">
+                                                    <MediumIcon />
+                                                </div>
+                                                <span className="text-green-500/80 font-bold">{post.author}</span>
+                                            </div>
+                                            <span className="px-1.5 py-0.5 bg-green-500/10 text-green-500 border border-green-500/20 rounded uppercase tracking-tighter">{post.tag}</span>
                                         </div>
                                     </div>
                                 </a>

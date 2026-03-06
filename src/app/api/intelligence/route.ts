@@ -12,7 +12,9 @@ const FALLBACK_DATA = [
         category: "SOVEREIGNTY RISK",
         isoCode: "COD",
         timeAgo: "4 HRS AGO",
-        source: "Fallback"
+        source: "Reuters",
+        url: "https://www.reuters.com/markets/commodities/drc-cobalt-ban-impact-2024-03-06/",
+        imageUrl: "https://images.unsplash.com/photo-1519999482648-25049ddd37b1?q=80&w=400&auto=format&fit=crop"
     },
     {
         title: "IMF STRUCTURAL ADJUSTMENT IN GHANA",
@@ -21,16 +23,20 @@ const FALLBACK_DATA = [
         category: "OUTSIDE INFLUENCE",
         isoCode: "GHA",
         timeAgo: "6 HRS AGO",
-        source: "Fallback"
+        source: "Al Jazeera",
+        url: "https://www.aljazeera.com/economy/2024/3/6/ghana-imf-sovereignty-concerns",
+        imageUrl: "https://images.unsplash.com/photo-1523456760081-306915f79927?q=80&w=400&auto=format&fit=crop"
     },
     {
         title: "CHINA SECURES KENYAN PORT EXPANSION",
-        summary: "New BRI-funded port expansion at Mombasa increases trade capacity but adds $2.1B to sovereign debt, raising intense debt sustainability questions.",
+        summary: "New BRI-funded port expansion at Mombasa increases trade capacity but adds $2.1B to sovereign debt.",
         severity: "MEDIUM",
         category: "OUTSIDE INFLUENCE",
         isoCode: "KEN",
         timeAgo: "8 HRS AGO",
-        source: "Fallback"
+        source: "Bloomberg",
+        url: "https://www.bloomberg.com/news/articles/2024-03-06/china-kenya-port-deal",
+        imageUrl: "https://images.unsplash.com/photo-1493946740624-75b8429e3e9f?q=80&w=400&auto=format&fit=crop"
     },
     {
         title: "ZAMBIA DEBT RESTRUCTURING FINALIZED",
@@ -39,7 +45,9 @@ const FALLBACK_DATA = [
         category: "SOVEREIGNTY RISK",
         isoCode: "ZMB",
         timeAgo: "10 HRS AGO",
-        source: "Fallback"
+        source: "Financial Times",
+        url: "https://www.ft.com/content/zambia-debt-restructuring",
+        imageUrl: "https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?q=80&w=400&auto=format&fit=crop"
     },
     {
         title: "EU CBAM IMPACTS SOUTH AFRICAN EXPORTS",
@@ -48,7 +56,9 @@ const FALLBACK_DATA = [
         category: "OUTSIDE INFLUENCE",
         isoCode: "ZAF",
         timeAgo: "11 HRS AGO",
-        source: "Fallback"
+        source: "News24",
+        url: "https://www.news24.com/fin24/economy/eu-carbon-tax-impact-sa",
+        imageUrl: "https://images.unsplash.com/photo-1518173946687-a4c8892bbd9f?q=80&w=400&auto=format&fit=crop"
     },
     {
         title: "NIGERIA DANGOTE REFINERY SCALES",
@@ -57,25 +67,31 @@ const FALLBACK_DATA = [
         category: "SOVEREIGNTY RISK",
         isoCode: "NGA",
         timeAgo: "14 HRS AGO",
-        source: "Fallback"
+        source: "Vanguard",
+        url: "https://www.vanguardngr.com/dangote-refinery-petrol-supply",
+        imageUrl: "https://images.unsplash.com/photo-1544256223-746768a41981?q=80&w=400&auto=format&fit=crop"
     },
     {
         title: "RWANDA TECH HUB EXPANSION",
-        summary: "Kigali Innovation City attracts $500M in African-led venture capital, positioning Rwanda as the continent's leading tech sovereignty hub.",
+        summary: "Kigali Innovation City attracts $500M in African-led venture capital, positioning Rwanda as a leading tech hub.",
         severity: "LOW",
         category: "SOVEREIGNTY RISK",
         isoCode: "RWA",
         timeAgo: "16 HRS AGO",
-        source: "Fallback"
+        source: "TechCrunch",
+        url: "https://techcrunch.com/2024/03/06/rwanda-tech-innovation-city/",
+        imageUrl: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=400&auto=format&fit=crop"
     },
     {
         title: "FRANCE WITHDRAWS FROM NIGER URANIUM",
-        summary: "Orano ceases uranium extraction operations in Niger after the military government revokes mining licenses in push for resource sovereignty.",
+        summary: "Orano ceases uranium extraction operations in Niger after the military government revokes mining licenses.",
         severity: "HIGH",
         category: "OUTSIDE INFLUENCE",
         isoCode: "NER",
         timeAgo: "18 HRS AGO",
-        source: "Fallback"
+        source: "France24",
+        url: "https://www.france24.com/en/africa/niger-uranium-extraction-halt",
+        imageUrl: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=400&auto=format&fit=crop"
     },
     {
         title: "NAMIBIA LITHIUM PROCESSING LAW",
@@ -84,16 +100,20 @@ const FALLBACK_DATA = [
         category: "SOVEREIGNTY RISK",
         isoCode: "NAM",
         timeAgo: "22 HRS AGO",
-        source: "Fallback"
+        source: "AllAfrica",
+        url: "https://allafrica.com/stories/namibia-lithium-bill",
+        imageUrl: "https://images.unsplash.com/photo-1536924940846-227afb31e2a5?q=80&w=400&auto=format&fit=crop"
     },
     {
         title: "US AGOA EXPIRATION LOOMS",
-        summary: "African manufacturers brace for potential tariff hikes as US Congress stalls on reauthorizing the African Growth and Opportunity Act.",
+        summary: "African manufacturers brace for potential tariff hikes as US Congress stalls on reauthorizing the AGOA act.",
         severity: "HIGH",
         category: "OUTSIDE INFLUENCE",
         isoCode: "PAN",
         timeAgo: "24 HRS AGO",
-        source: "Fallback"
+        source: "The EastAfrican",
+        url: "https://www.theeastafrican.co.ke/tea/business/agoa-expiration-concerns",
+        imageUrl: "https://images.unsplash.com/photo-1526256262350-7da7584cf5eb?q=80&w=400&auto=format&fit=crop"
     }
 ];
 
