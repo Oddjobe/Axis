@@ -14,10 +14,14 @@ import FrictionEngine from "@/components/friction-engine";
 import ContinentalGoalsTicker from "@/components/continental-goals-ticker";
 import MissionModal from "@/components/mission-modal";
 import AnalyticsModal from "@/components/analytics-modal";
+import AiNexusModal from "@/components/ai-nexus-modal";
+import AiBriefingModal from "@/components/ai-briefing-modal";
+import CommodityTicker from "@/components/commodity-ticker";
 import { ALL_SOVEREIGN_DATA } from "@/lib/mock-data";
 import { Language, useTranslation } from "@/lib/i18n";
 import type { CountryData } from "@/components/country-dossier-modal";
 import { AnimatePresence, motion } from "framer-motion";
+import { Share2 } from "lucide-react";
 
 const TOTAL_POPULATION = 1_444; // ~1.44 billion
 
@@ -26,6 +30,8 @@ export default function Home() {
   const [selectedCodes, setSelectedCodes] = useState<string[]>([]);
   const [missionOpen, setMissionOpen] = useState(false);
   const [analyticsOpen, setAnalyticsOpen] = useState(false);
+  const [aiNexusOpen, setAiNexusOpen] = useState(false);
+  const [briefingOpen, setBriefingOpen] = useState(false);
   const [mobilePanel, setMobilePanel] = useState<"map" | "index" | "intel">("map");
   const [mobileSettingsOpen, setMobileSettingsOpen] = useState(false);
   const [selectedResource, setSelectedResource] = useState<string | null>(null);
@@ -77,6 +83,7 @@ export default function Home() {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden">
+      <CommodityTicker />
       {/* Top Navigation / Dashboard Header */}
       <header className="h-14 lg:h-16 flex items-center justify-between px-3 lg:px-6 border-b border-border bg-panel backdrop-blur-md z-10 shrink-0">
         <div className="flex items-center gap-2 lg:gap-4">
@@ -119,6 +126,22 @@ export default function Home() {
             >
               <BarChart3 className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
               <span className="hidden xl:inline">ANALYTICS</span>
+            </button>
+            <button
+              onClick={() => setAiNexusOpen(true)}
+              className="flex items-center gap-1.5 px-2 py-1.5 lg:px-2.5 rounded-lg text-[10px] lg:text-xs font-bold bg-cobalt/10 text-cobalt hover:bg-cobalt/20 transition-all border border-cobalt/20 shadow-[0_0_15px_rgba(37,99,235,0.1)]"
+              title="AI Supply Chain Nexus"
+            >
+              <Share2 className="w-3.5 h-3.5 lg:w-4 lg:h-4 animate-pulse" />
+              <span className="hidden xl:inline">AI NEXUS</span>
+            </button>
+            <button
+              onClick={() => setBriefingOpen(true)}
+              className="flex items-center gap-1.5 px-2 py-1.5 lg:px-2.5 rounded-lg text-[10px] lg:text-xs font-bold bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 transition-all border border-amber-500/20 shadow-[0_0_15px_rgba(245,158,11,0.1)]"
+              title="Executive SITREP"
+            >
+              <ShieldAlert className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
+              <span className="hidden xl:inline">BRIEFING</span>
             </button>
           </div>
 
@@ -451,6 +474,15 @@ export default function Home() {
         onClose={() => setAnalyticsOpen(false)}
         data={countryDataMaster}
         selectedResource={selectedResource}
+      />
+      <AiNexusModal
+        isOpen={aiNexusOpen}
+        onClose={() => setAiNexusOpen(false)}
+        selectedResource={selectedResource}
+      />
+      <AiBriefingModal
+        isOpen={briefingOpen}
+        onClose={() => setBriefingOpen(false)}
       />
     </div>
   );
