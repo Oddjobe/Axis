@@ -13,7 +13,7 @@ const FALLBACK_DATA = [
         isoCode: "COD",
         timeAgo: "4 HRS AGO",
         source: "Reuters",
-        url: "https://www.reuters.com/markets/commodities/drc-cobalt-ban-impact-2024-03-06/",
+        url: "https://www.reuters.com/site-search/?query=DRC+cobalt+ban",
         imageUrl: "https://images.unsplash.com/photo-1519999482648-25049ddd37b1?q=80&w=400&auto=format&fit=crop"
     },
     {
@@ -24,7 +24,7 @@ const FALLBACK_DATA = [
         isoCode: "GHA",
         timeAgo: "6 HRS AGO",
         source: "Al Jazeera",
-        url: "https://www.aljazeera.com/economy/2024/3/6/ghana-imf-sovereignty-concerns",
+        url: "https://www.aljazeera.com/search/IMF%20Ghana",
         imageUrl: "https://images.unsplash.com/photo-1523456760081-306915f79927?q=80&w=400&auto=format&fit=crop"
     },
     {
@@ -35,7 +35,7 @@ const FALLBACK_DATA = [
         isoCode: "KEN",
         timeAgo: "8 HRS AGO",
         source: "Bloomberg",
-        url: "https://www.bloomberg.com/news/articles/2024-03-06/china-kenya-port-deal",
+        url: "https://www.bloomberg.com/search?query=Kenya%20port%20expansion",
         imageUrl: "https://images.unsplash.com/photo-1493946740624-75b8429e3e9f?q=80&w=400&auto=format&fit=crop"
     },
     {
@@ -46,7 +46,7 @@ const FALLBACK_DATA = [
         isoCode: "ZMB",
         timeAgo: "10 HRS AGO",
         source: "Financial Times",
-        url: "https://www.ft.com/content/zambia-debt-restructuring",
+        url: "https://www.ft.com/search?q=Zambia+debt+restructuring",
         imageUrl: "https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?q=80&w=400&auto=format&fit=crop"
     },
     {
@@ -57,7 +57,7 @@ const FALLBACK_DATA = [
         isoCode: "ZAF",
         timeAgo: "11 HRS AGO",
         source: "News24",
-        url: "https://www.news24.com/fin24/economy/eu-carbon-tax-impact-sa",
+        url: "https://www.news24.com/news24/search?query=EU+CBAM+South+Africa",
         imageUrl: "https://images.unsplash.com/photo-1518173946687-a4c8892bbd9f?q=80&w=400&auto=format&fit=crop"
     },
     {
@@ -68,7 +68,7 @@ const FALLBACK_DATA = [
         isoCode: "NGA",
         timeAgo: "14 HRS AGO",
         source: "Vanguard",
-        url: "https://www.vanguardngr.com/dangote-refinery-petrol-supply",
+        url: "https://www.vanguardngr.com/?s=Dangote+Refinery",
         imageUrl: "https://images.unsplash.com/photo-1544256223-746768a41981?q=80&w=400&auto=format&fit=crop"
     },
     {
@@ -79,7 +79,7 @@ const FALLBACK_DATA = [
         isoCode: "RWA",
         timeAgo: "16 HRS AGO",
         source: "TechCrunch",
-        url: "https://techcrunch.com/2024/03/06/rwanda-tech-innovation-city/",
+        url: "https://techcrunch.com/search/Rwanda+tech",
         imageUrl: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=400&auto=format&fit=crop"
     },
     {
@@ -90,7 +90,7 @@ const FALLBACK_DATA = [
         isoCode: "NER",
         timeAgo: "18 HRS AGO",
         source: "France24",
-        url: "https://www.france24.com/en/africa/niger-uranium-extraction-halt",
+        url: "https://www.france24.com/en/search/Niger+uranium",
         imageUrl: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=400&auto=format&fit=crop"
     },
     {
@@ -101,7 +101,7 @@ const FALLBACK_DATA = [
         isoCode: "NAM",
         timeAgo: "22 HRS AGO",
         source: "AllAfrica",
-        url: "https://allafrica.com/stories/namibia-lithium-bill",
+        url: "https://allafrica.com/search/index.html?search-string=Namibia+lithium",
         imageUrl: "https://images.unsplash.com/photo-1536924940846-227afb31e2a5?q=80&w=400&auto=format&fit=crop"
     },
     {
@@ -112,7 +112,7 @@ const FALLBACK_DATA = [
         isoCode: "PAN",
         timeAgo: "24 HRS AGO",
         source: "The EastAfrican",
-        url: "https://www.theeastafrican.co.ke/tea/business/agoa-expiration-concerns",
+        url: "https://www.theeastafrican.co.ke/tea/search?query=AGOA",
         imageUrl: "https://images.unsplash.com/photo-1526256262350-7da7584cf5eb?q=80&w=400&auto=format&fit=crop"
     }
 ];

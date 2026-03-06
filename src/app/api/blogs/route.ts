@@ -10,7 +10,7 @@ const FALLBACK_BLOGS = [
         summary: "Analysis of how the continental free trade agreement is reshaping intra-African commerce and reducing dependency on external markets.",
         author: "Dr. Folasade Akinwale",
         tag: "AfCFTA Trade",
-        url: "https://medium.com/geopolitics/why-afcfta-matters-2024",
+        url: "https://medium.com/search?q=AfCFTA+Africa",
         imageUrl: "https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?q=80&w=400&auto=format&fit=crop"
     },
     {
@@ -18,7 +18,7 @@ const FALLBACK_BLOGS = [
         summary: "How DRC, Zambia, and Zimbabwe are learning from Indonesia's nickel playbook to capture more value from lithium and cobalt.",
         author: "James Mwangi",
         tag: "Resource Sovereignty",
-        url: "https://medium.com/geopolitics/africa-minerals-scramble",
+        url: "https://medium.com/search?q=DRC+cobalt+lithium",
         imageUrl: "https://images.unsplash.com/photo-1519999482648-25049ddd37b1?q=80&w=400&auto=format&fit=crop"
     },
     {
@@ -26,7 +26,7 @@ const FALLBACK_BLOGS = [
         summary: "PAPSS, e-Naira, and the push for a Pan-African payment system that bypasses SWIFT and dollar dependency.",
         author: "Amina Osei",
         tag: "Digital Economy",
-        url: "https://medium.com/geopolitics/africa-financial-rails",
+        url: "https://medium.com/search?q=PAPSS+Africa+banking",
         imageUrl: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=400&auto=format&fit=crop"
     },
     {
@@ -34,7 +34,7 @@ const FALLBACK_BLOGS = [
         summary: "Mapping the competing infrastructure investment frameworks and their implications for African debt sustainability.",
         author: "Chen Wei-Lin",
         tag: "Foreign Influence",
-        url: "https://medium.com/geopolitics/africa-superpowers-scramble",
+        url: "https://medium.com/search?q=Africa+Belt+and+Road+debt",
         imageUrl: "https://images.unsplash.com/photo-1493946740624-75b8429e3e9f?q=80&w=400&auto=format&fit=crop"
     },
     {
@@ -42,7 +42,7 @@ const FALLBACK_BLOGS = [
         summary: "The 650K bpd Lagos refinery signals a shift from raw export dependency to domestic value-add processing.",
         author: "Okonkwo Emeka",
         tag: "Infrastructure",
-        url: "https://medium.com/geopolitics/dangote-refinery-impact",
+        url: "https://medium.com/search?q=Dangote+Refinery+petrol",
         imageUrl: "https://images.unsplash.com/photo-1544256223-746768a41981?q=80&w=400&auto=format&fit=crop"
     }
 ];
