@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState, useRef } from "react"
-import { ShieldAlert, Newspaper, Video, BookOpen, Lightbulb, Globe, Play, Square, Pause, Star, ChevronRight } from "lucide-react"
+import { ShieldAlert, Newspaper, Video, BookOpen, Lightbulb, Globe, Play, Square, Pause, Star, ChevronRight, ArrowUpRight, Users } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { supabase } from "@/lib/supabase"
 import { useWatchlist } from "@/lib/use-watchlist"
@@ -388,51 +388,87 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
                                     if (aPinned && !bPinned) return -1;
                                     if (!aPinned && bPinned) return 1;
                                     return 0; // Maintain original chronological order
-                                }) : (filteredAlerts || [])).map((alert, idx) => {
-                                    const isPinned = isMounted && watchlist.includes(alert.isoCode);
-
+                                }).map((alert, idx) => {
                                     return (
-                                        <motion.div
+                                        <motion.a
                                             key={`${alert.title}-${idx}`}
+                                            href={alert.url || "#"}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
                                             initial={{ opacity: 0, x: 20 }}
                                             animate={{ opacity: 1, x: 0 }}
                                             transition={{ delay: idx * 0.1, duration: 0.3 }}
-                                            className="p-3 border border-orange-500/20 bg-white hover:bg-orange-50 dark:bg-orange-500/5 rounded-md transition-all dark:hover:bg-orange-500/10 hover:shadow-[0_0_15px_rgba(249,115,22,0.1)] group relative overflow-hidden"
+                                            className="flex items-center w-full h-[85px] bg-[#252525] hover:bg-[#353535] border border-white/5 rounded-[20px] backdrop-blur-[10px] transition-all duration-500 ease-in-out hover:scale-[1.02] group cursor-pointer overflow-hidden p-2"
                                         >
-                                            <div className="text-[10px] font-mono text-orange-400 mb-1 flex justify-between items-start gap-4 relaitve z-10">
-                                                <span className="leading-tight">{alert.title}</span>
-                                                <div className="flex flex-col items-end text-right shrink-0">
-                                                    <span className="opacity-80 font-bold text-orange-500">
+                                            <div className="w-[65px] h-[65px] shrink-0 rounded-[15px] bg-gradient-to-br from-orange-500/20 to-orange-500/5 border border-orange-500/20 flex items-center justify-center transition-all duration-500 group-hover:from-orange-500/40 group-hover:to-orange-500/10">
+                                                <ShieldAlert className="w-8 h-8 text-orange-500 group-hover:scale-110 transition-transform" />
+                                            </div>
+                                            <div className="flex-1 ml-3 min-w-0 pr-2">
+                                                <div className="flex items-center justify-between mb-1">
+                                                    <h3 className="text-[13px] font-bold text-white truncate uppercase tracking-tight">{alert.title}</h3>
+                                                    <span className="text-[9px] text-orange-500/80 font-mono whitespace-nowrap ml-2">
                                                         {getLiveTimeAgo((alert as any).timestamp)}
                                                     </span>
                                                 </div>
+                                                <p className="text-[11px] text-slate-light font-light line-clamp-2 leading-tight">
+                                                    {alert.summary}
+                                                </p>
+                                                <div className="mt-1 flex items-center gap-2">
+                                                    <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded uppercase ${alert.severity === "HIGH" ? "bg-red-500/20 text-red-500" :
+                                                            alert.severity === "MEDIUM" ? "bg-orange-500/20 text-orange-500" :
+                                                                "bg-emerald-500/20 text-emerald-500"
+                                                        }`}>
+                                                        {alert.severity}
+                                                    </span>
+                                                    <span className="text-[8px] text-slate-light/40 uppercase tracking-widest">{alert.isoCode}</span>
+                                                </div>
                                             </div>
-                                            <p className="text-sm text-foreground/90 relative z-10">{alert.summary}</p>
-                                            <div className="mt-3 flex gap-2 relative z-10">
-                                                <span className={`text-[10px] px-2 py-0.5 bg-background border rounded font-bold ${alert.severity === "HIGH" ? "border-red-500/50 text-red-500 shadow-[0_0_8px_rgba(239,68,68,0.3)]" :
-                                                    alert.severity === "MEDIUM" ? "border-orange-500/50 text-orange-500" :
-                                                        "border-yellow-500/50 text-yellow-500"
-                                                    }`}>
-                                                    {alert.severity} SEVERITY
-                                                </span>
-                                                <span className={`text-[10px] px-2 py-0.5 bg-background border border-border rounded opacity-80 flex items-center gap-1 ${isPinned ? "border-amber-500/30 text-amber-500 font-bold" : ""}`}>
-                                                    {isPinned && <Star className="w-2.5 h-2.5 fill-amber-500" />}
-                                                    {alert.isoCode}
-                                                </span>
+                                            <div className="opacity-0 group-hover:opacity-100 transition-opacity pr-2">
+                                                <ArrowUpRight className="w-4 h-4 text-orange-500" />
                                             </div>
-                                            {alert.url && (
-                                                <a
-                                                    href={alert.url}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="absolute top-2 right-2 p-1.5 rounded bg-orange-500/10 text-orange-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                                                >
-                                                    <Globe className="w-3 h-3" />
-                                                </a>
-                                            )}
-                                        </motion.div>
+                                        </motion.a>
                                     );
-                                })}
+                                }) : (filteredAlerts || []).map((alert, idx) => {
+                                    return (
+                                        <motion.a
+                                            key={`${alert.title}-${idx}`}
+                                            href={alert.url || "#"}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            initial={{ opacity: 0, x: 20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            transition={{ delay: idx * 0.1, duration: 0.3 }}
+                                            className="flex items-center w-full h-[85px] bg-[#252525] hover:bg-[#353535] border border-white/5 rounded-[20px] backdrop-blur-[10px] transition-all duration-500 ease-in-out hover:scale-[1.02] group cursor-pointer overflow-hidden p-2"
+                                        >
+                                            <div className="w-[65px] h-[65px] shrink-0 rounded-[15px] bg-gradient-to-br from-orange-500/20 to-orange-500/5 border border-orange-500/20 flex items-center justify-center transition-all duration-500 group-hover:from-orange-500/40 group-hover:to-orange-500/10">
+                                                <ShieldAlert className="w-8 h-8 text-orange-500 group-hover:scale-110 transition-transform" />
+                                            </div>
+                                            <div className="flex-1 ml-3 min-w-0 pr-2">
+                                                <div className="flex items-center justify-between mb-1">
+                                                    <h3 className="text-[13px] font-bold text-white truncate uppercase tracking-tight">{alert.title}</h3>
+                                                    <span className="text-[9px] text-orange-500/80 font-mono whitespace-nowrap ml-2">
+                                                        {getLiveTimeAgo((alert as any).timestamp)}
+                                                    </span>
+                                                </div>
+                                                <p className="text-[11px] text-slate-light font-light line-clamp-2 leading-tight">
+                                                    {alert.summary}
+                                                </p>
+                                                <div className="mt-1 flex items-center gap-2">
+                                                    <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded uppercase ${alert.severity === "HIGH" ? "bg-red-500/20 text-red-500" :
+                                                            alert.severity === "MEDIUM" ? "bg-orange-500/20 text-orange-500" :
+                                                                "bg-emerald-500/20 text-emerald-500"
+                                                        }`}>
+                                                        {alert.severity}
+                                                    </span>
+                                                    <span className="text-[8px] text-slate-light/40 uppercase tracking-widest">{alert.isoCode}</span>
+                                                </div>
+                                            </div>
+                                            <div className="opacity-0 group-hover:opacity-100 transition-opacity pr-2">
+                                                <ArrowUpRight className="w-4 h-4 text-orange-500" />
+                                            </div>
+                                        </motion.a>
+                                    );
+                                }))}
                             </AnimatePresence>
                         )}
                     </>
@@ -479,22 +515,31 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
                                 href={news.url || "#"}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex items-start gap-3 p-3 border border-border/50 bg-white dark:bg-background/30 rounded-md transition-all hover:bg-slate-50 dark:hover:bg-background/80 hover:border-cobalt/40 group overflow-hidden"
+                                className="flex items-center w-full h-[85px] bg-[#252525] hover:bg-[#353535] border border-white/5 rounded-[20px] backdrop-blur-[10px] transition-all duration-500 ease-in-out hover:scale-[1.02] group cursor-pointer overflow-hidden p-2"
                             >
-                                {news.imageUrl && (
-                                    <div className="h-16 w-16 shrink-0 rounded overflow-hidden border border-border bg-onyx-light">
-                                        <img src={news.imageUrl} alt="" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" />
+                                {news.imageUrl ? (
+                                    <div className="w-[65px] h-[65px] shrink-0 rounded-[15px] overflow-hidden border border-white/10">
+                                        <img src={news.imageUrl} alt="" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500 scale-110 group-hover:scale-100" />
+                                    </div>
+                                ) : (
+                                    <div className="w-[65px] h-[65px] shrink-0 rounded-[15px] bg-gradient-to-br from-cobalt/20 to-cobalt/5 border border-cobalt/20 flex items-center justify-center transition-all duration-500 group-hover:from-cobalt/40 group-hover:to-cobalt/10">
+                                        <Newspaper className="w-8 h-8 text-cobalt" />
                                     </div>
                                 )}
-                                <div className="flex-1 min-w-0">
-                                    <h3 className="text-[13px] font-bold mb-1 leading-tight text-foreground/90 group-hover:text-cobalt transition-colors line-clamp-2">{news.title}</h3>
-                                    <div className="flex justify-between items-center text-[9px] font-mono text-slate-light mt-2">
-                                        <span className="text-cobalt font-bold uppercase tracking-tighter">{news.source || "OSINT WIRE"}</span>
-                                        <span className="opacity-60">{getLiveTimeAgo((news as any).timestamp)}</span>
+                                <div className="flex-1 ml-3 min-w-0 pr-2">
+                                    <div className="flex items-center justify-between mb-1">
+                                        <h3 className="text-[13px] font-bold text-white truncate uppercase tracking-tight">{news.title}</h3>
+                                        <span className="text-[9px] text-cobalt/80 font-mono whitespace-nowrap ml-2">{getLiveTimeAgo((news as any).timestamp)}</span>
+                                    </div>
+                                    <p className="text-[11px] text-slate-light font-light line-clamp-2 leading-tight">
+                                        {news.summary}
+                                    </p>
+                                    <div className="mt-1">
+                                        <span className="text-[8px] font-bold text-cobalt uppercase tracking-widest">{news.source || "OSINT WIRE"}</span>
                                     </div>
                                 </div>
-                                <div className="opacity-0 group-hover:opacity-100 transition-opacity self-center text-cobalt translate-x-1 group-hover:translate-x-0">
-                                    <ChevronRight className="w-4 h-4" />
+                                <div className="opacity-0 group-hover:opacity-100 transition-opacity pr-2">
+                                    <ArrowUpRight className="w-4 h-4 text-cobalt" />
                                 </div>
                             </a>
                         ))}
@@ -523,25 +568,31 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
                                     href={post.url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="flex items-start gap-4 p-4 border border-green-500/20 bg-white hover:bg-green-50 dark:bg-green-500/5 rounded-xl transition-all dark:hover:bg-green-500/10 hover:border-green-500/40 group overflow-hidden"
+                                    className="flex items-center w-full h-[85px] bg-[#252525] hover:bg-[#353535] border border-white/5 rounded-[20px] backdrop-blur-[10px] transition-all duration-500 ease-in-out hover:scale-[1.02] group cursor-pointer overflow-hidden p-2"
                                 >
-                                    {post.imageUrl && (
-                                        <div className="h-10 w-10 shrink-0 rounded-lg overflow-hidden border border-green-500/20">
-                                            <img src={post.imageUrl} alt="" className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" />
+                                    {post.imageUrl ? (
+                                        <div className="w-[65px] h-[65px] shrink-0 rounded-[15px] overflow-hidden border border-white/10">
+                                            <img src={post.imageUrl} alt="" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500 scale-110 group-hover:scale-100" />
+                                        </div>
+                                    ) : (
+                                        <div className="w-[65px] h-[65px] shrink-0 rounded-[15px] bg-gradient-to-br from-green-500/20 to-green-500/5 border border-green-500/20 flex items-center justify-center transition-all duration-500 group-hover:from-green-500/40 group-hover:to-green-500/10">
+                                            <BookOpen className="w-8 h-8 text-green-500" />
                                         </div>
                                     )}
-                                    <div className="flex-1 min-w-0">
-                                        <h3 className="text-sm font-bold leading-tight group-hover:text-green-500 transition-colors mb-1 line-clamp-1">{post.title}</h3>
-                                        <p className="text-[10px] text-slate-light leading-relaxed mb-3 line-clamp-2">{post.summary}</p>
-                                        <div className="flex items-center justify-between text-[9px] font-mono">
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center text-green-500">
-                                                    <MediumIcon />
-                                                </div>
-                                                <span className="text-green-500/80 font-bold">{post.author}</span>
-                                            </div>
-                                            <span className="px-1.5 py-0.5 bg-green-500/10 text-green-500 border border-green-500/20 rounded uppercase tracking-tighter">{post.tag}</span>
+                                    <div className="flex-1 ml-3 min-w-0 pr-2">
+                                        <div className="flex items-center justify-between mb-1">
+                                            <h3 className="text-[13px] font-bold text-white truncate uppercase tracking-tight">{post.title}</h3>
+                                            <span className="text-[9px] text-green-500/80 font-mono whitespace-nowrap ml-2 uppercase">{post.tag}</span>
                                         </div>
+                                        <p className="text-[11px] text-slate-light font-light line-clamp-2 leading-tight">
+                                            {post.summary}
+                                        </p>
+                                        <div className="mt-1 flex items-center gap-1.5 font-mono text-[8px] text-green-500/60 font-bold uppercase tracking-wider">
+                                            <Users className="w-2.5 h-2.5" /> {post.author}
+                                        </div>
+                                    </div>
+                                    <div className="opacity-0 group-hover:opacity-100 transition-opacity pr-2">
+                                        <ArrowUpRight className="w-4 h-4 text-green-500" />
                                     </div>
                                 </a>
                             ))
