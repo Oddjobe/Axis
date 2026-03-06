@@ -1,14 +1,38 @@
 "use client"
 
 import { useState, useEffect } from "react";
-import { Globe, Users, Info, X, List, Map, ShieldAlert, Moon, Sun, BarChart3, SlidersHorizontal, Check } from "lucide-react";
+import {
+  Globe,
+  Search,
+  TrendingUp,
+  TrendingDown,
+  LayoutDashboard,
+  AlertCircle,
+  Clock,
+  ChevronRight,
+  ArrowUpRight,
+  ShieldAlert,
+  Activity,
+  Share2,
+  Combine,
+  Users,
+  Info,
+  BarChart3,
+  Sun,
+  Moon,
+  SlidersHorizontal,
+  X,
+  List,
+  Map as LucideMap,
+  Check
+} from "lucide-react";
 import { useTheme } from "next-themes";
 import dynamic from "next/dynamic";
 import AfcftaMatrix from "@/components/afcfta-matrix";
 
 const AfricaMap = dynamic(() => import("@/components/africa-map"), {
   ssr: false,
-  loading: () => <div className="w-full h-full flex flex-col gap-3 items-center justify-center text-cobalt font-mono text-[10px]"><div className="w-6 h-6 border-2 border-cobalt/30 border-t-cobalt rounded-full animate-spin" />INITIALIZING GEO ENGINE...</div>
+  loading: () => <div className="w-full h-full flex flex-col gap-3 items-center justify-center text-cobalt font-mono text-[10px]"><div className="w-6 h-6 border-border-cobalt/30 border-t-cobalt rounded-full animate-spin" />INITIALIZING GEO ENGINE...</div>
 });
 import FrictionEngine from "@/components/friction-engine";
 import ContinentalGoalsTicker from "@/components/continental-goals-ticker";
@@ -16,13 +40,12 @@ import MissionModal from "@/components/mission-modal";
 import AnalyticsModal from "@/components/analytics-modal";
 import AiNexusModal from "@/components/ai-nexus-modal";
 import AiBriefingModal from "@/components/ai-briefing-modal";
+import ComparativeAnalyticsModal from "@/components/comparative-analytics-modal";
 import CommodityTicker from "@/components/commodity-ticker";
 import { ALL_SOVEREIGN_DATA } from "@/lib/mock-data";
 import { Language, useTranslation } from "@/lib/i18n";
 import type { CountryData } from "@/components/country-dossier-modal";
 import { AnimatePresence, motion } from "framer-motion";
-import { Share2 } from "lucide-react";
-
 const TOTAL_POPULATION = 1_444; // ~1.44 billion
 
 export default function Home() {
@@ -32,6 +55,7 @@ export default function Home() {
   const [analyticsOpen, setAnalyticsOpen] = useState(false);
   const [aiNexusOpen, setAiNexusOpen] = useState(false);
   const [briefingOpen, setBriefingOpen] = useState(false);
+  const [comparativeOpen, setComparativeOpen] = useState(false);
   const [mobilePanel, setMobilePanel] = useState<"map" | "index" | "intel">("map");
   const [mobileSettingsOpen, setMobileSettingsOpen] = useState(false);
   const [selectedResource, setSelectedResource] = useState<string | null>(null);
@@ -78,8 +102,8 @@ export default function Home() {
   const totalPopMillions = selectedCountries.reduce((sum, c) => sum + parsePop(c.population), 0);
 
   const displayPop = selectedCountries.length > 0
-    ? totalPopMillions >= 1000 ? `${(totalPopMillions / 1000).toFixed(2)}B` : `${totalPopMillions.toFixed(1)}M`
-    : `${(TOTAL_POPULATION / 1000).toFixed(2)}B`;
+    ? totalPopMillions >= 1000 ? `${(totalPopMillions / 1000).toFixed(2)} B` : `${totalPopMillions.toFixed(1)} M`
+    : `${(TOTAL_POPULATION / 1000).toFixed(2)} B`;
 
   return (
     <div className="flex flex-col h-screen overflow-hidden">
@@ -143,6 +167,14 @@ export default function Home() {
               <ShieldAlert className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
               <span className="hidden xl:inline">BRIEFING</span>
             </button>
+            <button
+              onClick={() => setComparativeOpen(true)}
+              className="flex items-center gap-1.5 px-2 py-1.5 lg:px-2.5 rounded-lg text-[10px] lg:text-xs font-bold bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 transition-all border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]"
+              title="Comparative Strategic Analytics"
+            >
+              <Combine className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
+              <span className="hidden xl:inline">COMPARE</span>
+            </button>
           </div>
 
           <div className="hidden xl:block h-6 w-px bg-border/50" />
@@ -151,13 +183,13 @@ export default function Home() {
           <div className="hidden md:flex items-center gap-1 bg-background border border-border rounded-full p-1 shadow-inner">
             <button
               onClick={() => setMode("SOVEREIGNTY")}
-              className={`px-3 py-1 text-[10px] font-bold rounded-full transition-all ${mode === "SOVEREIGNTY" ? "bg-cobalt text-white shadow-[0_0_10px_rgba(37,99,235,0.4)]" : "text-slate-light hover:text-foreground"}`}
+              className={`px-3 py-1 text-[10px] font-bold rounded-full transition-all ${mode === "SOVEREIGNTY" ? "bg-cobalt text-white shadow-[0_0_10px_rgba(37,99,235,0.4)]" : "text-slate-light hover:text-foreground"} `}
             >
               {t("sovereignty")}
             </button>
             <button
               onClick={() => setMode("OUTSIDE INFLUENCE")}
-              className={`px-3 py-1 text-[10px] font-bold rounded-full transition-all ${mode === "OUTSIDE INFLUENCE" ? "bg-orange-500 text-white shadow-[0_0_10px_rgba(249,115,22,0.4)]" : "text-slate-light hover:text-foreground"}`}
+              className={`px-3 py-1 text-[10px] font-bold rounded-full transition-all ${mode === "OUTSIDE INFLUENCE" ? "bg-orange-500 text-white shadow-[0_0_10px_rgba(249,115,22,0.4)]" : "text-slate-light hover:text-foreground"} `}
             >
               {t("outside_influence")}
             </button>
@@ -172,7 +204,7 @@ export default function Home() {
                 <button
                   key={lang}
                   onClick={() => setLanguage(lang)}
-                  className={`px-2 py-1.5 transition-colors uppercase ${language === lang ? "bg-cobalt/20 text-cobalt" : "text-slate-light hover:bg-white/5"}`}
+                  className={`px-2 py-1.5 transition - colors uppercase ${language === lang ? "bg-cobalt/20 text-cobalt" : "text-slate-light hover:bg-white/5"} `}
                 >
                   {lang}
                 </button>
@@ -209,12 +241,12 @@ export default function Home() {
       {/* Main Grid Interface */}
       <main className="flex-1 flex overflow-hidden pb-16 lg:pb-0">
         {/* Left Panel: 54-Nation Matrix — hidden on mobile unless selected */}
-        <div className={`${mobilePanel === "index" ? "flex" : "hidden"} lg:flex`}>
+        <div className={`${mobilePanel === "index" ? "flex" : "hidden"} lg: flex`}>
           <AfcftaMatrix selectedCodes={selectedCodes} />
         </div>
 
         {/* Center Panel: Map Engine */}
-        <section className={`flex-1 relative bg-slate-50 dark:bg-onyx-deep flex-col items-center justify-center p-2 lg:p-4 ${mobilePanel === "map" ? "flex" : "hidden lg:flex"}`}>
+        <section className={`flex-1 relative bg - slate - 50 dark: bg - onyx - deep flex-col items-center justify-center p-2 lg:p-4 ${mobilePanel === "map" ? "flex" : "hidden lg:flex"} `}>
           {/* Atmospheric backdrop */}
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(37,99,235,0.12)_0%,rgba(0,10,30,0.3)_60%,transparent_100%)] dark:bg-[radial-gradient(ellipse_at_center,rgba(37,99,235,0.2)_0%,rgba(0,0,20,0.5)_60%,transparent_100%)] pointer-events-none" />
 
@@ -252,9 +284,10 @@ export default function Home() {
                 <button
                   key={res}
                   onClick={() => setSelectedResource(prev => prev === res ? null : res)}
-                  className={`px-2 py-1 rounded-full text-[9px] font-bold border transition-all whitespace-nowrap shadow-sm ${selectedResource === res
+                  className={`px-2 py-1 rounded-full text - [9px] font-bold border transition-all whitespace - nowrap shadow - sm ${selectedResource === res
                     ? "bg-amber-500 text-white border-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.4)]"
-                    : "bg-panel/80 border-border text-slate-light hover:border-amber-500/40 hover:text-amber-500 backdrop-blur-md"}`}
+                    : "bg-panel/80 border-border text-slate-light hover:border-amber-500/40 hover:text-amber-500 backdrop-blur-md"
+                    } `}
                 >
                   {res.toUpperCase()}
                 </button>
@@ -295,7 +328,7 @@ export default function Home() {
                 <div className="flex justify-between items-center text-[10px] font-mono font-bold text-slate-light">
                   <span>2015</span>
                   <span className="text-cobalt bg-cobalt/10 px-2 py-0.5 rounded border border-cobalt/30">
-                    {timeValue === currentYear ? `CURRENT (${currentYear})` : timeValue}
+                    {timeValue === currentYear ? `CURRENT(${currentYear})` : timeValue}
                   </span>
                   <span>{currentYear}</span>
                 </div>
@@ -313,7 +346,7 @@ export default function Home() {
         </section>
 
         {/* Right Panel: Friction Engine */}
-        <div className={`${mobilePanel === "intel" ? "flex" : "hidden"} lg:flex`}>
+        <div className={`${mobilePanel === "intel" ? "flex" : "hidden"} lg: flex`}>
           <FrictionEngine mode={mode} filterCountries={selectedCodes.length > 0 ? selectedCodes : null} />
         </div>
       </main>
@@ -327,7 +360,7 @@ export default function Home() {
       <div className="flex lg:hidden fixed bottom-0 left-0 right-0 h-16 border-t border-border bg-panel/95 backdrop-blur-md z-50 safe-area-inset-bottom">
         <button
           onClick={() => setMobilePanel("index")}
-          className={`flex flex-1 flex-col items-center justify-center gap-1 transition-all relative ${mobilePanel === "index" ? "text-cobalt" : "text-slate-light"}`}
+          className={`flex flex-1 flex-col items-center justify-center gap-1 transition-all relative ${mobilePanel === "index" ? "text-cobalt" : "text-slate-light"} `}
         >
           {mobilePanel === "index" && (
             <span className="absolute top-0 inset-x-4 h-0.5 bg-cobalt rounded-b-full" />
@@ -337,17 +370,17 @@ export default function Home() {
         </button>
         <button
           onClick={() => setMobilePanel("map")}
-          className={`flex flex-1 flex-col items-center justify-center gap-1 transition-all relative ${mobilePanel === "map" ? "text-green-500" : "text-slate-light"}`}
+          className={`flex flex-1 flex-col items-center justify-center gap-1 transition-all relative ${mobilePanel === "map" ? "text-green-500" : "text-slate-light"} `}
         >
           {mobilePanel === "map" && (
             <span className="absolute top-0 inset-x-4 h-0.5 bg-green-500 rounded-b-full" />
           )}
-          <Map className="w-5 h-5" />
+          <LucideMap className="w-5 h-5" />
           <span className="text-[9px] font-bold tracking-wider">{t("map")}</span>
         </button>
         <button
           onClick={() => setMobilePanel("intel")}
-          className={`flex flex-1 flex-col items-center justify-center gap-1 transition-all relative ${mobilePanel === "intel" ? "text-orange-500" : "text-slate-light"}`}
+          className={`flex flex-1 flex-col items-center justify-center gap-1 transition-all relative ${mobilePanel === "intel" ? "text-orange-500" : "text-slate-light"} `}
         >
           {mobilePanel === "intel" && (
             <span className="absolute top-0 inset-x-4 h-0.5 bg-orange-500 rounded-b-full" />
@@ -404,7 +437,8 @@ export default function Home() {
                       onClick={() => { setMode("SOVEREIGNTY"); setMobileSettingsOpen(false); }}
                       className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold text-sm transition-all border ${mode === "SOVEREIGNTY"
                         ? "bg-cobalt text-white border-cobalt shadow-[0_0_20px_rgba(37,99,235,0.4)]"
-                        : "bg-background border-border text-slate-light hover:border-cobalt/40"}`}
+                        : "bg-background border-border text-slate-light hover:border-cobalt/40"
+                        } `}
                     >
                       {mode === "SOVEREIGNTY" && <Check className="w-4 h-4" />}
                       SOVEREIGNTY
@@ -413,7 +447,8 @@ export default function Home() {
                       onClick={() => { setMode("OUTSIDE INFLUENCE"); setMobileSettingsOpen(false); }}
                       className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold text-xs transition-all border ${mode === "OUTSIDE INFLUENCE"
                         ? "bg-orange-500 text-white border-orange-500 shadow-[0_0_20px_rgba(249,115,22,0.4)]"
-                        : "bg-background border-border text-slate-light hover:border-orange-500/40"}`}
+                        : "bg-background border-border text-slate-light hover:border-orange-500/40"
+                        } `}
                     >
                       {mode === "OUTSIDE INFLUENCE" && <Check className="w-4 h-4" />}
                       INFLUENCE
@@ -431,7 +466,8 @@ export default function Home() {
                         onClick={() => { setLanguage(lang); }}
                         className={`py-2.5 rounded-xl uppercase font-bold text-sm transition-all border ${language === lang
                           ? "bg-cobalt/20 text-cobalt border-cobalt/40"
-                          : "bg-background border-border text-slate-light"}`}
+                          : "bg-background border-border text-slate-light"
+                          } `}
                       >
                         {lang}
                       </button>
@@ -447,7 +483,8 @@ export default function Home() {
                       onClick={() => setTheme("light")}
                       className={`flex items-center justify-center gap-2 py-2.5 rounded-xl font-bold text-sm transition-all border ${!mounted || theme === "light"
                         ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/40"
-                        : "bg-background border-border text-slate-light"}`}
+                        : "bg-background border-border text-slate-light"
+                        } `}
                     >
                       <Sun className="w-4 h-4" /> LIGHT
                     </button>
@@ -455,7 +492,8 @@ export default function Home() {
                       onClick={() => setTheme("dark")}
                       className={`flex items-center justify-center gap-2 py-2.5 rounded-xl font-bold text-sm transition-all border ${mounted && theme === "dark"
                         ? "bg-cobalt/10 text-cobalt border-cobalt/40"
-                        : "bg-background border-border text-slate-light"}`}
+                        : "bg-background border-border text-slate-light"
+                        } `}
                     >
                       <Moon className="w-4 h-4" /> DARK
                     </button>
@@ -483,6 +521,12 @@ export default function Home() {
       <AiBriefingModal
         isOpen={briefingOpen}
         onClose={() => setBriefingOpen(false)}
+      />
+      <ComparativeAnalyticsModal
+        isOpen={comparativeOpen}
+        onClose={() => setComparativeOpen(false)}
+        allData={ALL_SOVEREIGN_DATA}
+        initialSelectedCodes={selectedCodes}
       />
     </div>
   );
