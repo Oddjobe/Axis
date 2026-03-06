@@ -49,6 +49,23 @@ const MediumIcon = () => (
     </svg>
 )
 
+const SafeImage = ({ src, fallbackIcon: Icon, className }: { src?: string; fallbackIcon: any; className?: string }) => {
+    const [error, setError] = useState(false);
+    if (error || !src) return (
+        <div className={`flex items-center justify-center bg-gradient-to-br from-white/5 to-white/10 ${className}`}>
+            <Icon className="w-8 h-8 opacity-20" />
+        </div>
+    );
+    return (
+        <img
+            src={src}
+            alt=""
+            className={`object-cover ${className}`}
+            onError={() => setError(true)}
+        />
+    );
+}
+
 interface Article {
     title: string
     summary: string
@@ -400,8 +417,8 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
                                             transition={{ delay: idx * 0.1, duration: 0.3 }}
                                             className="flex items-center w-full h-[85px] bg-[#252525] hover:bg-[#353535] border border-white/5 rounded-[20px] backdrop-blur-[10px] transition-all duration-500 ease-in-out hover:scale-[1.02] group cursor-pointer overflow-hidden p-2"
                                         >
-                                            <div className="w-[65px] h-[65px] shrink-0 rounded-[15px] bg-gradient-to-br from-orange-500/20 to-orange-500/5 border border-orange-500/20 flex items-center justify-center transition-all duration-500 group-hover:from-orange-500/40 group-hover:to-orange-500/10">
-                                                <ShieldAlert className="w-8 h-8 text-orange-500 group-hover:scale-110 transition-transform" />
+                                            <div className="w-[65px] h-[65px] shrink-0 rounded-[15px] overflow-hidden border border-orange-500/20 group-hover:border-orange-500/40 transition-colors">
+                                                <SafeImage src={alert.imageUrl} fallbackIcon={ShieldAlert} className="w-full h-full grayscale group-hover:grayscale-0 transition-all duration-500 scale-110 group-hover:scale-100" />
                                             </div>
                                             <div className="flex-1 ml-3 min-w-0 pr-2">
                                                 <div className="flex items-center justify-between mb-1">
@@ -415,8 +432,8 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
                                                 </p>
                                                 <div className="mt-1 flex items-center gap-2">
                                                     <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded uppercase ${alert.severity === "HIGH" ? "bg-red-500/20 text-red-500" :
-                                                            alert.severity === "MEDIUM" ? "bg-orange-500/20 text-orange-500" :
-                                                                "bg-emerald-500/20 text-emerald-500"
+                                                        alert.severity === "MEDIUM" ? "bg-orange-500/20 text-orange-500" :
+                                                            "bg-emerald-500/20 text-emerald-500"
                                                         }`}>
                                                         {alert.severity}
                                                     </span>
@@ -455,8 +472,8 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
                                                 </p>
                                                 <div className="mt-1 flex items-center gap-2">
                                                     <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded uppercase ${alert.severity === "HIGH" ? "bg-red-500/20 text-red-500" :
-                                                            alert.severity === "MEDIUM" ? "bg-orange-500/20 text-orange-500" :
-                                                                "bg-emerald-500/20 text-emerald-500"
+                                                        alert.severity === "MEDIUM" ? "bg-orange-500/20 text-orange-500" :
+                                                            "bg-emerald-500/20 text-emerald-500"
                                                         }`}>
                                                         {alert.severity}
                                                     </span>
@@ -478,32 +495,48 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
                     <div className="space-y-4 cursor-default">
                         {/* Top Story Feature Card */}
                         {filteredAlerts.length > 0 ? (
-                            <a
-                                href="#"
-                                onClick={(e) => e.preventDefault()}
-                                className="block p-4 border border-cobalt/20 dark:border-cobalt/50 bg-white dark:bg-gradient-to-br dark:from-cobalt/10 dark:to-transparent rounded-lg shadow-[0_0_20px_rgba(37,99,235,0.05)] dark:shadow-[0_0_20px_rgba(37,99,235,0.15)] group transition-all hover:bg-blue-50 dark:hover:bg-cobalt/20 relative overflow-hidden"
+                            <motion.a
+                                href={filteredAlerts[0].url || "#"}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="block group relative rounded-[24px] overflow-hidden border border-white/10 h-[220px] mb-6 shadow-2xl transition-all duration-500 hover:scale-[1.01]"
                             >
-                                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                                    <Globe className="w-24 h-24" />
+                                {/* Background Image with Overlay */}
+                                <div className="absolute inset-0 z-0">
+                                    <SafeImage
+                                        src={filteredAlerts[0].imageUrl}
+                                        fallbackIcon={Globe}
+                                        className="w-full h-full grayscale group-hover:grayscale-0 transition-all duration-1000 scale-110 group-hover:scale-100 opacity-60 group-hover:opacity-80"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-[#151515] via-[#151515]/80 to-transparent" />
                                 </div>
-                                <div className="flex items-center gap-2 mb-3 relative z-10">
-                                    <span className="w-2 h-2 rounded-full bg-cobalt animate-pulse shadow-[0_0_10px_rgba(37,99,235,0.8)]" />
-                                    <span className="text-[10px] font-mono text-cobalt font-bold tracking-widest">TOP STORY</span>
+
+                                {/* Content */}
+                                <div className="absolute inset-0 z-10 p-6 flex flex-col justify-end">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <span className="flex items-center gap-1.5 bg-cobalt px-2 py-0.5 rounded-full text-[10px] font-bold text-white shadow-lg animate-pulse">
+                                            <Newspaper className="w-3 h-3" /> FEATURED STORY
+                                        </span>
+                                        <span className="text-[10px] text-white/60 font-mono uppercase tracking-[0.2em]">
+                                            {filteredAlerts[0].source || "INTEL"} • {getLiveTimeAgo((filteredAlerts[0] as any).timestamp)}
+                                        </span>
+                                    </div>
+                                    <h2 className="text-xl md:text-2xl font-black text-white leading-tight mb-2 group-hover:text-cobalt transition-colors duration-300">
+                                        {filteredAlerts[0].title}
+                                    </h2>
+                                    <p className="text-xs md:text-sm text-white/70 font-light line-clamp-2 max-w-[90%] leading-relaxed mb-4">
+                                        {filteredAlerts[0].summary}
+                                    </p>
+                                    <div className="flex items-center text-cobalt text-[10px] font-bold uppercase tracking-widest group-hover:translate-x-1 transition-transform">
+                                        SECURE ACCESS TO FULL REPORT <ArrowUpRight className="ml-1 w-3 h-3" />
+                                    </div>
                                 </div>
-                                <h2 className="text-[17px] sm:text-lg font-bold text-foreground group-hover:text-white transition-colors leading-tight mb-2 relative z-10 w-[85%] line-clamp-2">
-                                    {filteredAlerts[0].title}
-                                </h2>
-                                <p className="text-xs text-slate-light font-mono line-clamp-2 mb-4 relative z-10">
-                                    {filteredAlerts[0].summary}
-                                </p>
-                                <div className="flex justify-between items-center text-[10px] font-mono border-t border-cobalt/20 pt-3 relative z-10">
-                                    <span className="flex items-center gap-1.5 text-cobalt"><Newspaper className="w-3 h-3" /> {filteredAlerts[0].source || "INTEL"}</span>
-                                    <span className="bg-cobalt/20 text-cobalt px-2 py-0.5 rounded">{getLiveTimeAgo((filteredAlerts[0] as any).timestamp)}</span>
-                                </div>
-                            </a>
+                            </motion.a>
                         ) : (
-                            <div className="p-4 border border-border border-dashed rounded-lg text-center opacity-50">
-                                <span className="text-xs font-mono">NO TOP STORIES AVAILABLE</span>
+                            <div className="p-4 border border-white/5 border-dashed rounded-[20px] text-center opacity-30 h-[100px] flex items-center justify-center">
+                                <span className="text-[10px] font-mono tracking-widest text-white">NO TOP STORIES DETECTED</span>
                             </div>
                         )}
 
@@ -517,15 +550,9 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
                                 rel="noopener noreferrer"
                                 className="flex items-center w-full h-[85px] bg-[#252525] hover:bg-[#353535] border border-white/5 rounded-[20px] backdrop-blur-[10px] transition-all duration-500 ease-in-out hover:scale-[1.02] group cursor-pointer overflow-hidden p-2"
                             >
-                                {news.imageUrl ? (
-                                    <div className="w-[65px] h-[65px] shrink-0 rounded-[15px] overflow-hidden border border-white/10">
-                                        <img src={news.imageUrl} alt="" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500 scale-110 group-hover:scale-100" />
-                                    </div>
-                                ) : (
-                                    <div className="w-[65px] h-[65px] shrink-0 rounded-[15px] bg-gradient-to-br from-cobalt/20 to-cobalt/5 border border-cobalt/20 flex items-center justify-center transition-all duration-500 group-hover:from-cobalt/40 group-hover:to-cobalt/10">
-                                        <Newspaper className="w-8 h-8 text-cobalt" />
-                                    </div>
-                                )}
+                                <div className="w-[65px] h-[65px] shrink-0 rounded-[15px] overflow-hidden border border-white/10 group-hover:border-white/20 transition-colors">
+                                    <SafeImage src={news.imageUrl} fallbackIcon={Newspaper} className="w-full h-full grayscale group-hover:grayscale-0 transition-all duration-500 scale-110 group-hover:scale-100" />
+                                </div>
                                 <div className="flex-1 ml-3 min-w-0 pr-2">
                                     <div className="flex items-center justify-between mb-1">
                                         <h3 className="text-[13px] font-bold text-white truncate uppercase tracking-tight">{news.title}</h3>
@@ -570,15 +597,9 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
                                     rel="noopener noreferrer"
                                     className="flex items-center w-full h-[85px] bg-[#252525] hover:bg-[#353535] border border-white/5 rounded-[20px] backdrop-blur-[10px] transition-all duration-500 ease-in-out hover:scale-[1.02] group cursor-pointer overflow-hidden p-2"
                                 >
-                                    {post.imageUrl ? (
-                                        <div className="w-[65px] h-[65px] shrink-0 rounded-[15px] overflow-hidden border border-white/10">
-                                            <img src={post.imageUrl} alt="" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500 scale-110 group-hover:scale-100" />
-                                        </div>
-                                    ) : (
-                                        <div className="w-[65px] h-[65px] shrink-0 rounded-[15px] bg-gradient-to-br from-green-500/20 to-green-500/5 border border-green-500/20 flex items-center justify-center transition-all duration-500 group-hover:from-green-500/40 group-hover:to-green-500/10">
-                                            <BookOpen className="w-8 h-8 text-green-500" />
-                                        </div>
-                                    )}
+                                    <div className="w-[65px] h-[65px] shrink-0 rounded-[15px] overflow-hidden border border-white/10 group-hover:border-white/20 transition-colors">
+                                        <SafeImage src={post.imageUrl} fallbackIcon={BookOpen} className="w-full h-full grayscale group-hover:grayscale-0 transition-all duration-500 scale-110 group-hover:scale-100" />
+                                    </div>
                                     <div className="flex-1 ml-3 min-w-0 pr-2">
                                         <div className="flex items-center justify-between mb-1">
                                             <h3 className="text-[13px] font-bold text-white truncate uppercase tracking-tight">{post.title}</h3>
@@ -618,19 +639,24 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
                                 href={channel.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex items-start gap-3 p-3 border border-red-500/20 bg-red-500/5 rounded-md transition-all hover:bg-red-500/10 hover:border-red-500/40 group cursor-pointer"
+                                className="flex items-start gap-4 p-4 bg-[#252525] hover:bg-[#353535] border border-white/5 rounded-[20px] backdrop-blur-[10px] transition-all duration-500 ease-in-out hover:scale-[1.02] group cursor-pointer overflow-hidden"
                             >
-                                <div className="text-red-500 mt-0.5"><YouTubeIcon /></div>
-                                <div className="flex-1 min-w-0 overflow-hidden">
-                                    <h3 className="text-sm font-bold leading-tight group-hover:text-red-500 transition-colors mb-0.5 truncate">
-                                        {channel.name} <span className="text-xs text-red-500/70 inline-block ml-1 opacity-0 group-hover:opacity-100 transition-opacity">↗</span>
+                                <div className="w-12 h-12 shrink-0 rounded-[12px] bg-red-500/10 border border-red-500/20 flex items-center justify-center transition-all duration-500 group-hover:bg-red-500/20">
+                                    <div className="text-red-500"><YouTubeIcon /></div>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <h3 className="text-[14px] font-bold text-white mb-1 group-hover:text-red-500 transition-colors">
+                                        {channel.name}
                                     </h3>
-                                    <div className="text-[10px] font-mono text-slate-light mb-2">
+                                    <div className="text-[10px] font-mono text-red-500/60 mb-2 uppercase tracking-tight">
                                         {channel.handle}
                                     </div>
-                                    <div className="text-[9px] px-1.5 py-0.5 bg-background border border-border/50 rounded font-mono inline-block bg-white/5 dark:bg-black/20">
-                                        FOCUS: {channel.focus.toUpperCase()}
+                                    <div className="text-[9px] text-slate-light/60 font-mono leading-tight">
+                                        {channel.focus.toUpperCase()}
                                     </div>
+                                </div>
+                                <div className="opacity-0 group-hover:opacity-100 transition-all transform translate-x-1 group-hover:translate-x-0">
+                                    <ArrowUpRight className="w-4 h-4 text-red-500" />
                                 </div>
                             </a>
                         ))}
@@ -650,9 +676,13 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
                             "Map Belt & Road debt exposure across East African corridor",
                             "Analyze AfCFTA tariff reduction timelines by member state"
                         ].map((suggestion, idx) => (
-                            <div key={idx} className="flex items-start gap-2 p-2 border border-border/30 bg-background/30 rounded text-[10px] font-mono text-slate-light hover:bg-background/60 hover:text-foreground transition-all cursor-default">
-                                <span className="text-cobalt shrink-0 mt-0.5">→</span>
-                                <span>{suggestion}</span>
+                            <div key={idx} className="flex items-center gap-3 p-3 bg-[#1d1d1d] hover:bg-[#252525] border border-white/5 rounded-[15px] transition-all duration-300 group cursor-default">
+                                <div className="w-6 h-6 shrink-0 rounded-full bg-cobalt/10 border border-cobalt/20 flex items-center justify-center group-hover:bg-cobalt/20 transition-colors">
+                                    <span className="text-cobalt text-[10px] font-bold">→</span>
+                                </div>
+                                <span className="text-[10px] font-mono text-slate-light leading-snug group-hover:text-white transition-colors">
+                                    {suggestion}
+                                </span>
                             </div>
                         ))}
                     </div>
