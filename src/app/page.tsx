@@ -183,13 +183,13 @@ export default function Home() {
           <div className="hidden md:flex items-center gap-1 bg-background border border-border rounded-full p-1 shadow-inner">
             <button
               onClick={() => setMode("SOVEREIGNTY")}
-              className={`px-3 py-1 text-[10px] font-bold rounded-full transition-all ${mode === "SOVEREIGNTY" ? "bg-cobalt text-white shadow-[0_0_10px_rgba(37,99,235,0.4)]" : "text-slate-light hover:text-foreground"} `}
+              className={`px-3 py-1 text-[10px] font-bold rounded-full transition-all ${mode === "SOVEREIGNTY" ? "bg-cobalt text-white shadow-[0_0_10px_rgba(37,99,235,0.4)]" : "text-slate-light hover:text-foreground"}`}
             >
               {t("sovereignty")}
             </button>
             <button
               onClick={() => setMode("OUTSIDE INFLUENCE")}
-              className={`px-3 py-1 text-[10px] font-bold rounded-full transition-all ${mode === "OUTSIDE INFLUENCE" ? "bg-orange-500 text-white shadow-[0_0_10px_rgba(249,115,22,0.4)]" : "text-slate-light hover:text-foreground"} `}
+              className={`px-3 py-1 text-[10px] font-bold rounded-full transition-all ${mode === "OUTSIDE INFLUENCE" ? "bg-orange-500 text-white shadow-[0_0_10px_rgba(249,115,22,0.4)]" : "text-slate-light hover:text-foreground"}`}
             >
               {t("outside_influence")}
             </button>
@@ -204,7 +204,7 @@ export default function Home() {
                 <button
                   key={lang}
                   onClick={() => setLanguage(lang)}
-                  className={`px-2 py-1.5 transition - colors uppercase ${language === lang ? "bg-cobalt/20 text-cobalt" : "text-slate-light hover:bg-white/5"} `}
+                  className={`px-2 py-1.5 transition-colors uppercase ${language === lang ? "bg-cobalt/20 text-cobalt" : "text-slate-light hover:bg-white/5"}`}
                 >
                   {lang}
                 </button>
@@ -241,12 +241,12 @@ export default function Home() {
       {/* Main Grid Interface */}
       <main className="flex-1 flex overflow-hidden pb-16 lg:pb-0">
         {/* Left Panel: 54-Nation Matrix — hidden on mobile unless selected */}
-        <div className={`${mobilePanel === "index" ? "flex" : "hidden"} lg: flex`}>
+        <div className={`${mobilePanel === "index" ? "flex" : "hidden"} lg:flex`}>
           <AfcftaMatrix selectedCodes={selectedCodes} />
         </div>
 
         {/* Center Panel: Map Engine */}
-        <section className={`flex-1 relative bg - slate - 50 dark: bg - onyx - deep flex-col items-center justify-center p-2 lg:p-4 ${mobilePanel === "map" ? "flex" : "hidden lg:flex"} `}>
+        <section className={`flex-1 relative bg-slate-50 dark:bg-onyx-deep flex-col items-center justify-center p-2 lg:p-4 ${mobilePanel === "map" ? "flex" : "hidden lg:flex"}`}>
           {/* Atmospheric backdrop */}
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(37,99,235,0.12)_0%,rgba(0,10,30,0.3)_60%,transparent_100%)] dark:bg-[radial-gradient(ellipse_at_center,rgba(37,99,235,0.2)_0%,rgba(0,0,20,0.5)_60%,transparent_100%)] pointer-events-none" />
 
@@ -284,10 +284,10 @@ export default function Home() {
                 <button
                   key={res}
                   onClick={() => setSelectedResource(prev => prev === res ? null : res)}
-                  className={`px-2 py-1 rounded-full text - [9px] font-bold border transition-all whitespace - nowrap shadow - sm ${selectedResource === res
+                  className={`px-2 py-1 rounded-full text-[9px] font-bold border transition-all whitespace-nowrap shadow-sm ${selectedResource === res
                     ? "bg-amber-500 text-white border-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.4)]"
                     : "bg-panel/80 border-border text-slate-light hover:border-amber-500/40 hover:text-amber-500 backdrop-blur-md"
-                    } `}
+                    }`}
                 >
                   {res.toUpperCase()}
                 </button>
@@ -360,7 +360,7 @@ export default function Home() {
       <div className="flex lg:hidden fixed bottom-0 left-0 right-0 h-16 border-t border-border bg-panel/95 backdrop-blur-md z-50 safe-area-inset-bottom">
         <button
           onClick={() => setMobilePanel("index")}
-          className={`flex flex-1 flex-col items-center justify-center gap-1 transition-all relative ${mobilePanel === "index" ? "text-cobalt" : "text-slate-light"} `}
+          className={`flex flex-1 flex-col items-center justify-center gap-1 transition-all relative ${mobilePanel === "index" ? "text-cobalt" : "text-slate-light"}`}
         >
           {mobilePanel === "index" && (
             <span className="absolute top-0 inset-x-4 h-0.5 bg-cobalt rounded-b-full" />
@@ -370,7 +370,7 @@ export default function Home() {
         </button>
         <button
           onClick={() => setMobilePanel("map")}
-          className={`flex flex-1 flex-col items-center justify-center gap-1 transition-all relative ${mobilePanel === "map" ? "text-green-500" : "text-slate-light"} `}
+          className={`flex flex-1 flex-col items-center justify-center gap-1 transition-all relative ${mobilePanel === "map" ? "text-green-500" : "text-slate-light"}`}
         >
           {mobilePanel === "map" && (
             <span className="absolute top-0 inset-x-4 h-0.5 bg-green-500 rounded-b-full" />
@@ -380,7 +380,7 @@ export default function Home() {
         </button>
         <button
           onClick={() => setMobilePanel("intel")}
-          className={`flex flex-1 flex-col items-center justify-center gap-1 transition-all relative ${mobilePanel === "intel" ? "text-orange-500" : "text-slate-light"} `}
+          className={`flex flex-1 flex-col items-center justify-center gap-1 transition-all relative ${mobilePanel === "intel" ? "text-orange-500" : "text-slate-light"}`}
         >
           {mobilePanel === "intel" && (
             <span className="absolute top-0 inset-x-4 h-0.5 bg-orange-500 rounded-b-full" />
@@ -438,7 +438,7 @@ export default function Home() {
                       className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold text-sm transition-all border ${mode === "SOVEREIGNTY"
                         ? "bg-cobalt text-white border-cobalt shadow-[0_0_20px_rgba(37,99,235,0.4)]"
                         : "bg-background border-border text-slate-light hover:border-cobalt/40"
-                        } `}
+                        }`}
                     >
                       {mode === "SOVEREIGNTY" && <Check className="w-4 h-4" />}
                       SOVEREIGNTY
@@ -448,7 +448,7 @@ export default function Home() {
                       className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold text-xs transition-all border ${mode === "OUTSIDE INFLUENCE"
                         ? "bg-orange-500 text-white border-orange-500 shadow-[0_0_20px_rgba(249,115,22,0.4)]"
                         : "bg-background border-border text-slate-light hover:border-orange-500/40"
-                        } `}
+                        }`}
                     >
                       {mode === "OUTSIDE INFLUENCE" && <Check className="w-4 h-4" />}
                       INFLUENCE
@@ -467,7 +467,7 @@ export default function Home() {
                         className={`py-2.5 rounded-xl uppercase font-bold text-sm transition-all border ${language === lang
                           ? "bg-cobalt/20 text-cobalt border-cobalt/40"
                           : "bg-background border-border text-slate-light"
-                          } `}
+                          }`}
                       >
                         {lang}
                       </button>
@@ -484,7 +484,7 @@ export default function Home() {
                       className={`flex items-center justify-center gap-2 py-2.5 rounded-xl font-bold text-sm transition-all border ${!mounted || theme === "light"
                         ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/40"
                         : "bg-background border-border text-slate-light"
-                        } `}
+                        }`}
                     >
                       <Sun className="w-4 h-4" /> LIGHT
                     </button>
@@ -493,7 +493,7 @@ export default function Home() {
                       className={`flex items-center justify-center gap-2 py-2.5 rounded-xl font-bold text-sm transition-all border ${mounted && theme === "dark"
                         ? "bg-cobalt/10 text-cobalt border-cobalt/40"
                         : "bg-background border-border text-slate-light"
-                        } `}
+                        }`}
                     >
                       <Moon className="w-4 h-4" /> DARK
                     </button>
