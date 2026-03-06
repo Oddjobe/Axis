@@ -172,28 +172,24 @@ export default function AfcftaMatrix({ selectedCodes }: AfcftaMatrixProps) {
                     </div>
                 </div>
 
-                {/* Status Filter Chips with Fade Effect */}
-                <div className="relative">
-                    <div className="absolute left-0 top-0 bottom-0 w-4 bg-gradient-to-r from-panel to-transparent z-10 pointer-events-none" />
-                    <div className="absolute right-0 top-0 bottom-0 w-4 bg-gradient-to-l from-panel to-transparent z-10 pointer-events-none" />
-                    <div className="flex gap-1.5 pb-2 overflow-x-auto no-scrollbar scroll-smooth px-3">
-                        {filterOptions.map(status => (
-                            <button
-                                key={status}
-                                onClick={() => setFilterStatus(status)}
-                                className={`whitespace-nowrap rounded-full px-2.5 py-1 text-[9px] font-bold font-mono transition-all border shrink-0 ${filterStatus === status
-                                    ? (status === 'OPTIMAL' ? 'bg-green-500 text-white border-green-500 shadow-[0_0_8px_rgba(34,197,94,0.3)]' :
-                                        status === 'EXTRACTIVE' ? 'bg-red-500 text-white border-red-500 shadow-[0_0_8px_rgba(239,68,68,0.3)]' :
-                                            status === 'IMPROVING' ? 'bg-yellow-500 text-white border-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.3)]' :
-                                                status === 'STABLE' ? 'bg-cobalt text-white border-cobalt shadow-[0_0_8px_rgba(37,99,235,0.3)]' :
-                                                    'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white border-slate-300 dark:border-slate-600')
-                                    : 'bg-background hover:bg-white/5 border-border text-slate-light'
-                                    }`}
-                            >
-                                {status} <span className={`ml-0.5 font-normal ${filterStatus === status ? 'text-white/80' : 'opacity-50'}`}>({statusCounts[status]})</span>
-                            </button>
-                        ))}
-                    </div>
+                {/* Status Filter Chips - Wrapped for better visibility */}
+                <div className="flex flex-wrap gap-1.5 px-0.5">
+                    {filterOptions.map(status => (
+                        <button
+                            key={status}
+                            onClick={() => setFilterStatus(status)}
+                            className={`whitespace-nowrap rounded-full px-2.5 py-1 text-[9px] font-bold font-mono transition-all border ${filterStatus === status
+                                ? (status === 'OPTIMAL' ? 'bg-green-500 text-white border-green-500 shadow-[0_0_8px_rgba(34,197,94,0.3)]' :
+                                    status === 'EXTRACTIVE' ? 'bg-red-500 text-white border-red-500 shadow-[0_0_8px_rgba(239,68,68,0.3)]' :
+                                        status === 'IMPROVING' ? 'bg-yellow-500 text-white border-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.3)]' :
+                                            status === 'STABLE' ? 'bg-cobalt text-white border-cobalt shadow-[0_0_8px_rgba(37,99,235,0.3)]' :
+                                                'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white border-slate-300 dark:border-slate-600')
+                                : 'bg-background hover:bg-white/5 border-border text-slate-light'
+                                }`}
+                        >
+                            {status} <span className={`ml-0.5 font-normal ${filterStatus === status ? 'text-white/80' : 'opacity-50'}`}>({statusCounts[status]})</span>
+                        </button>
+                    ))}
                 </div>
             </div>
 
