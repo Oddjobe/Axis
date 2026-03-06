@@ -50,7 +50,7 @@ export default function AiResourceGraph({ selectedResource = null }: { selectedR
     const [mounted, setMounted] = useState(false);
     const [hoverNode, setHoverNode] = useState<GraphNode | null>(null);
     const [isStabilized, setIsStabilized] = useState(false);
-    const [forcesReady, setForcesReady] = useState(false);
+    // Removed forcesReady gate to allow immediate rendering
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const fgRef = useRef<any>(null);
@@ -87,7 +87,7 @@ export default function AiResourceGraph({ selectedResource = null }: { selectedR
 
     // Configure forces after the graph engine is available
     useEffect(() => {
-        if (!mounted || !fgRef.current || !forcesReady) return;
+        if (!mounted || !fgRef.current) return;
 
         const fg = fgRef.current;
 
@@ -115,12 +115,17 @@ export default function AiResourceGraph({ selectedResource = null }: { selectedR
 
         // Important: Reheat to apply these changes to the internal simulation state
         fg.d3ReheatSimulation();
-    }, [mounted, dimensions.width, forcesReady]);
+    }, [mounted, dimensions.width]);
 
-    // Initial mount to signal we are ready to set forces
+    // Zoom to fit on initial load
     useEffect(() => {
         if (mounted && fgRef.current) {
-            setForcesReady(true);
+            const timeout = setTimeout(() => {
+                if (fgRef.current) {
+                    fgRef.current.zoomToFit(400, 50);
+                }
+            }, 100);
+            return () => clearTimeout(timeout);
         }
     }, [mounted]);
 
@@ -164,6 +169,15 @@ export default function AiResourceGraph({ selectedResource = null }: { selectedR
             { id: "Bauxite", group: "resource" as NodeType, name: "Bauxite", val: 16, column: 1, color: colors.resource, desc: "Refined into Aluminum for server racks, heat sinks, and casings." },
             { id: "Graphite", group: "resource" as NodeType, name: "Graphite", val: 18, column: 1, color: colors.resource, desc: "Largest mineral component by weight in modern battery cells." },
             { id: "Coltan", group: "resource" as NodeType, name: "Coltan", val: 16, column: 1, color: colors.resource, desc: "Refined into Tantalum for high-performance capacitors." },
+            { id: "Gold", group: "resource" as NodeType, name: "Gold", val: 18, column: 1, color: colors.resource, desc: "Unmatched conductivity and corrosion resistance for PCB plating and bond wires." },
+            { id: "Nickel", group: "resource" as NodeType, name: "Nickel", val: 18, column: 1, color: colors.resource, desc: "Critical for high-nickel cathode chemistries in energy storage." },
+            { id: "Phosphates", group: "resource" as NodeType, name: "Phosphates", val: 16, column: 1, color: colors.resource, desc: "Essential for LFP (Lithium Iron Phosphate) battery cathode production." },
+            { id: "GasOil", group: "resource" as NodeType, name: "Oil & Gas", val: 24, column: 1, color: colors.resource, desc: "The baseload energy source for massive data center power plants." },
+            { id: "Uranium", group: "resource" as NodeType, name: "Uranium", val: 20, column: 1, color: colors.resource, desc: "Nuclear fuel for zero-carbon consistent gigawatt-scale compute power." },
+            { id: "IronOre", group: "resource" as NodeType, name: "Iron Ore", val: 16, column: 1, color: colors.resource, desc: "Refined into steel for structural data center frames and server racks." },
+            { id: "Manganese", group: "resource" as NodeType, name: "Manganese", val: 15, column: 1, color: colors.resource, desc: "Used in steel alloys and increasingly in NMC battery cathodes." },
+            { id: "RareEarths", group: "resource" as NodeType, name: "Rare Earths", val: 18, column: 1, color: colors.resource, desc: "Neodymium and Praseodymium for high-efficiency server cooling fan motors." },
+            { id: "Platinum", group: "resource" as NodeType, name: "Platinum/PGMs", val: 17, column: 1, color: colors.resource, desc: "Catalytic properties used in specialized semiconductor manufacturing." }
         ];
 
         const resourceNodes = selectedResource
@@ -188,13 +202,35 @@ export default function AiResourceGraph({ selectedResource = null }: { selectedR
         const dynamicCountryLinks: GraphLink[] = [];
         filteredAllSovereign.forEach(c => {
             const res = c.keyResources.map(r => r.toLowerCase());
-            if (res.some(r => r.includes('cobalt'))) dynamicCountryLinks.push({ source: c.country, target: "Cobalt", value: 6 });
-            if (res.some(r => r.includes('copper'))) dynamicCountryLinks.push({ source: c.country, target: "Copper", value: 6 });
-            if (res.some(r => r.includes('lithium'))) dynamicCountryLinks.push({ source: c.country, target: "Lithium", value: 6 });
-            if (res.some(r => r.includes('bauxite'))) dynamicCountryLinks.push({ source: c.country, target: "Bauxite", value: 6 });
-            if (res.some(r => r.includes('graphite'))) dynamicCountryLinks.push({ source: c.country, target: "Graphite", value: 6 });
-            if (res.some(r => r.includes('coltan') || r.includes('tantalum'))) dynamicCountryLinks.push({ source: c.country, target: "Coltan", value: 6 });
-            if (c.country === "COD" && res.some(r => r.includes('cobalt'))) dynamicCountryLinks[dynamicCountryLinks.length - 1].label = "70% GLOBAL";
+            let hasLink = false;
+
+            if (res.some(r => r.includes('cobalt'))) { dynamicCountryLinks.push({ source: c.country, target: "Cobalt", value: 6 }); hasLink = true; }
+            if (res.some(r => r.includes('copper'))) { dynamicCountryLinks.push({ source: c.country, target: "Copper", value: 6 }); hasLink = true; }
+            if (res.some(r => r.includes('lithium'))) { dynamicCountryLinks.push({ source: c.country, target: "Lithium", value: 6 }); hasLink = true; }
+            if (res.some(r => r.includes('bauxite'))) { dynamicCountryLinks.push({ source: c.country, target: "Bauxite", value: 6 }); hasLink = true; }
+            if (res.some(r => r.includes('graphite'))) { dynamicCountryLinks.push({ source: c.country, target: "Graphite", value: 6 }); hasLink = true; }
+            if (res.some(r => r.includes('coltan') || r.includes('tantalum'))) { dynamicCountryLinks.push({ source: c.country, target: "Coltan", value: 6 }); hasLink = true; }
+            if (res.some(r => r.includes('gold'))) { dynamicCountryLinks.push({ source: c.country, target: "Gold", value: 6 }); hasLink = true; }
+            if (res.some(r => r.includes('nickel'))) { dynamicCountryLinks.push({ source: c.country, target: "Nickel", value: 6 }); hasLink = true; }
+            if (res.some(r => r.includes('phosphate'))) { dynamicCountryLinks.push({ source: c.country, target: "Phosphates", value: 6 }); hasLink = true; }
+            if (res.some(r => r.includes('oil') || r.includes('gas'))) { dynamicCountryLinks.push({ source: c.country, target: "GasOil", value: 6 }); hasLink = true; }
+            if (res.some(r => r.includes('uranium'))) { dynamicCountryLinks.push({ source: c.country, target: "Uranium", value: 6 }); hasLink = true; }
+            if (res.some(r => r.includes('iron ore'))) { dynamicCountryLinks.push({ source: c.country, target: "IronOre", value: 6 }); hasLink = true; }
+            if (res.some(r => r.includes('manganese'))) { dynamicCountryLinks.push({ source: c.country, target: "Manganese", value: 6 }); hasLink = true; }
+            if (res.some(r => r.includes('rare earth'))) { dynamicCountryLinks.push({ source: c.country, target: "RareEarths", value: 6 }); hasLink = true; }
+            if (res.some(r => r.includes('platinum') || r.includes('chrome'))) { dynamicCountryLinks.push({ source: c.country, target: "Platinum", value: 6 }); hasLink = true; }
+
+            // Special handling for DRC Cobalt dominance
+            if (c.country === "COD" && res.some(r => r.includes('cobalt'))) {
+                const codLink = dynamicCountryLinks.find(l => l.source === "COD" && l.target === "Cobalt");
+                if (codLink) codLink.label = "70% GLOBAL";
+            }
+
+            // Catch-all to ensure every country has at least ONE connection
+            if (!hasLink) {
+                // Map smaller economies or those with soft commodities to general Strategic nodes
+                dynamicCountryLinks.push({ source: c.country, target: "GasOil", value: 4, label: "ENERGY EXPORT" });
+            }
         });
 
         // Further filter dynamicCountryLinks if selectedResource is set
@@ -207,12 +243,23 @@ export default function AiResourceGraph({ selectedResource = null }: { selectedR
             { source: "Cobalt", target: "Batteries", value: 7 },
             { source: "Lithium", target: "Batteries", value: 7 },
             { source: "Graphite", target: "Batteries", value: 6 },
+            { source: "Nickel", target: "Batteries", value: 6 },
+            { source: "Phosphates", target: "Batteries", value: 5 },
+            { source: "Manganese", target: "Batteries", value: 5 },
             { source: "Copper", target: "Grid", value: 8 },
             { source: "Copper", target: "Semiconductors", value: 5 },
             { source: "Copper", target: "Thermal", value: 4 },
             { source: "Bauxite", target: "Thermal", value: 5 },
             { source: "Bauxite", target: "Grid", value: 3 },
             { source: "Coltan", target: "Semiconductors", value: 6 },
+            { source: "Gold", target: "Semiconductors", value: 7 },
+            { source: "Gold", target: "GPUs", value: 6 },
+            { source: "RareEarths", target: "Thermal", value: 6 },
+            { source: "Platinum", target: "Semiconductors", value: 5 },
+            { source: "GasOil", target: "Grid", value: 9 },
+            { source: "Uranium", target: "Grid", value: 8 },
+            { source: "IronOre", target: "Thermal", value: 4 },
+            { source: "IronOre", target: "Grid", value: 3 },
 
             // Components -> AI
             { source: "Batteries", target: "DataCenters", value: 6, label: "UPS" },
@@ -431,7 +478,7 @@ export default function AiResourceGraph({ selectedResource = null }: { selectedR
                             ref={fgRef}
                             width={dimensions.width}
                             height={dimensions.height}
-                            graphData={forcesReady ? graphData : { nodes: [], links: [] }}
+                            graphData={graphData}
                             nodeLabel=""
                             nodeCanvasObject={paintNode}
                             nodeCanvasObjectMode={() => 'replace'}
