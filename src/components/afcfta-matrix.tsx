@@ -147,8 +147,8 @@ export default function AfcftaMatrix({ selectedCodes }: AfcftaMatrixProps) {
 
             {/* Controls */}
             <div className="p-3 border-b border-border bg-black/5 dark:bg-white/5 space-y-3 shrink-0">
-                <div className="flex gap-2">
-                    <div className="relative flex-1">
+                <div className="flex flex-col gap-2">
+                    <div className="relative">
                         <Search className="absolute left-2.5 top-2 w-4 h-4 text-slate-light" />
                         <input
                             type="text"
@@ -158,35 +158,42 @@ export default function AfcftaMatrix({ selectedCodes }: AfcftaMatrixProps) {
                             className="w-full bg-background border border-border rounded-lg pl-9 pr-3 py-1.5 text-xs font-mono text-foreground focus:outline-none focus:border-cobalt/50 transition-colors"
                         />
                     </div>
-                    <select
-                        value={sortBy}
-                        onChange={(e) => setSortBy(e.target.value as any)}
-                        className="bg-background border border-border rounded-md px-2 py-1.5 text-xs font-mono text-slate-light focus:outline-none cursor-pointer hover:bg-white/5 transition-colors"
-                    >
-                        <option value="name">SORT: A-Z</option>
-                        <option value="score">SCORE</option>
-                        <option value="wealth">WEALTH</option>
-                    </select>
+                    <div className="relative">
+                        <ChevronDown className="absolute right-2.5 top-2 w-4 h-4 text-slate-light pointer-events-none" />
+                        <select
+                            value={sortBy}
+                            onChange={(e) => setSortBy(e.target.value as any)}
+                            className="w-full appearance-none bg-background border border-border rounded-lg pl-3 pr-9 py-1.5 text-xs font-mono text-slate-light focus:outline-none cursor-pointer hover:bg-white/5 transition-colors"
+                        >
+                            <option value="name">SORT: A-Z</option>
+                            <option value="score">SORT: AXIS SCORE</option>
+                            <option value="wealth">SORT: RESOURCE WEALTH</option>
+                        </select>
+                    </div>
                 </div>
 
-                {/* Status Filter Chips */}
-                <div className="flex gap-2 pb-1 overflow-x-auto no-scrollbar scroll-smooth">
-                    {filterOptions.map(status => (
-                        <button
-                            key={status}
-                            onClick={() => setFilterStatus(status)}
-                            className={`whitespace-nowrap rounded-full px-3 py-1.5 text-[10px] font-bold font-mono transition-all border ${filterStatus === status
-                                ? (status === 'OPTIMAL' ? 'bg-green-500 text-white border-green-500 shadow-[0_0_8px_rgba(34,197,94,0.3)]' :
-                                    status === 'EXTRACTIVE' ? 'bg-red-500 text-white border-red-500 shadow-[0_0_8px_rgba(239,68,68,0.3)]' :
-                                        status === 'IMPROVING' ? 'bg-yellow-500 text-white border-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.3)]' :
-                                            status === 'STABLE' ? 'bg-cobalt text-white border-cobalt shadow-[0_0_8px_rgba(37,99,235,0.3)]' :
-                                                'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white border-slate-300 dark:border-slate-600')
-                                : 'bg-background hover:bg-white/5 border-border text-slate-light'
-                                }`}
-                        >
-                            {status} <span className={`ml-1 font-normal ${filterStatus === status ? 'text-white/80' : 'opacity-50'}`}>({statusCounts[status]})</span>
-                        </button>
-                    ))}
+                {/* Status Filter Chips with Fade Effect */}
+                <div className="relative">
+                    <div className="absolute left-0 top-0 bottom-0 w-4 bg-gradient-to-r from-panel to-transparent z-10 pointer-events-none" />
+                    <div className="absolute right-0 top-0 bottom-0 w-4 bg-gradient-to-l from-panel to-transparent z-10 pointer-events-none" />
+                    <div className="flex gap-1.5 pb-2 overflow-x-auto no-scrollbar scroll-smooth px-3">
+                        {filterOptions.map(status => (
+                            <button
+                                key={status}
+                                onClick={() => setFilterStatus(status)}
+                                className={`whitespace-nowrap rounded-full px-2.5 py-1 text-[9px] font-bold font-mono transition-all border shrink-0 ${filterStatus === status
+                                    ? (status === 'OPTIMAL' ? 'bg-green-500 text-white border-green-500 shadow-[0_0_8px_rgba(34,197,94,0.3)]' :
+                                        status === 'EXTRACTIVE' ? 'bg-red-500 text-white border-red-500 shadow-[0_0_8px_rgba(239,68,68,0.3)]' :
+                                            status === 'IMPROVING' ? 'bg-yellow-500 text-white border-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.3)]' :
+                                                status === 'STABLE' ? 'bg-cobalt text-white border-cobalt shadow-[0_0_8px_rgba(37,99,235,0.3)]' :
+                                                    'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white border-slate-300 dark:border-slate-600')
+                                    : 'bg-background hover:bg-white/5 border-border text-slate-light'
+                                    }`}
+                            >
+                                {status} <span className={`ml-0.5 font-normal ${filterStatus === status ? 'text-white/80' : 'opacity-50'}`}>({statusCounts[status]})</span>
+                            </button>
+                        ))}
+                    </div>
                 </div>
             </div>
 
