@@ -104,20 +104,14 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
         async function fetchIntelligence() {
             if (alerts.length === 0) setLoading(true);
             try {
-                // Fetch live intelligence alerts directly from Supabase
-                const { data, error } = await supabase
-                    .from('intelligence_alerts')
-                    .select('*')
-                    .order('created_at', { ascending: false })
-                    .limit(50);
-
-                if (error) throw error;
+                const res = await fetch("/api/intelligence");
+                const data = await res.json();
                 if (!data) return;
 
                 // Calculate an exact date/time from the relative "timeAgo" string
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const enhancedData = data.map((alert: any) => {
-                    const exactDate = new Date(alert.created_at);
+                    const exactDate = alert.created_at ? new Date(alert.created_at) : new Date(); // Use current date for fallback data if created_at is missing
                     return { ...alert, timestamp: exactDate.toISOString() };
                 });
 

@@ -32,11 +32,23 @@ CREATE TABLE IF NOT EXISTS public.intelligence_alerts (
 -- Run this ALTER if upgrading an existing database:
 -- ALTER TABLE public.intelligence_alerts ADD COLUMN IF NOT EXISTS actor TEXT;
 
--- 3. Enable Row Level Security (RLS) on both tables
+-- 3. Create the `blog_posts` table to store scraped Medium articles
+CREATE TABLE IF NOT EXISTS public.blog_posts (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    title TEXT NOT NULL,
+    summary TEXT NOT NULL,
+    author TEXT NOT NULL,
+    tag TEXT NOT NULL,
+    url TEXT NOT NULL,
+    "created_at" TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 4. Enable Row Level Security (RLS) on all tables
 ALTER TABLE public.countries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.intelligence_alerts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.blog_posts ENABLE ROW LEVEL SECURITY;
 
--- 4. Create RLS Policies for Public Read Access (Frontend)
--- This allows anyone to READ the data, but only absolute admins (Service Role key) can INSERT/UPDATE.
+-- 5. Create RLS Policies for Public Read Access (Frontend)
 CREATE POLICY "Allow public read access to countries" ON public.countries FOR SELECT USING (true);
 CREATE POLICY "Allow public read access to intelligence_alerts" ON public.intelligence_alerts FOR SELECT USING (true);
+CREATE POLICY "Allow public read access to blog_posts" ON public.blog_posts FOR SELECT USING (true);
