@@ -56,6 +56,8 @@ interface Article {
     category: "SOVEREIGNTY RISK" | "OUTSIDE INFLUENCE"
     isoCode: string
     timeAgo: string
+    source?: string
+    timestamp?: string
 }
 
 interface BlogPost {
@@ -434,60 +436,55 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
                 {activeTab === "NEWS" && (
                     <div className="space-y-4 cursor-default">
                         {/* Top Story Feature Card */}
-                        <a
-                            href="#"
-                            onClick={(e) => e.preventDefault()}
-                            className="block p-4 border border-cobalt/20 dark:border-cobalt/50 bg-white dark:bg-gradient-to-br dark:from-cobalt/10 dark:to-transparent rounded-lg shadow-[0_0_20px_rgba(37,99,235,0.05)] dark:shadow-[0_0_20px_rgba(37,99,235,0.15)] group transition-all hover:bg-blue-50 dark:hover:bg-cobalt/20 relative overflow-hidden"
-                        >
-                            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                                <Globe className="w-24 h-24" />
+                        {filteredAlerts.length > 0 ? (
+                            <a
+                                href="#"
+                                onClick={(e) => e.preventDefault()}
+                                className="block p-4 border border-cobalt/20 dark:border-cobalt/50 bg-white dark:bg-gradient-to-br dark:from-cobalt/10 dark:to-transparent rounded-lg shadow-[0_0_20px_rgba(37,99,235,0.05)] dark:shadow-[0_0_20px_rgba(37,99,235,0.15)] group transition-all hover:bg-blue-50 dark:hover:bg-cobalt/20 relative overflow-hidden"
+                            >
+                                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                    <Globe className="w-24 h-24" />
+                                </div>
+                                <div className="flex items-center gap-2 mb-3 relative z-10">
+                                    <span className="w-2 h-2 rounded-full bg-cobalt animate-pulse shadow-[0_0_10px_rgba(37,99,235,0.8)]" />
+                                    <span className="text-[10px] font-mono text-cobalt font-bold tracking-widest">TOP STORY</span>
+                                </div>
+                                <h2 className="text-[17px] sm:text-lg font-bold text-foreground group-hover:text-white transition-colors leading-tight mb-2 relative z-10 w-[85%] line-clamp-2">
+                                    {filteredAlerts[0].title}
+                                </h2>
+                                <p className="text-xs text-slate-light font-mono line-clamp-2 mb-4 relative z-10">
+                                    {filteredAlerts[0].summary}
+                                </p>
+                                <div className="flex justify-between items-center text-[10px] font-mono border-t border-cobalt/20 pt-3 relative z-10">
+                                    <span className="flex items-center gap-1.5 text-cobalt"><Newspaper className="w-3 h-3" /> {filteredAlerts[0].source || "INTEL"}</span>
+                                    <span className="bg-cobalt/20 text-cobalt px-2 py-0.5 rounded">{getLiveTimeAgo((filteredAlerts[0] as any).timestamp)}</span>
+                                </div>
+                            </a>
+                        ) : (
+                            <div className="p-4 border border-border border-dashed rounded-lg text-center opacity-50">
+                                <span className="text-xs font-mono">NO TOP STORIES AVAILABLE</span>
                             </div>
-                            <div className="flex items-center gap-2 mb-3 relative z-10">
-                                <span className="w-2 h-2 rounded-full bg-cobalt animate-pulse shadow-[0_0_10px_rgba(37,99,235,0.8)]" />
-                                <span className="text-[10px] font-mono text-cobalt font-bold tracking-widest">TOP STORY</span>
-                            </div>
-                            <h2 className="text-[17px] sm:text-lg font-bold text-foreground group-hover:text-white transition-colors leading-tight mb-2 relative z-10 w-[85%] line-clamp-2">
-                                {filterCountries && filterCountries.length > 0 ? `${filterCountries.length === 1 ? filterCountries[0].toUpperCase() : 'MULTI-NATION'}: Strategic Resource Agreements Restructure Regional Supply Chains` : "PAPSS processes over $2.8B in intra-African payments since launch."}
-                            </h2>
-                            <p className="text-xs text-slate-light font-mono line-clamp-2 mb-4 relative z-10">
-                                {filterCountries && filterCountries.length > 0 ? `New diplomatic and economic shifts in ${filterCountries.join(', ')} are creating significant shockwaves across the regional resource market, driving sovereignty indexes higher.` : "The Pan-African Payment and Settlement System is accelerating AfCFTA by eliminating dollar dependency in cross-border trade."}
-                            </p>
-                            <div className="flex justify-between items-center text-[10px] font-mono border-t border-cobalt/20 pt-3 relative z-10">
-                                <span className="flex items-center gap-1.5 text-cobalt"><AfDBIcon /> MARKET INTELLIGENCE</span>
-                                <span className="bg-cobalt/20 text-cobalt px-2 py-0.5 rounded">JUST NOW</span>
-                            </div>
-                        </a>
+                        )}
 
                         <div className="text-[10px] font-mono text-slate-light border-b border-border pb-1 mt-6 mb-2">MACROECONOMIC CONTEXT & FORESIGHT</div>
 
-                        {[
-                            { title: "African Development Bank approves $1.3B for continental rail infrastructure.", source: "AfDB News", time: "RECENT", iso: "PAN-AFRICA", url: "https://www.afdb.org/en/news-and-events", Icon: AfDBIcon, color: "text-green-500" },
-                            { title: "Nigeria's Dangote Refinery begins petrol production, reducing import dependency.", source: "Bloomberg Africa", time: "RECENT", iso: "NGA", url: "https://www.bloomberg.com/africa", Icon: BloombergIcon, color: "text-purple-500" },
-                            { title: "DRC and Zambia sign historic agreement for regional electric battery value chain.", source: "Mining Weekly", time: "RECENT", iso: "COD", url: "https://www.miningweekly.com/page/africa", Icon: MiningIcon, color: "text-orange-500" },
-                            { title: "Zambia finalizes $3B debt restructuring with international bondholders.", source: "Reuters Africa", time: "RECENT", iso: "ZMB", url: "https://www.reuters.com/world/africa/", Icon: ReutersIcon, color: "text-cobalt" },
-                            { title: "Live African Business, Trade & Market Feed", source: "Africanews", time: "WIRE", iso: "PAN-AFRICA", url: "https://www.africanews.com/business/", Icon: AlJazeeraIcon, color: "text-cobalt" },
-                            { title: "Investing in Africa: Continental Capital Aggregation", source: "AFSIC", time: "EVENTS", iso: "GLOBAL", url: "https://www.afsic.net/", Icon: BloombergIcon, color: "text-green-500" },
-                            { title: "Continental Economic History & Structural Architecture", source: "Britannica", time: "ENCYCLOPEDIA", iso: "PAN-AFRICA", url: "https://www.britannica.com/place/Africa/Economy", Icon: ReutersIcon, color: "text-amber-500" }
-                        ].map((news, idx) => (
-                            <a
+                        {filteredAlerts.slice(1, 8).map((news, idx) => (
+                            <div
                                 key={idx}
-                                href={news.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-start gap-3 p-3 border border-border/50 bg-white dark:bg-background/30 rounded-md transition-all hover:bg-slate-50 dark:hover:bg-background/80 hover:border-cobalt/40 group cursor-pointer"
+                                className="flex items-start gap-3 p-3 border border-border/50 bg-white dark:bg-background/30 rounded-md transition-all hover:bg-slate-50 dark:hover:bg-background/80 hover:border-cobalt/40 group cursor-default"
                             >
-                                <div className={`mt-0.5 ${news.color}`}><news.Icon /></div>
+                                <div className={`mt-0.5 text-cobalt`}><Newspaper className="w-4 h-4" /></div>
                                 <div className="flex-1 min-w-0">
                                     <h3 className="text-sm font-bold mb-1 leading-tight text-foreground/90 group-hover:text-cobalt transition-colors">{news.title}</h3>
                                     <div className="flex justify-between items-center text-[10px] font-mono text-slate-light mt-2">
-                                        <span className="text-cobalt">{news.source}</span>
-                                        <span>{news.time}</span>
+                                        <span className="text-cobalt">{news.source || "OSINT WIRE"}</span>
+                                        <span>{getLiveTimeAgo((news as any).timestamp)}</span>
                                     </div>
                                     <div className="mt-2 text-[9px] px-1.5 py-0.5 bg-border/30 rounded border border-border/50 inline-block font-mono bg-white/5 dark:bg-black/20">
-                                        TAG: {news.iso}
+                                        TAG: {news.isoCode}
                                     </div>
                                 </div>
-                            </a>
+                            </div>
                         ))}
                     </div>
                 )}
