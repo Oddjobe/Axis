@@ -346,7 +346,7 @@ export default function Home() {
         </section>
 
         {/* Right Panel: Friction Engine */}
-        <div className={`${mobilePanel === "intel" ? "flex" : "hidden"} lg: flex`}>
+        <div className={`${mobilePanel === "intel" ? "flex" : "hidden"} lg:flex`}>
           <FrictionEngine mode={mode} filterCountries={selectedCodes.length > 0 ? selectedCodes : null} />
         </div>
       </main>
