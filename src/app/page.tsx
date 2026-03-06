@@ -124,14 +124,32 @@ export default function Home() {
         <div className="flex items-center gap-2 lg:gap-4">
           {/* Group 1: Population */}
           <div className="flex items-center gap-1.5 lg:gap-2 px-2 lg:px-3 py-1 lg:py-1.5 bg-background border border-border rounded-lg text-[10px] lg:text-xs font-mono shadow-sm">
-            <Users className="w-3 h-3 lg:w-3.5 lg:h-3.5 text-green-500" />
+            <Users className="w-3 h-3 lg:w-3.5 lg:h-3.5 text-zinc-400" />
             <span className="text-slate-light hidden sm:inline">
               {selectedCountries.length === 1 ? selectedCountries[0].name.toUpperCase() : selectedCountries.length > 1 ? t("selected_population") : t("population")}
             </span>
-            <span className="font-bold text-green-500 ml-0.5 lg:ml-1">{displayPop}</span>
+            <span className="font-bold text-zinc-400 dark:text-zinc-200 ml-0.5 lg:ml-1">{displayPop}</span>
           </div>
 
-          <div className="hidden md:block h-6 w-px bg-border/50" />
+          <div className="hidden lg:flex h-6 w-px bg-border/50" />
+
+          {/* Group 2: Capital Flow KPIs */}
+          <div className="hidden lg:flex items-center gap-3">
+            <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-emerald-500/5 border border-emerald-500/20 rounded-lg text-[10px] font-mono shadow-sm group hover:bg-emerald-500/10 transition-colors">
+              <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
+              <div className="flex flex-col">
+                <span className="text-[8px] text-emerald-500/60 font-bold leading-none uppercase tracking-tighter">Inbound</span>
+                <span className="font-bold text-emerald-500 leading-tight">$58.4B</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-red-500/5 border border-red-500/20 rounded-lg text-[10px] font-mono shadow-sm group hover:bg-red-500/10 transition-colors">
+              <TrendingDown className="w-3.5 h-3.5 text-red-500" />
+              <div className="flex flex-col">
+                <span className="text-[8px] text-red-500/60 font-bold leading-none uppercase tracking-tighter">Outflow</span>
+                <span className="font-bold text-red-500 leading-tight">$142.8B</span>
+              </div>
+            </div>
+          </div>
 
           {/* Group 2: Tools/Modals */}
           <div className="flex items-center gap-2">

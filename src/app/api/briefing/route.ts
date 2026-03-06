@@ -40,6 +40,32 @@ export async function GET() {
         // 4. Afro-centric Strategic Synthesis
         const growthPosture = highSeverityCount > 3 ? "navigating complex external dynamics" : "strengthening continental autonomy";
 
+        // Define representative Capital Flows ($ Billions)
+        const capitalInflow = alerts?.length ? 45.2 + (alerts.length * 2.5) : 58.4;
+        const capitalOutflow = alerts?.length ? 122.5 + (highSeverityCount * 15.2) : 142.8;
+        const leakage = capitalOutflow - capitalInflow;
+
+        // Determine most impactful change based on current risk profile
+        let impactfulChange = {
+            title: "AfCFTA Unified Protocol",
+            description: "Implementing the single digital trade standard to eliminate 90% of intra-continental tariffs.",
+            impactScore: 9.4
+        };
+
+        if (leakage > 80) {
+            impactfulChange = {
+                title: "Rail-to-Port Sovereignty",
+                description: "Standardizing the Trans-African railway network to bypass foreign-managed logistics hubs.",
+                impactScore: 9.2
+            };
+        } else if (highSeverityCount > 5) {
+            impactfulChange = {
+                title: "Decentralized Solar Grids",
+                description: "Deploying modular solar infrastructure to reduce industrial energy dependency on external gas imports.",
+                impactScore: 8.8
+            };
+        }
+
         const briefing = {
             overview: `The continent is currently ${growthPosture}, supported by ${effectiveAlerts.length} strategic indicators across regional blocs. Analysis of ${effectiveBlogs.length} recent dossiers confirms a decisive shift toward accelerated AfCFTA integration and the prioritization of domestic processing for Africa's critical mineral wealth.`,
 
@@ -74,6 +100,16 @@ export async function GET() {
                 extractivePressure: alerts?.length ? Math.min(6.5 + (highSeverityCount * 0.4), 9.0) : 6.2,
                 regionalStability: alerts?.length ? Math.max(7.5 - (highSeverityCount * 0.3), 4.5) : 7.4
             },
+
+            capitalFlows: {
+                inbound: capitalInflow,
+                outbound: capitalOutflow,
+                leakage: leakage,
+                currency: "USD",
+                denominator: "B"
+            },
+
+            impactfulChange,
 
             status: "Sovereignty Posture: STRENGTHENING",
             timestamp: new Date().toISOString()

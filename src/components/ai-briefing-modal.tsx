@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ShieldAlert, Zap, Target, BarChart3, Clock, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { X, ShieldAlert, Zap, Target, BarChart3, Clock, AlertTriangle, ShieldCheck, TrendingUp, TrendingDown, LayoutDashboard } from 'lucide-react';
 
 interface BriefingData {
     overview: string;
@@ -12,6 +12,18 @@ interface BriefingData {
         sovereigntyRestoration: number;
         extractivePressure: number;
         regionalStability: number;
+    };
+    capitalFlows: {
+        inbound: number;
+        outbound: number;
+        leakage: number;
+        currency: string;
+        denominator: string;
+    };
+    impactfulChange: {
+        title: string;
+        description: string;
+        impactScore: number;
     };
     status: string;
     timestamp: string;
@@ -111,6 +123,23 @@ export default function AiBriefingModal({ isOpen, onClose }: AiBriefingModalProp
                                         </div>
                                     </div>
 
+                                    {/* Sovereign Impact Callout */}
+                                    <div className="p-4 bg-cobalt/5 border border-cobalt/20 rounded-xl flex items-start gap-4">
+                                        <div className="p-2 bg-cobalt/10 rounded-lg">
+                                            <Zap className="w-5 h-5 text-cobalt" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <div className="flex justify-between items-center mb-1">
+                                                <h4 className="text-[11px] font-bold text-foreground uppercase tracking-wider">Most Impactful Change</h4>
+                                                <div className="px-2 py-0.5 bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 rounded text-[8px] font-bold">
+                                                    +{data?.impactfulChange.impactScore} IMPACT
+                                                </div>
+                                            </div>
+                                            <p className="text-[10px] text-slate-light/90 leading-relaxed font-bold mb-1">{data?.impactfulChange.title}</p>
+                                            <p className="text-[9px] text-slate-light/70 italic leading-relaxed">{data?.impactfulChange.description}</p>
+                                        </div>
+                                    </div>
+
                                     {/* Risk Indices */}
                                     <div className="grid grid-cols-3 gap-4">
                                         {[
@@ -130,6 +159,38 @@ export default function AiBriefingModal({ isOpen, onClose }: AiBriefingModalProp
                                                 </div>
                                             </div>
                                         ))}
+                                    </div>
+
+                                    {/* Capital Flow Analysis */}
+                                    <div className="space-y-4">
+                                        <h3 className="text-[10px] font-bold text-slate-light flex items-center gap-2 tracking-[0.2em] mb-4 uppercase opacity-60">
+                                            <LayoutDashboard className="w-4 h-4" />
+                                            Capital Flow Analysis ($B)
+                                        </h3>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-xl">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <TrendingUp className="w-3 h-3 text-emerald-500" />
+                                                    <span className="text-[9px] font-bold text-emerald-500/70 uppercase">Entering Continent</span>
+                                                </div>
+                                                <div className="text-xl font-bold font-mono text-emerald-500">
+                                                    ${data?.capitalFlows.inbound.toFixed(1)}B
+                                                </div>
+                                            </div>
+                                            <div className="p-4 bg-red-500/5 border border-red-500/10 rounded-xl">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <TrendingDown className="w-3 h-3 text-red-500" />
+                                                    <span className="text-[9px] font-bold text-red-500/70 uppercase">Leaving Continent</span>
+                                                </div>
+                                                <div className="text-xl font-bold font-mono text-red-500">
+                                                    ${data?.capitalFlows.outbound.toFixed(1)}B
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="p-3 bg-black/20 border border-border rounded-lg flex justify-between items-center italic">
+                                            <span className="text-[9px] text-slate-light italic">Net Strategic Leakage:</span>
+                                            <span className="text-[10px] font-bold text-red-400 font-mono">-${data?.capitalFlows.leakage.toFixed(1)}B USD</span>
+                                        </div>
                                     </div>
 
                                     {/* Risks & Threats */}
