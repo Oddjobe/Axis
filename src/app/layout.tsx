@@ -70,7 +70,6 @@ export const metadata: Metadata = {
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",
-    apple: "/apple-touch-icon.png",
   },
   verification: {
     google: "HkfTIuxWTtwzesUI1mAP-0jWhSn1K9tJvg6GdlTn-2E",

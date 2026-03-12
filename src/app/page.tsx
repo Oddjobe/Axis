@@ -138,15 +138,15 @@ export default function Home() {
             <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-emerald-500/5 border border-emerald-500/20 rounded-lg text-[10px] font-mono shadow-sm group hover:bg-emerald-500/10 transition-colors">
               <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
               <div className="flex flex-col">
-                <span className="text-[8px] text-emerald-500/60 font-bold leading-none uppercase tracking-tighter">Inbound</span>
-                <span className="font-bold text-emerald-500 leading-tight">$58.4B</span>
+                <span className="text-[8px] text-emerald-500/60 font-bold leading-none uppercase tracking-tighter">Inbound (FDI)</span>
+                <span className="font-bold text-emerald-500 leading-tight">$59.0B</span>
               </div>
             </div>
             <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-red-500/5 border border-red-500/20 rounded-lg text-[10px] font-mono shadow-sm group hover:bg-red-500/10 transition-colors">
               <TrendingDown className="w-3.5 h-3.5 text-red-500" />
               <div className="flex flex-col">
-                <span className="text-[8px] text-red-500/60 font-bold leading-none uppercase tracking-tighter">Outflow</span>
-                <span className="font-bold text-red-500 leading-tight">$142.8B</span>
+                <span className="text-[8px] text-red-500/60 font-bold leading-none uppercase tracking-tighter">Capital Flight</span>
+                <span className="font-bold text-red-500 leading-tight">$587.0B</span>
               </div>
             </div>
           </div>

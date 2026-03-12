@@ -202,7 +202,7 @@ export default function AfcftaMatrix({ selectedCodes }: AfcftaMatrixProps) {
                         }}
                         className={`p-2 sm:p-3 border rounded-md transition-all duration-300 cursor-pointer group relative overflow-hidden flex-shrink-0 hover:shadow-md hover:-translate-y-0.5 ${selectedCodes.includes(data.country)
                             ? "border-green-500 bg-green-50/50 dark:border-green-500/60 dark:bg-green-500/10 shadow-[0_0_15px_rgba(34,197,94,0.15)]"
-                            : "border-border bg-white hover:bg-slate-50 hover:border-cobalt/30 dark:border-border/50 dark:bg-background/50 dark:hover:bg-slate-800/80 dark:hover:border-cobalt/40"
+                            : "border-border/60 bg-white hover:bg-slate-50 hover:border-cobalt/30 dark:border-border/50 dark:bg-background/50 dark:hover:bg-slate-800/80 dark:hover:border-cobalt/40 shadow-sm hover:shadow-lg"
                             }`}
                     >
                         {/* Animated left border highlight on hover */}

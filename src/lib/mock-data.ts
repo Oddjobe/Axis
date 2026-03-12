@@ -122,7 +122,7 @@ const generateMockData = (): CountryData[] => {
             infrastructureControl: Math.floor(Math.min(100, Math.max(10, baseScore + ((index % 5) * 4) - 8))),
             policyIndependence: Math.floor(Math.min(100, Math.max(10, baseScore - ((index % 4) * 3) + 5))),
             currencyStability: Math.floor(Math.min(100, Math.max(10, baseScore + ((index % 6) * 3) - 10))),
-            keyInitiatives: highlightPatterns[index % highlightPatterns.length].map((h, i) => ({
+            keyInitiatives: highlightPatterns[index % highlightPatterns.length].map((h, _i) => ({
                 title: h,
                 details: `Accelerating ${h.toLowerCase()} implementation, tracking ${(index % 5 + 1) * 5}% ahead of target.`
             })),

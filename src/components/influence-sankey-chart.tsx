@@ -4,7 +4,7 @@ import React, { useMemo, useEffect, useState } from 'react';
 import { ResponsiveSankey } from '@nivo/sankey';
 import { useTheme } from 'next-themes';
 import { supabase } from '@/lib/supabase';
-import type { CountryData } from './country-dossier-modal';
+import type { CountryData, IntelligenceAlert } from './country-dossier-modal';
 
 interface InfluenceSankeyChartProps {
     data: CountryData[];
@@ -52,7 +52,7 @@ export default function InfluenceSankeyChart({ data: _data }: InfluenceSankeyCha
     const { theme } = useTheme();
     const isDark = theme === "dark" || theme === "system" || !theme;
 
-    const [liveAlerts, setLiveAlerts] = useState<any[]>([]);
+    const [liveAlerts, setLiveAlerts] = useState<IntelligenceAlert[]>([]);
     const [alertCount, setAlertCount] = useState(0);
     const [isLive, setIsLive] = useState(false);
 
@@ -60,7 +60,7 @@ export default function InfluenceSankeyChart({ data: _data }: InfluenceSankeyCha
         async function fetchInfluenceAlerts() {
             const { data, error } = await supabase
                 .from('intelligence_alerts')
-                .select('isoCode, actor, source, title')
+                .select('*')
                 .eq('category', 'OUTSIDE INFLUENCE')
                 .not('isoCode', 'is', null)
                 .order('created_at', { ascending: false })
@@ -75,10 +75,18 @@ export default function InfluenceSankeyChart({ data: _data }: InfluenceSankeyCha
         fetchInfluenceAlerts();
     }, []);
 
+
+    // Derive if we should actually show live data based on whether any alerts have influence actors
+    const hasInfluenceActors = useMemo(() => {
+        return liveAlerts.some(alert => alert.actor && SOURCE_META[alert.actor]);
+    }, [liveAlerts]);
+
+    const showLive = isLive && hasInfluenceActors;
+
     const sankeyData = useMemo(() => {
         let links: { source: string; target: string; value: number }[];
 
-        if (isLive && liveAlerts.length > 0) {
+        if (showLive && liveAlerts.length > 0) {
             // Build flows from real Supabase data using the `actor` field
             const countMap: Record<string, number> = {};
 
@@ -102,7 +110,6 @@ export default function InfluenceSankeyChart({ data: _data }: InfluenceSankeyCha
             // If liveAlerts exist but no actor field is set yet (old data), fall back
             if (links.length === 0) {
                 links = STATIC_FLOWS;
-                setIsLive(false);
             }
         } else {
             links = STATIC_FLOWS;
@@ -121,7 +128,7 @@ export default function InfluenceSankeyChart({ data: _data }: InfluenceSankeyCha
         }));
 
         return { nodes: [...sourceNodes, ...targetNodes], links };
-    }, [liveAlerts, isLive, isDark]);
+    }, [liveAlerts, showLive, isDark]);
 
     const textColor = isDark ? "#e2e8f0" : "#1e293b";
     const subtleColor = isDark ? "#475569" : "#cbd5e1";
@@ -134,13 +141,13 @@ export default function InfluenceSankeyChart({ data: _data }: InfluenceSankeyCha
                         <span className="w-2 h-2 rounded-full bg-orange-500" />
                         Negative Influence Flows
                     </h3>
-                    <span className={`text-[10px] font-mono px-2 py-1 rounded border flex items-center gap-1.5 ${isLive ? "text-green-500 border-green-500/30 bg-green-500/10" : "text-slate-light border-border bg-background/50"}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${isLive ? "bg-green-500 animate-pulse" : "bg-slate-400"}`} />
-                        {isLive ? `LIVE · ${alertCount} ALERTS` : "STATIC FALLBACK"}
+                    <span className={`text-[10px] font-mono px-2 py-1 rounded border flex items-center gap-1.5 ${showLive ? "text-green-500 border-green-500/30 bg-green-500/10" : "text-slate-light border-border bg-background/50"}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${showLive ? "bg-green-500 animate-pulse" : "bg-slate-400"}`} />
+                        {showLive ? `LIVE · ${alertCount} ALERTS` : "STATIC FALLBACK"}
                     </span>
                 </div>
                 <p className="text-xs font-mono text-slate-light mt-1">
-                    Volume of debt-traps, extractive trade deals, and structural adjustment pressure on Africa's most vulnerable states.
+                    Volume of debt-traps, extractive trade deals, and structural adjustment pressure on Africa&apos;s most vulnerable states.
                 </p>
             </div>
 

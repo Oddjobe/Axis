@@ -9,6 +9,29 @@ interface SovereigntyTrendlineChartProps {
     data: CountryData[];
 }
 
+interface TooltipProps {
+    active?: boolean;
+    payload?: any[];
+    label?: string | number;
+}
+
+const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
+    if (active && payload && payload.length) {
+        return (
+            <div className="bg-panel border border-border p-3 rounded-lg shadow-xl backdrop-blur-md">
+                <p className="text-[10px] font-bold font-mono text-foreground mb-1">YEAR: {label}</p>
+                <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: payload[0].color }} />
+                    <p className="text-[12px] font-mono font-bold" style={{ color: payload[0].color }}>
+                        SCORE: {payload[0].value}
+                    </p>
+                </div>
+            </div>
+        );
+    }
+    return null;
+};
+
 export default function SovereigntyTrendlineChart({ data }: SovereigntyTrendlineChartProps) {
     const { theme } = useTheme();
     const isDark = theme === "dark" || theme === "system" || !theme;
@@ -49,22 +72,6 @@ export default function SovereigntyTrendlineChart({ data }: SovereigntyTrendline
         return years;
     }, [activeCountry]);
 
-    const CustomTooltip = ({ active, payload, label }: any) => {
-        if (active && payload && payload.length) {
-            return (
-                <div className="bg-panel border border-border p-3 rounded-lg shadow-xl backdrop-blur-md">
-                    <p className="text-[10px] font-bold font-mono text-foreground mb-1">YEAR: {label}</p>
-                    <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: payload[0].color }} />
-                        <p className="text-[12px] font-mono font-bold" style={{ color: payload[0].color }}>
-                            SCORE: {payload[0].value}
-                        </p>
-                    </div>
-                </div>
-            );
-        }
-        return null;
-    };
 
     if (!activeCountry) return <div className="p-4 text-center text-slate-light font-mono text-xs">NO DATA AVAILABLE</div>;
 

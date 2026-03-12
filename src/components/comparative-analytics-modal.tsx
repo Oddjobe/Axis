@@ -36,7 +36,10 @@ export default function ComparativeAnalyticsModal({
 
     useEffect(() => {
         if (isOpen && initialSelectedCodes.length > 0) {
-            setSelectedCodes(initialSelectedCodes);
+            setSelectedCodes(prev => {
+                if (JSON.stringify(prev) === JSON.stringify(initialSelectedCodes)) return prev;
+                return initialSelectedCodes;
+            });
         }
     }, [isOpen, initialSelectedCodes]);
 
@@ -231,7 +234,7 @@ export default function ComparativeAnalyticsModal({
                                                             {selectedCountries.map(c => (
                                                                 <td key={c.country} className="p-4 border-b border-border border-l border-border text-center">
                                                                     <span className={`text-[11px] font-bold ${(c as any)[row.key] > 75 ? 'text-emerald-500' :
-                                                                            (c as any)[row.key] < 50 ? 'text-red-500' : 'text-foreground'
+                                                                        (c as any)[row.key] < 50 ? 'text-red-500' : 'text-foreground'
                                                                         }`}>
                                                                         {(c as any)[row.key]}%
                                                                     </span>

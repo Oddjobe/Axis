@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Globe, HeartHandshake, ShieldCheck, Target, Zap } from "lucide-react";
+import { X, Globe, HeartHandshake, ShieldCheck, Target } from "lucide-react";
 
 export default function MissionModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) {
     if (!isOpen) return null;
@@ -40,9 +40,7 @@ export default function MissionModal({ isOpen, onClose }: { isOpen: boolean, onC
                     </div>
 
                     <div className="p-8 space-y-6 relative z-10 font-mono">
-                        <p className="text-sm leading-relaxed text-foreground/90">
-                            <strong>Axis Africa</strong> is not just a dashboard—it is a unified lens into the continent's strategic ascendancy. Designed to map, analyze, and accelerate Pan-African sovereignty, this platform empowers policymakers, investors, and analysts by aggregating fragmented data into actionable geopolitical intelligence.
-                        </p>
+                        <strong>Axis Africa</strong> is not just a dashboard&mdash;it is a unified lens into the continent&apos;s strategic ascendancy. Designed to map, analyze, and accelerate Pan-African sovereignty, this platform empowers policymakers, investors, and analysts by aggregating fragmented data into actionable geopolitical intelligence.
 
                         <div className="grid grid-cols-2 gap-4">
                             <div className="p-4 border border-border bg-background/50 rounded-lg space-y-2">
@@ -50,7 +48,7 @@ export default function MissionModal({ isOpen, onClose }: { isOpen: boolean, onC
                                     <Target className="w-4 h-4" /> The Mission
                                 </div>
                                 <p className="text-xs text-slate-light">
-                                    To provide a real-time, objective, and data-driven perspective on Africa's resource beneficiation, infrastructure expansion, and AfCFTA integration.
+                                    To provide a real-time, objective, and data-driven perspective on Africa&apos;s resource beneficiation, infrastructure expansion, and AfCFTA integration.
                                 </p>
                             </div>
                             <div className="p-4 border border-border bg-background/50 rounded-lg space-y-2">
@@ -68,7 +66,7 @@ export default function MissionModal({ isOpen, onClose }: { isOpen: boolean, onC
                         <div className="border border-green-500/30 bg-green-500/10 p-4 rounded-lg flex items-start gap-3">
                             <HeartHandshake className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
                             <p className="text-xs leading-relaxed text-green-500/90 font-bold">
-                                "The Africa we want is a continent that is integrated, prosperous, and peaceful, driven by its own citizens." This platform is a digital infrastructure step toward that sovereign future.
+                                &quot;The Africa we want is a continent that is integrated, prosperous, and peaceful, driven by its own citizens.&quot; This platform is a digital infrastructure step toward that sovereign future.
                             </p>
                         </div>
                     </div>

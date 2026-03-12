@@ -29,6 +29,21 @@ export interface CountryData {
     frictionVectors: { title: string, severity: string, details: string }[];
 }
 
+export interface IntelligenceAlert {
+    id: string;
+    created_at: string;
+    isoCode: string;
+    title: string;
+    summary: string;
+    details?: string;
+    severity: "HIGH" | "MEDIUM" | "LOW";
+    category: string;
+    source: string;
+    imageUrl?: string;
+    url?: string;
+    actor?: string;
+}
+
 export interface CountryDossierProps {
     isOpen: boolean;
     onClose: () => void;
@@ -39,7 +54,7 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
     const [activeTab, setActiveTab] = useState<"STRATEGY" | "EXPORTS" | "FRICTION" | "INTEL">("STRATEGY");
     const [mounted, setMounted] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
-    const [intelAlerts, setIntelAlerts] = useState<any[]>([]);
+    const [intelAlerts, setIntelAlerts] = useState<IntelligenceAlert[]>([]);
     const [intelLoading, setIntelLoading] = useState(false);
     const { watchlist, togglePin } = useWatchlist();
     const isPinned = countryData ? watchlist.includes(countryData.country) : false;
@@ -398,16 +413,16 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
                                                         <circle cx="50" cy={bottom} r="2.5" fill={getValColor(countryData.resourceWealth)} stroke="white" strokeWidth="0.8" opacity="0.9" />
                                                         <circle cx={left} cy="50" r="2.5" fill={getValColor(countryData.currencyStability)} stroke="white" strokeWidth="0.8" opacity="0.9" />
                                                         {/* Axis labels */}
-                                                        <text x="50" y="5" textAnchor="middle" fill="rgba(148,163,184,0.8)" fontSize="3" fontWeight="bold" fontFamily="monospace">INFRA</text>
+                                                        <text x="50" y="5" textAnchor="middle" fill="currentColor" className="text-slate-light dark:text-slate-400" fontSize="3" fontWeight="bold" fontFamily="monospace">INFRA</text>
                                                         <text x="50" y="9.5" textAnchor="middle" fill={getValColor(countryData.infrastructureControl)} fontSize="4.5" fontWeight="900" fontFamily="monospace">{countryData.infrastructureControl}</text>
 
-                                                        <text x="93" y="48" textAnchor="start" fill="rgba(148,163,184,0.8)" fontSize="3" fontWeight="bold" fontFamily="monospace">POLICY</text>
+                                                        <text x="93" y="48" textAnchor="start" fill="currentColor" className="text-slate-light dark:text-slate-400" fontSize="3" fontWeight="bold" fontFamily="monospace">POLICY</text>
                                                         <text x="93" y="53" textAnchor="start" fill={getValColor(countryData.policyIndependence)} fontSize="4.5" fontWeight="900" fontFamily="monospace">{countryData.policyIndependence}</text>
 
                                                         <text x="50" y="95" textAnchor="middle" fill={getValColor(countryData.resourceWealth)} fontSize="4.5" fontWeight="900" fontFamily="monospace">{countryData.resourceWealth}</text>
-                                                        <text x="50" y="100" textAnchor="middle" fill="rgba(148,163,184,0.8)" fontSize="3" fontWeight="bold" fontFamily="monospace">RESOURCES</text>
+                                                        <text x="50" y="100" textAnchor="middle" fill="currentColor" className="text-slate-light dark:text-slate-400" fontSize="3" fontWeight="bold" fontFamily="monospace">RESOURCES</text>
 
-                                                        <text x="7" y="48" textAnchor="end" fill="rgba(148,163,184,0.8)" fontSize="3" fontWeight="bold" fontFamily="monospace">CURR</text>
+                                                        <text x="7" y="48" textAnchor="end" fill="currentColor" className="text-slate-light dark:text-slate-400" fontSize="3" fontWeight="bold" fontFamily="monospace">CURR</text>
                                                         <text x="7" y="53" textAnchor="end" fill={getValColor(countryData.currencyStability)} fontSize="4.5" fontWeight="900" fontFamily="monospace">{countryData.currencyStability}</text>
                                                     </>
                                                 );
@@ -494,8 +509,8 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
                         {activeTab === "FRICTION" && (() => {
                             const liveRisk = intelAlerts.filter(a => a.category === 'SOVEREIGNTY RISK');
                             const alerts = liveRisk.length > 0 ? liveRisk : countryData.frictionVectors;
-                            const highCount = alerts.filter((a: any) => a.severity === 'HIGH').length;
-                            const medCount = alerts.filter((a: any) => a.severity === 'MEDIUM').length;
+                            const highCount = alerts.filter((a: IntelligenceAlert | { severity: string }) => a.severity === 'HIGH').length;
+                            const medCount = alerts.filter((a: IntelligenceAlert | { severity: string }) => a.severity === 'MEDIUM').length;
                             const riskScore = Math.min(100, (highCount * 30) + (medCount * 15) + (alerts.length * 5));
                             const riskLabel = riskScore >= 60 ? 'CRITICAL' : riskScore >= 35 ? 'ELEVATED' : riskScore >= 15 ? 'MODERATE' : 'STABLE';
                             const riskGradient = riskScore >= 60 ? 'from-red-600 to-red-400' : riskScore >= 35 ? 'from-orange-600 to-orange-400' : riskScore >= 15 ? 'from-yellow-600 to-yellow-400' : 'from-green-600 to-green-400';
@@ -536,7 +551,7 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
                                     </div>
 
                                     {/* Threat vector cards */}
-                                    {alerts.map((alert: any, i: number) => {
+                                    {alerts.map((alert: IntelligenceAlert | { title: string; severity: string; summary?: string; details?: string; created_at?: string; source?: string }, i: number) => {
                                         const isHigh = alert.severity === 'HIGH';
                                         const isMed = alert.severity === 'MEDIUM';
                                         const borderColor = isHigh ? 'border-l-red-500' : isMed ? 'border-l-orange-500' : 'border-l-yellow-500';

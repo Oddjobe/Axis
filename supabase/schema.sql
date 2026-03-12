@@ -26,11 +26,15 @@ CREATE TABLE IF NOT EXISTS public.intelligence_alerts (
     "timeAgo" TEXT NOT NULL,
     source TEXT NOT NULL,
     actor TEXT,  -- Primary foreign actor, e.g. 'China', 'IMF / World Bank', 'EU / CBAM', etc.
+    url TEXT,
+    "imageUrl" TEXT,
     "created_at" TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
 -- Run this ALTER if upgrading an existing database:
 -- ALTER TABLE public.intelligence_alerts ADD COLUMN IF NOT EXISTS actor TEXT;
+-- ALTER TABLE public.intelligence_alerts ADD COLUMN IF NOT EXISTS url TEXT;
+-- ALTER TABLE public.intelligence_alerts ADD COLUMN IF NOT EXISTS "imageUrl" TEXT;
 
 -- 3. Create the `blog_posts` table to store scraped Medium articles
 CREATE TABLE IF NOT EXISTS public.blog_posts (
