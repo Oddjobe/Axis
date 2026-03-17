@@ -24,7 +24,8 @@ import {
   X,
   List,
   Map as LucideMap,
-  Check
+  Check,
+  Settings2
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import dynamic from "next/dynamic";
@@ -151,47 +152,59 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Group 2: Tools/Modals */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setMissionOpen(true)}
-              className="flex items-center gap-1.5 px-2 py-1.5 lg:px-2.5 rounded-lg text-[10px] lg:text-xs font-bold text-slate-light hover:text-cobalt hover:bg-cobalt/10 transition-all border border-transparent hover:border-cobalt/20"
-              title={t("about")}
-            >
-              <Info className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
-              <span className="hidden xl:inline">{t("about")}</span>
-            </button>
-            <button
-              onClick={() => setAnalyticsOpen(true)}
-              className="flex items-center gap-1.5 px-2 py-1.5 lg:px-2.5 rounded-lg text-[10px] lg:text-xs font-bold text-slate-light hover:text-green-500 hover:bg-green-500/10 transition-all border border-transparent hover:border-green-500/20"
-              title="Analytics"
-            >
-              <BarChart3 className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
-              <span className="hidden xl:inline">ANALYTICS</span>
-            </button>
-            <button
-              onClick={() => setAiNexusOpen(true)}
-              className="flex items-center gap-1.5 px-2 py-1.5 lg:px-2.5 rounded-lg text-[10px] lg:text-xs font-bold bg-cobalt/10 text-cobalt hover:bg-cobalt/20 transition-all border border-cobalt/20 shadow-[0_0_15px_rgba(37,99,235,0.1)]"
-              title="AI Supply Chain Nexus"
-            >
-              <Share2 className="w-3.5 h-3.5 lg:w-4 lg:h-4 animate-pulse" />
-              <span className="hidden xl:inline">AI NEXUS</span>
-            </button>
+          {/* Group 2: Tools/Modals - Consolidate on mobile */}
+          <div className="flex items-center gap-1.5 lg:gap-2">
+            {/* Desktop-only individual tool buttons */}
+            <div className="hidden lg:flex items-center gap-2">
+              <button
+                onClick={() => setMissionOpen(true)}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-light hover:text-cobalt hover:bg-cobalt/10 transition-all border border-transparent hover:border-cobalt/20"
+                title={t("about")}
+              >
+                <Info className="w-4 h-4" />
+                <span className="hidden xl:inline">{t("about")}</span>
+              </button>
+              <button
+                onClick={() => setAnalyticsOpen(true)}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-light hover:text-green-500 hover:bg-green-500/10 transition-all border border-transparent hover:border-green-500/20"
+                title="Analytics"
+              >
+                <BarChart3 className="w-4 h-4" />
+                <span className="hidden xl:inline">ANALYTICS</span>
+              </button>
+              <button
+                onClick={() => setAiNexusOpen(true)}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-cobalt/10 text-cobalt hover:bg-cobalt/20 transition-all border border-cobalt/20 shadow-[0_0_15px_rgba(37,99,235,0.1)]"
+                title="AI Supply Chain Nexus"
+              >
+                <Share2 className="w-4 h-4 animate-pulse" />
+                <span className="hidden xl:inline">AI NEXUS</span>
+              </button>
+              <button
+                onClick={() => setBriefingOpen(true)}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 transition-all border border-amber-500/20 shadow-[0_0_15px_rgba(245,158,11,0.1)]"
+                title="Executive SITREP"
+              >
+                <ShieldAlert className="w-4 h-4" />
+                <span className="hidden xl:inline">BRIEFING</span>
+              </button>
+              <button
+                onClick={() => setComparativeOpen(true)}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 transition-all border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]"
+                title="Comparative Strategic Analytics"
+              >
+                <Combine className="w-4 h-4" />
+                <span className="hidden xl:inline">COMPARE</span>
+              </button>
+            </div>
+
+            {/* Mobile-only "Active Action" or "Quick Link" if needed, otherwise just use settings */}
             <button
               onClick={() => setBriefingOpen(true)}
-              className="flex items-center gap-1.5 px-2 py-1.5 lg:px-2.5 rounded-lg text-[10px] lg:text-xs font-bold bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 transition-all border border-amber-500/20 shadow-[0_0_15px_rgba(245,158,11,0.1)]"
-              title="Executive SITREP"
+              className="flex lg:hidden items-center justify-center w-9 h-9 rounded-lg bg-amber-500/10 text-amber-500 border border-amber-500/20"
+              title="Quick Brief"
             >
-              <ShieldAlert className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
-              <span className="hidden xl:inline">BRIEFING</span>
-            </button>
-            <button
-              onClick={() => setComparativeOpen(true)}
-              className="flex items-center gap-1.5 px-2 py-1.5 lg:px-2.5 rounded-lg text-[10px] lg:text-xs font-bold bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 transition-all border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]"
-              title="Comparative Strategic Analytics"
-            >
-              <Combine className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
-              <span className="hidden xl:inline">COMPARE</span>
+              <ShieldAlert className="w-4 h-4" />
             </button>
           </div>
 
@@ -296,15 +309,15 @@ export default function Home() {
               selectedResource={selectedResource}
             />
 
-            {/* Resource Filter Pills */}
-            <div className="absolute top-3 left-3 sm:top-4 sm:left-4 flex items-center gap-1.5 z-20 overflow-x-auto no-scrollbar max-w-[50vw] sm:max-w-none px-2 py-1">
+            {/* Resource Filter Pills - Better horizontal scroll and sizing */}
+            <div className="absolute top-2 left-2 lg:top-4 lg:left-4 right-2 lg:right-auto flex items-center gap-1.5 z-20 overflow-x-auto no-scrollbar py-1">
               {["Copper", "Cobalt", "Lithium", "Bauxite", "Graphite", "Coltan"].map(res => (
                 <button
                   key={res}
                   onClick={() => setSelectedResource(prev => prev === res ? null : res)}
-                  className={`px-2 py-1 rounded-full text-[9px] font-bold border transition-all whitespace-nowrap shadow-sm ${selectedResource === res
-                    ? "bg-amber-500 text-white border-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.4)]"
-                    : "bg-panel/80 border-border text-slate-light hover:border-amber-500/40 hover:text-amber-500 backdrop-blur-md"
+                  className={`px-2.5 py-1.5 rounded-full text-[9px] font-bold border transition-all whitespace-nowrap shadow-sm ${selectedResource === res
+                    ? "bg-amber-500 text-white border-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.5)] scale-105"
+                    : "bg-panel/90 border-border text-slate-light hover:border-amber-500/40 hover:text-amber-500 backdrop-blur-md"
                     }`}
                 >
                   {res.toUpperCase()}
@@ -313,7 +326,7 @@ export default function Home() {
               {selectedResource && (
                 <button
                   onClick={() => setSelectedResource(null)}
-                  className="p-1 rounded-full bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500 hover:text-white transition-colors"
+                  className="p-1.5 rounded-full bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500 hover:text-white transition-colors"
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -333,31 +346,36 @@ export default function Home() {
             )}
 
             {selectedCountries.length === 0 && (
-              <div className="absolute inset-x-0 bottom-6 flex justify-center pointer-events-none">
-                <div className="px-4 py-2 bg-panel/80 border border-border rounded-full text-[10px] font-mono backdrop-blur-md shadow-lg text-cobalt bg-white/10 dark:bg-black/20">
-                  D3 GEO ENGINE // CLICK A COUNTRY TO FILTER
+              <div className="absolute inset-x-0 bottom-6 flex justify-center pointer-events-none p-4">
+                <div className="px-4 py-2 bg-panel/90 border border-border rounded-full text-[9px] lg:text-[10px] font-mono backdrop-blur-md shadow-lg text-cobalt group">
+                  D3 GEO ENGINE <span className="mx-1 opacity-30">//</span> CLICK COUNTRY TO FILTER
                 </div>
               </div>
             )}
 
-            {/* Time Series Slider — positioned above bottom nav on mobile */}
-            <div className="absolute bottom-[4.5rem] lg:bottom-20 inset-x-0 flex justify-center px-3 lg:px-4 pointer-events-auto">
-              <div className="bg-panel/95 backdrop-blur-md border border-border rounded-xl p-2.5 lg:p-3 shadow-2xl flex flex-col gap-2 w-full max-w-sm">
-                <div className="flex justify-between items-center text-[10px] font-mono font-bold text-slate-light">
-                  <span>2015</span>
-                  <span className="text-cobalt bg-cobalt/10 px-2 py-0.5 rounded border border-cobalt/30">
-                    {timeValue === currentYear ? `CURRENT(${currentYear})` : timeValue}
-                  </span>
-                  <span>{currentYear}</span>
+            {/* Time Series Slider — sleek integrated design */}
+            <div className="absolute bottom-[4.5rem] lg:bottom-10 inset-x-0 flex justify-center px-4 pointer-events-auto">
+              <div className="bg-panel/90 backdrop-blur-sm border border-border/50 rounded-2xl p-3 lg:p-4 shadow-[0_20px_50px_rgba(0,0,0,0.3)] flex flex-col gap-2.5 w-full max-w-sm border-b-0">
+                <div className="flex justify-between items-center text-[10px] font-mono font-bold tracking-tighter">
+                  <span className="text-slate-light/60">2015</span>
+                  <div className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-cobalt animate-pulse" />
+                    <span className="text-cobalt">
+                      {timeValue === currentYear ? `PRESENT` : timeValue}
+                    </span>
+                  </div>
+                  <span className="text-slate-light/60">{currentYear}</span>
                 </div>
-                <input
-                  type="range"
-                  min="2015"
-                  max={currentYear}
-                  value={timeValue}
-                  onChange={(e) => setTimeValue(parseInt(e.target.value))}
-                  className="w-full h-1 bg-border rounded-lg appearance-none cursor-pointer accent-cobalt outline-none"
-                />
+                <div className="relative h-6 flex items-center">
+                  <input
+                    type="range"
+                    min="2015"
+                    max={currentYear}
+                    value={timeValue}
+                    onChange={(e) => setTimeValue(parseInt(e.target.value))}
+                    className="w-full h-1 bg-border/30 rounded-lg appearance-none cursor-pointer accent-cobalt outline-none appearance-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-cobalt [&::-webkit-slider-thumb]:shadow-[0_0_10px_rgba(37,99,235,0.5)]"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -374,37 +392,74 @@ export default function Home() {
         <ContinentalGoalsTicker />
       </div>
 
-      {/* Fixed Bottom Mobile Navigation */}
-      <div className="flex lg:hidden fixed bottom-0 left-0 right-0 h-16 border-t border-border bg-panel/95 backdrop-blur-md z-50 safe-area-inset-bottom">
+      {/* Fixed Bottom Mobile Navigation — Enhanced with premium animations */}
+      <div className="flex lg:hidden fixed bottom-1 left-3 right-3 h-16 border border-border/40 bg-panel/90 backdrop-blur-xl z-50 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.5)] safe-area-inset-bottom overflow-hidden">
         <button
           onClick={() => setMobilePanel("index")}
-          className={`flex flex-1 flex-col items-center justify-center gap-1 transition-all relative ${mobilePanel === "index" ? "text-cobalt" : "text-slate-light"}`}
+          className={`group flex flex-1 flex-col items-center justify-center gap-1 transition-all relative ${mobilePanel === "index" ? "text-cobalt" : "text-slate-light"}`}
         >
           {mobilePanel === "index" && (
-            <span className="absolute top-0 inset-x-4 h-0.5 bg-cobalt rounded-b-full" />
+            <motion.span
+              layoutId="navGlow"
+              className="absolute inset-0 bg-cobalt/5 z-0"
+            />
           )}
-          <List className="w-5 h-5" />
+          {mobilePanel === "index" && (
+            <motion.span
+              layoutId="navTab"
+              className="absolute top-0 inset-x-4 h-0.5 bg-cobalt rounded-b-full shadow-[0_2px_10px_rgba(37,99,235,0.5)]"
+            />
+          )}
+          <List className={`w-5 h-5 transition-transform duration-300 ${mobilePanel === "index" ? "scale-110" : "group-hover:scale-105"}`} />
           <span className="text-[9px] font-bold tracking-wider">{t("index")}</span>
         </button>
+
         <button
           onClick={() => setMobilePanel("map")}
-          className={`flex flex-1 flex-col items-center justify-center gap-1 transition-all relative ${mobilePanel === "map" ? "text-green-500" : "text-slate-light"}`}
+          className={`group flex flex-1 flex-col items-center justify-center gap-1 transition-all relative ${mobilePanel === "map" ? "text-cobalt" : "text-slate-light"}`}
         >
           {mobilePanel === "map" && (
-            <span className="absolute top-0 inset-x-4 h-0.5 bg-green-500 rounded-b-full" />
+            <motion.span
+              layoutId="navGlow"
+              className="absolute inset-0 bg-cobalt/5 z-0"
+            />
           )}
-          <LucideMap className="w-5 h-5" />
+          {mobilePanel === "map" && (
+            <motion.span
+              layoutId="navTab"
+              className="absolute top-0 inset-x-4 h-0.5 bg-cobalt rounded-b-full shadow-[0_2px_10px_rgba(37,99,235,0.5)]"
+            />
+          )}
+          <LucideMap className={`w-5 h-5 transition-transform duration-300 ${mobilePanel === "map" ? "scale-110" : "group-hover:scale-105"}`} />
           <span className="text-[9px] font-bold tracking-wider">{t("map")}</span>
         </button>
+
         <button
           onClick={() => setMobilePanel("intel")}
-          className={`flex flex-1 flex-col items-center justify-center gap-1 transition-all relative ${mobilePanel === "intel" ? "text-orange-500" : "text-slate-light"}`}
+          className={`group flex flex-1 flex-col items-center justify-center gap-1 transition-all relative ${mobilePanel === "intel" ? "text-cobalt" : "text-slate-light"}`}
         >
           {mobilePanel === "intel" && (
-            <span className="absolute top-0 inset-x-4 h-0.5 bg-orange-500 rounded-b-full" />
+            <motion.span
+              layoutId="navGlow"
+              className="absolute inset-0 bg-cobalt/5 z-0"
+            />
           )}
-          <ShieldAlert className="w-5 h-5" />
+          {mobilePanel === "intel" && (
+            <motion.span
+              layoutId="navTab"
+              className="absolute top-0 inset-x-4 h-0.5 bg-cobalt rounded-b-full shadow-[0_2px_10px_rgba(37,99,235,0.5)]"
+            />
+          )}
+          <ShieldAlert className={`w-5 h-5 transition-transform duration-300 ${mobilePanel === "intel" ? "scale-110" : "group-hover:scale-105"}`} />
           <span className="text-[9px] font-bold tracking-wider">{t("intel")}</span>
+        </button>
+
+        <button
+          onClick={() => setMobileSettingsOpen(true)}
+          className={`group flex flex-1 flex-col items-center justify-center gap-1 transition-all relative ${mobileSettingsOpen ? "text-cobalt" : "text-slate-light"}`}
+        >
+          <Settings2 className={`w-5 h-5 transition-transform duration-300 ${mobileSettingsOpen ? "scale-110 rotate-90" : "group-hover:scale-105"}`} />
+          <span className="text-[9px] font-bold tracking-wider uppercase">{t("controls")}</span>
         </button>
       </div>
 

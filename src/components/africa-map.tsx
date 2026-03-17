@@ -100,6 +100,7 @@ export default function AfricaMap({ selectedCountryCodes, onToggleCountry, timeV
     const [tooltip, setTooltip] = useState({ show: false, content: "", data: null as CountryData | null, x: 0, y: 0 });
     const [position, setPosition] = useState({ coordinates: [0, 0], zoom: 1 });
     const [mapTheme, setMapTheme] = useState<MapTheme>("SOVEREIGNTY");
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [countryDataMaster, setCountryDataMaster] = useState<CountryData[]>([]);
 
     const [mounted, setMounted] = useState(false);
@@ -459,41 +460,45 @@ export default function AfricaMap({ selectedCountryCodes, onToggleCountry, timeV
                 </button>
             </div>
 
-            {/* Map Theme Toggle Button */}
-            <div className="absolute top-36 right-4 group/theme z-50 pointer-events-auto">
-                <button className="flex items-center gap-2 bg-panel/80 p-2 border border-border backdrop-blur-md rounded-lg shadow-lg hover:bg-background transition-colors pointer-events-auto">
-                    <span className="text-[10px] font-bold font-mono text-foreground hidden sm:block">THEME</span>
-                    <Layers className="w-4 h-4 text-cobalt" />
+            {/* Map Theme Toggle Button — Click-based for touch support */}
+            <div className="absolute top-36 right-4 z-50 pointer-events-auto">
+                <button
+                    onClick={() => setIsMenuOpen(!isMenuOpen)}
+                    className={`flex items-center gap-2 p-2 border border-border backdrop-blur-md rounded-lg shadow-lg transition-all ${isMenuOpen ? "bg-cobalt text-white border-cobalt" : "bg-panel/80 text-foreground hover:bg-background"}`}
+                >
+                    <span className="text-[10px] font-bold font-mono hidden sm:block">THEME</span>
+                    <Layers className={`w-4 h-4 ${isMenuOpen ? "text-white" : "text-cobalt"}`} />
                 </button>
 
-                {/* Dropdown Menu - Opens to the left side of the button */}
-                <div className="absolute right-0 top-full mt-2 w-48 bg-panel/95 border border-border rounded-lg shadow-xl opacity-0 invisible group-hover/theme:opacity-100 group-hover/theme:visible transition-all flex flex-col overflow-hidden backdrop-blur-xl">
-                    <button
-                        onClick={() => setMapTheme("SOVEREIGNTY")}
-                        className={`text-right px-3 py-2 text-[10px] font-mono border-r-2 transition-all ${mapTheme === "SOVEREIGNTY" ? "border-green-500 bg-background/50 text-foreground font-bold" : "border-transparent text-slate-light hover:bg-background/30 hover:text-foreground"}`}
-                    >
-                        ⚡ SOVEREIGNTY HEAT
-                    </button>
-                    <button
-                        onClick={() => setMapTheme("RESOURCE_WEALTH")}
-                        className={`text-right px-3 py-2 text-[10px] font-mono border-r-2 transition-all ${mapTheme === "RESOURCE_WEALTH" ? "border-amber-500 bg-background/50 text-foreground font-bold" : "border-transparent text-slate-light hover:bg-background/30 hover:text-foreground"}`}
-                    >
-                        💎 RESOURCE WEALTH
-                    </button>
-                    <button
-                        onClick={() => setMapTheme("FDI_TREND")}
-                        className={`text-right px-3 py-2 text-[10px] font-mono border-r-2 transition-all ${mapTheme === "FDI_TREND" ? "border-blue-500 bg-background/50 text-foreground font-bold" : "border-transparent text-slate-light hover:bg-background/30 hover:text-foreground"}`}
-                    >
-                        📈 FOREIGN INVESTMENT (FDI)
-                    </button>
-                    <div className="h-px bg-border/50 my-1 mx-2" />
-                    <button
-                        onClick={() => setMapTheme("BASE")}
-                        className={`text-right px-3 py-2 text-[10px] font-mono border-r-2 transition-all ${mapTheme === "BASE" ? "border-slate-400 bg-background/50 text-foreground font-bold" : "border-transparent text-slate-light hover:bg-background/30 hover:text-foreground"}`}
-                    >
-                        🗺️ BASE TOPOLOGY
-                    </button>
-                </div>
+                {isMenuOpen && (
+                    <div className="absolute right-0 top-full mt-2 w-48 bg-panel/95 border border-border rounded-lg shadow-xl flex flex-col overflow-hidden backdrop-blur-xl animate-in fade-in slide-in-from-top-2 duration-200">
+                        <button
+                            onClick={() => { setMapTheme("SOVEREIGNTY"); setIsMenuOpen(false); }}
+                            className={`text-right px-3 py-2 text-[10px] font-mono border-r-2 transition-all ${mapTheme === "SOVEREIGNTY" ? "border-green-500 bg-background/50 text-foreground font-bold" : "border-transparent text-slate-light hover:bg-background/30 hover:text-foreground"}`}
+                        >
+                            ⚡ SOVEREIGNTY HEAT
+                        </button>
+                        <button
+                            onClick={() => { setMapTheme("RESOURCE_WEALTH"); setIsMenuOpen(false); }}
+                            className={`text-right px-3 py-2 text-[10px] font-mono border-r-2 transition-all ${mapTheme === "RESOURCE_WEALTH" ? "border-amber-500 bg-background/50 text-foreground font-bold" : "border-transparent text-slate-light hover:bg-background/30 hover:text-foreground"}`}
+                        >
+                            💎 RESOURCE WEALTH
+                        </button>
+                        <button
+                            onClick={() => { setMapTheme("FDI_TREND"); setIsMenuOpen(false); }}
+                            className={`text-right px-3 py-2 text-[10px] font-mono border-r-2 transition-all ${mapTheme === "FDI_TREND" ? "border-blue-500 bg-background/50 text-foreground font-bold" : "border-transparent text-slate-light hover:bg-background/30 hover:text-foreground"}`}
+                        >
+                            📈 FOREIGN INVESTMENT (FDI)
+                        </button>
+                        <div className="h-px bg-border/50 my-1 mx-2" />
+                        <button
+                            onClick={() => { setMapTheme("BASE"); setIsMenuOpen(false); }}
+                            className={`text-right px-3 py-2 text-[10px] font-mono border-r-2 transition-all ${mapTheme === "BASE" ? "border-slate-400 bg-background/50 text-foreground font-bold" : "border-transparent text-slate-light hover:bg-background/30 hover:text-foreground"}`}
+                        >
+                            🗺️ BASE TOPOLOGY
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* Rich Hover Tooltip — centered above cursor */}

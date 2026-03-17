@@ -92,11 +92,6 @@ const generateMockData = (): CountryData[] => {
         const isPositive = (index % 3) !== 0;
         const trendValue = ((index * 3) % 4) + 0.1;
 
-        let status = "STABLE";
-        if (baseScore >= 75) status = "OPTIMAL";
-        else if (baseScore <= 50) status = "EXTRACTIVE";
-        else if (isPositive) status = "IMPROVING";
-
         const highlightPatterns = [
             ["Battery Metals", "Tech Transfer"],
             ["Agri-Tech", "Food Security"],
@@ -107,6 +102,61 @@ const generateMockData = (): CountryData[] => {
             ["Trade Hub", "Port Expansion"]
         ];
 
+        let highlights = highlightPatterns[index % highlightPatterns.length];
+        let status = "STABLE";
+        if (baseScore >= 75) status = "OPTIMAL";
+        else if (baseScore <= 50) status = "EXTRACTIVE";
+        else if (isPositive) status = "IMPROVING";
+
+        let frictionVectors = [
+            {
+                title: "IMF CONDITIONALITY PRESSURE",
+                severity: baseScore < 50 ? "HIGH" : "LOW",
+                details: "Pending loan disbursement delayed due to refusal to privatize state assets."
+            },
+            {
+                title: "UNAUTHORIZED LEASES",
+                severity: index % 2 === 0 ? "MEDIUM" : "LOW",
+                details: "Reviewing legacy contracts signed prior to sovereign wealth mandate."
+            },
+            {
+                title: "SUPPLY CHAIN BOTTLENECKS",
+                severity: "LOW",
+                details: "Port infrastructure congestion at primary export terminal causing delays."
+            }
+        ].slice(0, (index % 3) + 1);
+
+        // Geopolitical Overrides for March 13, 2026
+        if (nation.c === "ETH") {
+            highlights = ["GERD Strategic Leverage", "Red Sea Access Strategy"];
+            status = "IMPROVING";
+            frictionVectors = [
+                { title: "GERD DIPLOMATIC TENSION", severity: "HIGH", details: "Dispute over dam filling escalating with downstream neighbors." },
+                { title: "MARITIME ACCESS AMBITIONS", severity: "MEDIUM", details: "Pursuing sovereign port access ahead of 2026 elections." }
+            ];
+        } else if (nation.c === "EGY") {
+            highlights = ["Military Leverage Horn", "Food Security Crisis"];
+            status = "EXTRACTIVE";
+            frictionVectors = [
+                { title: "REGIONAL MILITARY POSTURE", severity: "HIGH", details: "Increasing activity in the Horn region to counter GERD developments." },
+                { title: "IMPORT VOLATILITY", severity: "MEDIUM", details: "Middle East conflict causing sharp spikes in essential grain costs." }
+            ];
+        } else if (nation.c === "COD") {
+            highlights = ["Cobalt Export Ban", "Conflict Belt Risk"];
+            status = "OPTIMAL";
+            frictionVectors = [
+                { title: "MINERAL SOVEREIGNTY LAW", severity: "HIGH", details: "Enforcing ban on raw cobalt exports to mandate domestic refining." },
+                { title: "ILLICIT TRADE VECTORS", severity: "MEDIUM", details: "Armed group activity in TFM mining regions increasing due to price surge." }
+            ];
+        } else if (nation.c === "ZAF") {
+            highlights = ["SADC Council Chair", "Energy Grid Recovery"];
+            status = "IMPROVING";
+            frictionVectors = [
+                { title: "EXTERNAL SHOCK RESILIENCE", severity: "HIGH", details: "Interim SADC chairing focuses on buffer zones against Middle East crisis volatility." },
+                { title: "CBAM TRADE BARRIERS", severity: "MEDIUM", details: "EU carbon border taxes reducing steel export competitiveness." }
+            ];
+        }
+
         const resourceData = RESOURCE_MAP[nation.c] || { score: 20, resources: ["Undetermined"] };
 
         return {
@@ -114,7 +164,7 @@ const generateMockData = (): CountryData[] => {
             name: nation.n,
             axisScore: baseScore,
             trend: `${isPositive ? '+' : '-'}${trendValue.toFixed(1)}%`,
-            highlights: highlightPatterns[index % highlightPatterns.length],
+            highlights: highlights,
             status: status,
             population: `${(POP_MAP[nation.c] || (1 + (index * 5.3) % 40)).toFixed(1)}M`,
             resourceWealth: resourceData.score,
@@ -122,7 +172,7 @@ const generateMockData = (): CountryData[] => {
             infrastructureControl: Math.floor(Math.min(100, Math.max(10, baseScore + ((index % 5) * 4) - 8))),
             policyIndependence: Math.floor(Math.min(100, Math.max(10, baseScore - ((index % 4) * 3) + 5))),
             currencyStability: Math.floor(Math.min(100, Math.max(10, baseScore + ((index % 6) * 3) - 10))),
-            keyInitiatives: highlightPatterns[index % highlightPatterns.length].map((h, _i) => ({
+            keyInitiatives: highlights.map((h, _i) => ({
                 title: h,
                 details: `Accelerating ${h.toLowerCase()} implementation, tracking ${(index % 5 + 1) * 5}% ahead of target.`
             })),
@@ -133,23 +183,7 @@ const generateMockData = (): CountryData[] => {
                 value: `$${((baseScore / 10) * 0.8 * (3 - i)).toFixed(1)}B`,
                 status: i % 3 === 2 ? "RESTRICTED EXPORT" : "ON TRACK"
             })),
-            frictionVectors: [
-                {
-                    title: "IMF CONDITIONALITY PRESSURE",
-                    severity: baseScore < 50 ? "HIGH" : "LOW",
-                    details: "Pending loan disbursement delayed due to refusal to privatize state assets."
-                },
-                {
-                    title: "UNAUTHORIZED LEASES",
-                    severity: index % 2 === 0 ? "MEDIUM" : "LOW",
-                    details: "Reviewing legacy contracts signed prior to sovereign wealth mandate."
-                },
-                {
-                    title: "SUPPLY CHAIN BOTTLENECKS",
-                    severity: "LOW",
-                    details: "Port infrastructure congestion at primary export terminal causing delays."
-                }
-            ].slice(0, (index % 3) + 1)
+            frictionVectors: frictionVectors
         };
     }).sort((a, b) => a.name.localeCompare(b.name));
 };

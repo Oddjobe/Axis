@@ -301,27 +301,31 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
             <div className="flex border-b border-border text-xs font-bold tracking-wider pt-2 px-1 gap-0.5">
                 <button
                     onClick={() => setActiveTab("ALERTS")}
-                    className={`flex-1 pb-2 flex items-center justify-center gap-1.5 border-b-2 transition-all text-[10px] ${activeTab === "ALERTS" ? "border-orange-500 text-orange-500" : "border-transparent text-slate-light hover:text-foreground"}`}
+                    className={`flex-1 pb-2 flex items-center justify-center gap-2 border-b-2 transition-all ${activeTab === "ALERTS" ? "border-orange-500 text-orange-500" : "border-transparent text-slate-light hover:text-foreground"}`}
                 >
-                    <ShieldAlert className="w-3 h-3" /> ALERTS
+                    <ShieldAlert className="w-4 h-4" />
+                    <span className="hidden sm:inline text-[10px]">ALERTS</span>
                 </button>
                 <button
                     onClick={() => setActiveTab("NEWS")}
-                    className={`flex-1 pb-2 flex items-center justify-center gap-1.5 border-b-2 transition-all text-[10px] ${activeTab === "NEWS" ? "border-cobalt text-cobalt" : "border-transparent text-slate-light hover:text-foreground"}`}
+                    className={`flex-1 pb-2 flex items-center justify-center gap-2 border-b-2 transition-all ${activeTab === "NEWS" ? "border-cobalt text-cobalt" : "border-transparent text-slate-light hover:text-foreground"}`}
                 >
-                    <Newspaper className="w-3 h-3" /> NEWS
+                    <Newspaper className="w-4 h-4" />
+                    <span className="hidden sm:inline text-[10px]">NEWS</span>
                 </button>
                 <button
                     onClick={() => setActiveTab("BLOGS")}
-                    className={`flex-1 pb-2 flex items-center justify-center gap-1.5 border-b-2 transition-all text-[10px] ${activeTab === "BLOGS" ? "border-green-500 text-green-500" : "border-transparent text-slate-light hover:text-foreground"}`}
+                    className={`flex-1 pb-2 flex items-center justify-center gap-2 border-b-2 transition-all ${activeTab === "BLOGS" ? "border-green-500 text-green-500" : "border-transparent text-slate-light hover:text-foreground"}`}
                 >
-                    <BookOpen className="w-3 h-3" /> BLOGS
+                    <BookOpen className="w-4 h-4" />
+                    <span className="hidden sm:inline text-[10px]">BLOGS</span>
                 </button>
                 <button
                     onClick={() => setActiveTab("MEDIA")}
-                    className={`flex-1 pb-2 flex items-center justify-center gap-1.5 border-b-2 transition-all text-[10px] ${activeTab === "MEDIA" ? "border-red-500 text-red-500" : "border-transparent text-slate-light hover:text-foreground"}`}
+                    className={`flex-1 pb-2 flex items-center justify-center gap-2 border-b-2 transition-all ${activeTab === "MEDIA" ? "border-red-500 text-red-500" : "border-transparent text-slate-light hover:text-foreground"}`}
                 >
-                    <Video className="w-3 h-3" /> MEDIA
+                    <Video className="w-4 h-4" />
+                    <span className="hidden sm:inline text-[10px]">MEDIA</span>
                 </button>
             </div>
 
@@ -334,18 +338,20 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
                 )}
                 {activeTab === "ALERTS" && (
                     <>
-                        <div className="flex justify-end mb-2">
+                        <div className="flex justify-between items-center mb-2 px-1">
+                            <span className="text-[10px] font-mono text-slate-light/60 uppercase tracking-widest">Live Signals</span>
                             <button
                                 onClick={filteredAlerts.length > 0 ? (isPlayingAudio && !audioPaused ? stopAudio : toggleAudioBrief) : undefined}
-                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[10px] font-bold tracking-widest transition-all ${filteredAlerts.length === 0 ? "opacity-30 cursor-not-allowed border border-border bg-background" :
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] font-bold tracking-widest transition-all ${filteredAlerts.length === 0 ? "opacity-30 cursor-not-allowed border border-border bg-background" :
                                     isPlayingAudio && !audioPaused ? "bg-red-500/10 text-red-500 border border-red-500/30 hover:bg-red-500/20" :
                                         isPlayingAudio && audioPaused ? "bg-yellow-500/10 text-yellow-500 border border-yellow-500/30 hover:bg-yellow-500/20" :
                                             isDownloadingModel ? "bg-cobalt/10 text-cobalt border border-cobalt/30 hover:bg-cobalt/20 opacity-80 cursor-wait" :
-                                                "bg-orange-500/10 text-orange-500 border border-orange-500/30 hover:bg-orange-500/20"
+                                                "bg-orange-500/10 text-orange-500 border border-orange-500/30 hover:bg-orange-500/20 shadow-sm"
                                     }`}
                             >
-                                {isDownloadingModel ? <Globe className="w-3.5 h-3.5 animate-spin" /> : isPlayingAudio && !audioPaused ? <Square className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
-                                {isDownloadingModel ? "INITIALIZING AI VOICE..." : isPlayingAudio && !audioPaused ? "STOP BRIEFING" : isPlayingAudio && audioPaused ? "RESUME BRIEFING" : "PLAY AUDIO BRIEF"}
+                                {isDownloadingModel ? <Globe className="w-3 h-3 animate-spin" /> : isPlayingAudio && !audioPaused ? <Square className="w-3 h-3" /> : <Play className="w-3 h-3" />}
+                                <span className="hidden xs:inline">{isDownloadingModel ? "INITIALIZING..." : isPlayingAudio && !audioPaused ? "STOP BRIEF" : isPlayingAudio && audioPaused ? "RESUME" : "AUDIO BRIEF"}</span>
+                                <span className="xs:hidden">{isPlayingAudio && !audioPaused ? "STOP" : "PLAY"}</span>
                             </button>
                         </div>
                         {loading && alerts.length === 0 ? (
@@ -376,10 +382,10 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
                                         animate={{ opacity: 1, x: 0 }}
                                         exit={{ opacity: 0, x: -20 }}
                                         transition={{ delay: idx * 0.1, duration: 0.3 }}
-                                        className="flex items-center w-full h-[85px] bg-background/60 dark:bg-[#252525] hover:bg-background/80 dark:hover:bg-[#353535] border border-border/40 dark:border-white/5 rounded-[20px] backdrop-blur-[10px] transition-all duration-500 ease-in-out hover:scale-[1.02] group cursor-pointer overflow-hidden p-2"
+                                        className="flex items-center w-full min-h-[85px] bg-background/60 dark:bg-onyx/40 hover:bg-background/80 dark:hover:bg-onyx/60 border border-border/40 dark:border-white/5 rounded-2xl backdrop-blur-md transition-all duration-300 hover:scale-[1.01] group cursor-pointer overflow-hidden p-2.5"
                                     >
-                                        <div className="w-[65px] h-[65px] shrink-0 rounded-[15px] overflow-hidden border border-orange-500/20 group-hover:border-orange-500/40 transition-colors">
-                                            <SafeImage src={alert.imageUrl} fallbackIcon={ShieldAlert} className="w-full h-full grayscale group-hover:grayscale-0 transition-all duration-500 scale-110 group-hover:scale-100" width={65} height={65} />
+                                        <div className="w-[60px] h-[60px] lg:w-[65px] lg:h-[65px] shrink-0 rounded-xl overflow-hidden border border-orange-500/20 group-hover:border-orange-500/40 transition-colors">
+                                            <SafeImage src={alert.imageUrl} fallbackIcon={ShieldAlert} className="w-full h-full grayscale group-hover:grayscale-0 transition-opacity duration-500 scale-105 group-hover:scale-100" width={65} height={65} />
                                         </div>
                                         <div className="flex-1 ml-3 min-w-0 pr-2">
                                             <div className="flex items-center justify-between mb-1">
@@ -426,29 +432,29 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
                                     <SafeImage
                                         src={filteredAlerts[0].imageUrl}
                                         fallbackIcon={Globe}
-                                        className="w-full h-full grayscale group-hover:grayscale-0 transition-all duration-1000 scale-110 group-hover:scale-100 opacity-60 group-hover:opacity-80"
+                                        className="w-full h-full grayscale group-hover:grayscale-0 transition-all duration-1000 scale-105 group-hover:scale-100 opacity-50 group-hover:opacity-70"
                                         fill
                                     />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-[#151515] via-[#151515]/80 to-transparent dark:from-[#151515] dark:via-[#151515]/80" />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-onyx via-onyx/70 to-transparent" />
                                 </div>
 
-                                <div className="absolute inset-0 z-10 p-6 flex flex-col justify-end">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <span className="flex items-center gap-1.5 bg-cobalt px-2 py-0.5 rounded-full text-[10px] font-bold text-white shadow-lg animate-pulse">
-                                            <Newspaper className="w-3 h-3" /> FEATURED STORY
+                                <div className="absolute inset-0 z-10 p-4 lg:p-6 flex flex-col justify-end">
+                                    <div className="flex items-center gap-2 mb-1.5">
+                                        <span className="flex items-center gap-1 bg-cobalt px-2 py-0.5 rounded-full text-[9px] font-bold text-white shadow-lg">
+                                            <Newspaper className="w-2.5 h-2.5" /> FEATURED
                                         </span>
-                                        <span className="text-[10px] text-white/60 font-mono uppercase tracking-[0.2em]">
+                                        <span className="text-[9px] text-white/50 font-mono uppercase tracking-widest truncate">
                                             {filteredAlerts[0].source || "INTEL"} • {getLiveTimeAgo(filteredAlerts[0].timestamp)}
                                         </span>
                                     </div>
-                                    <h2 className="text-xl md:text-2xl font-black text-white leading-tight mb-2 group-hover:text-cobalt transition-colors duration-300">
+                                    <h2 className="text-lg lg:text-2xl font-black text-white leading-tight mb-1.5 group-hover:text-cobalt transition-colors duration-300 line-clamp-2">
                                         {filteredAlerts[0].title}
                                     </h2>
-                                    <p className="text-xs md:text-sm text-white/70 font-light line-clamp-2 max-w-[90%] leading-relaxed mb-4">
+                                    <p className="text-[10px] lg:text-sm text-white/60 font-light line-clamp-2 max-w-[95%] leading-relaxed mb-3 lg:mb-4">
                                         {filteredAlerts[0].summary}
                                     </p>
-                                    <div className="flex items-center text-cobalt text-[10px] font-bold uppercase tracking-widest group-hover:translate-x-1 transition-transform">
-                                        SECURE ACCESS TO FULL REPORT <ArrowUpRight className="ml-1 w-3 h-3" />
+                                    <div className="flex items-center text-cobalt text-[9px] font-bold uppercase tracking-widest group-hover:translate-x-1 transition-transform">
+                                        ACCESS REPORT <ArrowUpRight className="ml-1 w-2.5 h-2.5" />
                                     </div>
                                 </div>
                             </motion.a>
@@ -466,10 +472,10 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
                                 href={news.url || "#"}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex items-center w-full h-[85px] bg-background/60 dark:bg-[#252525] hover:bg-background/80 dark:hover:bg-[#353535] border border-border/40 dark:border-white/5 rounded-[20px] backdrop-blur-[10px] transition-all duration-500 ease-in-out hover:scale-[1.02] group cursor-pointer overflow-hidden p-2"
+                                className="flex items-center w-full min-h-[85px] bg-background/60 dark:bg-onyx/40 hover:bg-background/80 dark:hover:bg-onyx/60 border border-border/40 dark:border-white/5 rounded-2xl backdrop-blur-md transition-all duration-300 hover:scale-[1.01] group cursor-pointer overflow-hidden p-2.5"
                             >
-                                <div className="w-[65px] h-[65px] shrink-0 rounded-[15px] overflow-hidden border border-border/40 dark:border-white/10 group-hover:border-orange-500/40 transition-colors">
-                                    <SafeImage src={news.imageUrl} fallbackIcon={Newspaper} className="w-full h-full grayscale group-hover:grayscale-0 transition-all duration-500 scale-110 group-hover:scale-100" width={65} height={65} />
+                                <div className="w-[60px] h-[60px] lg:w-[65px] lg:h-[65px] shrink-0 rounded-xl overflow-hidden border border-border/40 dark:border-white/10 group-hover:border-cobalt/40 transition-colors">
+                                    <SafeImage src={news.imageUrl} fallbackIcon={Newspaper} className="w-full h-full grayscale group-hover:grayscale-0 transition-opacity duration-500 scale-105 group-hover:scale-100" width={65} height={65} />
                                 </div>
                                 <div className="flex-1 ml-3 min-w-0 pr-2">
                                     <div className="flex items-center justify-between mb-1">
@@ -513,10 +519,10 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
                                     href={post.url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="flex items-center w-full h-[85px] bg-[#252525] hover:bg-[#353535] border border-white/5 rounded-[20px] backdrop-blur-[10px] transition-all duration-500 ease-in-out hover:scale-[1.02] group cursor-pointer overflow-hidden p-2"
+                                    className="flex items-center w-full min-h-[85px] bg-background/60 dark:bg-onyx/40 hover:bg-background/80 dark:hover:bg-onyx/60 border border-border/40 dark:border-white/5 rounded-2xl backdrop-blur-md transition-all duration-300 hover:scale-[1.01] group cursor-pointer overflow-hidden p-2.5"
                                 >
-                                    <div className="w-[65px] h-[65px] shrink-0 rounded-[15px] overflow-hidden border border-white/10 group-hover:border-white/20 transition-colors">
-                                        <SafeImage src={post.imageUrl} fallbackIcon={BookOpen} className="w-full h-full grayscale group-hover:grayscale-0 transition-all duration-500 scale-110 group-hover:scale-100" width={65} height={65} />
+                                    <div className="w-[60px] h-[60px] lg:w-[65px] lg:h-[65px] shrink-0 rounded-xl overflow-hidden border border-white/10 group-hover:border-green-500/40 transition-colors">
+                                        <SafeImage src={post.imageUrl} fallbackIcon={BookOpen} className="w-full h-full grayscale group-hover:grayscale-0 transition-opacity duration-500 scale-105 group-hover:scale-100" width={65} height={65} />
                                     </div>
                                     <div className="flex-1 ml-3 min-w-0 pr-2">
                                         <div className="flex items-center justify-between mb-1">

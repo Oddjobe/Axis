@@ -13,8 +13,8 @@ async function check() {
     const { count: blogCount, error: err2 } = await supabase.from('blog_posts').select('*', { count: 'exact', head: true });
     const { count: countryCount, error: err3 } = await supabase.from('countries').select('*', { count: 'exact', head: true });
 
-    const { data: alerts } = await supabase.from('intelligence_alerts').select('*').limit(3);
-    const { data: blogs } = await supabase.from('blog_posts').select('*').limit(3);
+    const { data: alerts } = await supabase.from('intelligence_alerts').select('*').order('created_at', { ascending: false }).limit(3);
+    const { data: blogs } = await supabase.from('blog_posts').select('*').order('created_at', { ascending: false }).limit(3);
 
     console.log(`Intel count: ${intelCount}`);
     console.log(`Blog count: ${blogCount}`);
