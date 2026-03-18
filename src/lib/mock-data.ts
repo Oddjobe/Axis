@@ -126,7 +126,7 @@ const generateMockData = (): CountryData[] => {
             }
         ].slice(0, (index % 3) + 1);
 
-        // Geopolitical Overrides for March 13, 2026
+        // Geopolitical Overrides for March 18, 2026
         if (nation.c === "ETH") {
             highlights = ["GERD Strategic Leverage", "Red Sea Access Strategy"];
             status = "IMPROVING";
@@ -154,6 +154,20 @@ const generateMockData = (): CountryData[] => {
             frictionVectors = [
                 { title: "EXTERNAL SHOCK RESILIENCE", severity: "HIGH", details: "Interim SADC chairing focuses on buffer zones against Middle East crisis volatility." },
                 { title: "CBAM TRADE BARRIERS", severity: "MEDIUM", details: "EU carbon border taxes reducing steel export competitiveness." }
+            ];
+        } else if (nation.c === "NER") {
+            highlights = ["Sovereign Mining Reform", "Eco-Uranium Strategy"];
+            status = "IMPROVING";
+            frictionVectors = [
+                { title: "URANIUM LICENSE REVOCATION", severity: "HIGH", details: "Withdrawal of mining rights from legacy partners completed, now seeking new strategic investors." },
+                { title: "REGIONAL SECURITY BUFFER", severity: "MEDIUM", details: "Integrating domestic defense systems with neighboring Alliance of Sahel States (AES)." }
+            ];
+        } else if (nation.c === "GIN") {
+            highlights = ["Simandou Rail Link", "Bauxite Value-Add"];
+            status = "OPTIMAL";
+            frictionVectors = [
+                { title: "INFRASTRUCTURE MILESTONES", severity: "HIGH", details: "Multi-billion dollar rail link connecting Simandou to the coast reaches 75% completion." },
+                { title: "CO-DEVELOPMENT OVERRIDE", severity: "MEDIUM", details: "Joint venture for domestic alumina refining plant finalized with consortium partners." }
             ];
         }
 
