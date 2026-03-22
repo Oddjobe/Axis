@@ -1,14 +1,17 @@
-name: Automated OSINT Intelligence Scraper
+name: Automated OSINT Daily Update
 
 on:
   schedule:
-    # Run once daily at 5 AM UTC to stay within the 3,000 Firecrawl credit/month limit
-    - cron: '0 5 * * *'
+    # Run once daily at 8 AM UTC (09:00 local time)
+    - cron: '0 8 * * *'
   workflow_dispatch:
     # Allow manual triggering from the GitHub Actions tab
 
+permissions:
+  contents: write
+
 jobs:
-  scrape-and-insert:
+  update-dashboard:
     runs-on: ubuntu-latest
     
     env:
@@ -27,8 +30,21 @@ jobs:
       - name: Install dependencies
         run: npm ci
         
-      - name: Run Firecrawl-Free OSINT Scraper
+      - name: Run Metadata Automation
+        run: npx tsx scripts/automate-daily-metadata.ts
+
+      - name: Run OSINT Scraper
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        run: npx tsx scripts/fast-scrape.ts
+          FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
+          FOUNDRY_API_KEY: ${{ secrets.FOUNDRY_API_KEY }}
+          FOUNDRY_ENDPOINT: ${{ secrets.FOUNDRY_ENDPOINT }}
+          FOUNDRY_MODEL: ${{ secrets.FOUNDRY_MODEL }}
+        run: npx tsx scripts/manual-scrape.ts
+
+      - name: Commit and Push Changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: daily dashboard metadata update [skip ci]"
+          branch: main

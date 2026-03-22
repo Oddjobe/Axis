@@ -8,7 +8,7 @@ const COMMODITY_DATA = [
     {
         id: "lithium",
         name: "LITHIUM (CARBONATE)",
-        price: 22680,
+        price: 22797,
         unit: "T",
         currency: "USD",
         trend: +1.12,
@@ -20,7 +20,7 @@ const COMMODITY_DATA = [
     {
         id: "cobalt",
         name: "COBALT (99.8%)",
-        price: 56950,
+        price: 56741,
         unit: "T",
         currency: "USD",
         trend: +0.42,
@@ -32,7 +32,7 @@ const COMMODITY_DATA = [
     {
         id: "copper",
         name: "COPPER (GRADE A)",
-        price: 13040.00,
+        price: 12998,
         unit: "T",
         currency: "USD",
         trend: +0.50,
@@ -44,7 +44,7 @@ const COMMODITY_DATA = [
     {
         id: "gold",
         name: "GOLD (SPOT)",
-        price: 5178.60,
+        price: 5204,
         unit: "OZ",
         currency: "USD",
         trend: +0.45,
@@ -56,7 +56,7 @@ const COMMODITY_DATA = [
     {
         id: "bauxite",
         name: "BAUXITE (GUINEA)",
-        price: 77.10,
+        price: 76.95,
         unit: "T",
         currency: "USD",
         trend: +2.15,
