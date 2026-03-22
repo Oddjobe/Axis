@@ -126,47 +126,47 @@ const generateMockData = (): CountryData[] => {
             }
         ].slice(0, (index % 3) + 1);
 
-        // Geopolitical Overrides for March 18, 2026
+        // Geopolitical Overrides for March 22, 2026
         if (nation.c === "ETH") {
             highlights = ["GERD Strategic Leverage", "Red Sea Access Strategy"];
             status = "IMPROVING";
             frictionVectors = [
                 { title: "GERD DIPLOMATIC TENSION", severity: "HIGH", details: "Dispute over dam filling escalating with downstream neighbors." },
-                { title: "MARITIME ACCESS AMBITIONS", severity: "MEDIUM", details: "Pursuing sovereign port access ahead of 2026 elections." }
+                { title: "MARITIME ACCESS AMBITIONS", severity: "MEDIUM", details: "Maritime cooperation agreement signed; regional security coordination meetings initiated." }
             ];
         } else if (nation.c === "EGY") {
             highlights = ["Military Leverage Horn", "Food Security Crisis"];
             status = "EXTRACTIVE";
             frictionVectors = [
-                { title: "REGIONAL MILITARY POSTURE", severity: "HIGH", details: "Increasing activity in the Horn region to counter GERD developments." },
+                { title: "REGIONAL MILITARY POSTURE", severity: "HIGH", details: "Diplomatic outreach to Blue Nile riparian states intensifies following strategic repositioning." },
                 { title: "IMPORT VOLATILITY", severity: "MEDIUM", details: "Middle East conflict causing sharp spikes in essential grain costs." }
             ];
         } else if (nation.c === "COD") {
-            highlights = ["Cobalt Export Ban", "Conflict Belt Risk"];
+            highlights = ["Lithium Refining Hub", "Conflict Belt Risk"];
             status = "OPTIMAL";
             frictionVectors = [
-                { title: "MINERAL SOVEREIGNTY LAW", severity: "HIGH", details: "Enforcing ban on raw cobalt exports to mandate domestic refining." },
+                { title: "MINERAL SOVEREIGNTY LAW", severity: "HIGH", details: "New battery-grade lithium processing facility breaks ground in Manono region." },
                 { title: "ILLICIT TRADE VECTORS", severity: "MEDIUM", details: "Armed group activity in TFM mining regions increasing due to price surge." }
             ];
         } else if (nation.c === "ZAF") {
             highlights = ["SADC Council Chair", "Energy Grid Recovery"];
             status = "IMPROVING";
             frictionVectors = [
-                { title: "EXTERNAL SHOCK RESILIENCE", severity: "HIGH", details: "Interim SADC chairing focuses on buffer zones against Middle East crisis volatility." },
+                { title: "EXTERNAL SHOCK RESILIENCE", severity: "HIGH", details: "SADC energy grid stability improves as regional buffer zones yield early resilience gains." },
                 { title: "CBAM TRADE BARRIERS", severity: "MEDIUM", details: "EU carbon border taxes reducing steel export competitiveness." }
             ];
         } else if (nation.c === "NER") {
             highlights = ["Sovereign Mining Reform", "Eco-Uranium Strategy"];
             status = "IMPROVING";
             frictionVectors = [
-                { title: "URANIUM LICENSE REVOCATION", severity: "HIGH", details: "Withdrawal of mining rights from legacy partners completed, now seeking new strategic investors." },
+                { title: "URANIUM LICENSE REVOCATION", severity: "HIGH", details: "Shortlisted bidders for Guezouman uranium project invited to final technical audit." },
                 { title: "REGIONAL SECURITY BUFFER", severity: "MEDIUM", details: "Integrating domestic defense systems with neighboring Alliance of Sahel States (AES)." }
             ];
         } else if (nation.c === "GIN") {
             highlights = ["Simandou Rail Link", "Bauxite Value-Add"];
             status = "OPTIMAL";
             frictionVectors = [
-                { title: "INFRASTRUCTURE MILESTONES", severity: "HIGH", details: "Multi-billion dollar rail link connecting Simandou to the coast reaches 75% completion." },
+                { title: "INFRASTRUCTURE MILESTONES", severity: "HIGH", details: "First test train completes Simandou-to-Morebaya transit as 85% milestone reached." },
                 { title: "CO-DEVELOPMENT OVERRIDE", severity: "MEDIUM", details: "Joint venture for domestic alumina refining plant finalized with consortium partners." }
             ];
         }
@@ -186,7 +186,7 @@ const generateMockData = (): CountryData[] => {
             infrastructureControl: Math.floor(Math.min(100, Math.max(10, baseScore + ((index % 5) * 4) - 8))),
             policyIndependence: Math.floor(Math.min(100, Math.max(10, baseScore - ((index % 4) * 3) + 5))),
             currencyStability: Math.floor(Math.min(100, Math.max(10, baseScore + ((index % 6) * 3) - 10))),
-            keyInitiatives: highlights.map((h, _i) => ({
+            keyInitiatives: highlights.map((h) => ({
                 title: h,
                 details: `Accelerating ${h.toLowerCase()} implementation, tracking ${(index % 5 + 1) * 5}% ahead of target.`
             })),
