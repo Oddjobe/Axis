@@ -126,7 +126,7 @@ const generateMockData = (): CountryData[] => {
             }
         ].slice(0, (index % 3) + 1);
 
-        // Geopolitical Overrides for March 23, 2026
+        // Geopolitical Overrides for March 24, 2026
         if (nation.c === "ETH") {
             highlights = ["GERD Strategic Leverage", "Red Sea Access Strategy"];
             status = "IMPROVING";
