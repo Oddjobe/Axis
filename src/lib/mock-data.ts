@@ -132,41 +132,41 @@ const generateMockData = (): CountryData[] => {
             status = "IMPROVING";
             frictionVectors = [
                 { title: "GERD DIPLOMATIC TENSION", severity: "HIGH", details: "Dispute over dam filling escalating with downstream neighbors." },
-                { title: "MARITIME ACCESS AMBITIONS", severity: "MEDIUM", details: "Maritime cooperation agreement signed; regional security coordination meetings initiated." }
+                { title: "MARITIME ACCESS AMBITIONS", severity: "MEDIUM", details: "Joint maritime task force established; technical surveys for Bergera port site commence." }
             ];
         } else if (nation.c === "EGY") {
             highlights = ["Military Leverage Horn", "Food Security Crisis"];
             status = "EXTRACTIVE";
             frictionVectors = [
-                { title: "REGIONAL MILITARY POSTURE", severity: "HIGH", details: "Diplomatic outreach to Blue Nile riparian states intensifies following strategic repositioning." },
+                { title: "REGIONAL MILITARY POSTURE", severity: "HIGH", details: "Strategic memorandum with South Sudan finalized; naval presence in Gulf of Aden increased." },
                 { title: "IMPORT VOLATILITY", severity: "MEDIUM", details: "Middle East conflict causing sharp spikes in essential grain costs." }
             ];
         } else if (nation.c === "COD") {
             highlights = ["Lithium Refining Hub", "Conflict Belt Risk"];
             status = "OPTIMAL";
             frictionVectors = [
-                { title: "MINERAL SOVEREIGNTY LAW", severity: "HIGH", details: "New battery-grade lithium processing facility breaks ground in Manono region." },
+                { title: "MINERAL SOVEREIGNTY LAW", severity: "HIGH", details: "Infrastructure corridor for Manono lithium refinery enters phase 1 construction; supply contracts with EU battery consortium signed." },
                 { title: "ILLICIT TRADE VECTORS", severity: "MEDIUM", details: "Armed group activity in TFM mining regions increasing due to price surge." }
             ];
         } else if (nation.c === "ZAF") {
             highlights = ["SADC Council Chair", "Energy Grid Recovery"];
             status = "IMPROVING";
             frictionVectors = [
-                { title: "EXTERNAL SHOCK RESILIENCE", severity: "HIGH", details: "SADC energy grid stability improves as regional buffer zones yield early resilience gains." },
+                { title: "EXTERNAL SHOCK RESILIENCE", severity: "HIGH", details: "Grid availability factor hits 12-month high; regional green hydrogen pilot projects in Northern Cape enter testing." },
                 { title: "CBAM TRADE BARRIERS", severity: "MEDIUM", details: "EU carbon border taxes reducing steel export competitiveness." }
             ];
         } else if (nation.c === "NER") {
             highlights = ["Sovereign Mining Reform", "Eco-Uranium Strategy"];
             status = "IMPROVING";
             frictionVectors = [
-                { title: "URANIUM LICENSE REVOCATION", severity: "HIGH", details: "Shortlisted bidders for Guezouman uranium project invited to final technical audit." },
+                { title: "URANIUM LICENSE REVOCATION", severity: "HIGH", details: "Conditional licenses granted for Guezouman exploitation; new revenue-sharing model with AES partners implemented." },
                 { title: "REGIONAL SECURITY BUFFER", severity: "MEDIUM", details: "Integrating domestic defense systems with neighboring Alliance of Sahel States (AES)." }
             ];
         } else if (nation.c === "GIN") {
             highlights = ["Simandou Rail Link", "Bauxite Value-Add"];
             status = "OPTIMAL";
             frictionVectors = [
-                { title: "INFRASTRUCTURE MILESTONES", severity: "HIGH", details: "First test train completes Simandou-to-Morebaya transit as 85% milestone reached." },
+                { title: "INFRASTRUCTURE MILESTONES", severity: "HIGH", details: "Regular bauxite rail transit between Simandou and Morebaya operational; port dredging for deep-water berths 60% complete." },
                 { title: "CO-DEVELOPMENT OVERRIDE", severity: "MEDIUM", details: "Joint venture for domestic alumina refining plant finalized with consortium partners." }
             ];
         }
