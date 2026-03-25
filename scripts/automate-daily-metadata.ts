@@ -89,6 +89,17 @@ const main = () => {
     const { isoDate, fullDate } = getTodayDateStrings();
 
     try {
+        console.log("Starting daily automation suite...");
+
+        // Step 1: Generate AI Narratives for all nations
+        try {
+            const { execSync } = require('child_process');
+            console.log("Triggering AI Geopolitical Synthesis...");
+            execSync('npx tsx scripts/generate-ai-narratives.ts', { stdio: 'inherit' });
+        } catch (aiError) {
+            console.error("AI Narrative generation failed, continuing with date/price refresh only:", aiError);
+        }
+
         updateMockData(fullDate);
         updateCommodities(isoDate);
         updateTicker();

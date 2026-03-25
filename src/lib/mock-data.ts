@@ -1,4 +1,11 @@
 import { CountryData } from "../components/country-dossier-modal";
+import dynamicNarrativesRaw from "./dynamic-narratives.json";
+
+const dynamicNarratives = dynamicNarrativesRaw as Record<string, {
+    highlights: string[],
+    status: "OPTIMAL" | "IMPROVING" | "EXTRACTIVE" | "STABLE" | "NEUTRAL",
+    frictionVectors: { title: string, severity: "HIGH" | "MEDIUM" | "LOW", details: string }[]
+}>;
 
 const AFRICAN_NATIONS = [
     { c: "DZA", n: "Algeria" }, { c: "AGO", n: "Angola" }, { c: "BEN", n: "Benin" }, { c: "BWA", n: "Botswana" },
@@ -103,7 +110,7 @@ const generateMockData = (): CountryData[] => {
         ];
 
         let highlights = highlightPatterns[index % highlightPatterns.length];
-        let status = "STABLE";
+        let status: "OPTIMAL" | "IMPROVING" | "EXTRACTIVE" | "STABLE" | "NEUTRAL" = "STABLE";
         if (baseScore >= 75) status = "OPTIMAL";
         else if (baseScore <= 50) status = "EXTRACTIVE";
         else if (isPositive) status = "IMPROVING";
@@ -126,7 +133,14 @@ const generateMockData = (): CountryData[] => {
             }
         ].slice(0, (index % 3) + 1);
 
-        // Geopolitical Overrides for March 25, 2026
+        // AI Dynamic Narratives
+        if (dynamicNarratives[nation.c]) {
+            highlights = dynamicNarratives[nation.c].highlights;
+            status = dynamicNarratives[nation.c].status;
+            frictionVectors = dynamicNarratives[nation.c].frictionVectors;
+        }
+
+        // Hardcoded Geopolitical Overrides for Legacy / Specific Milestone Context
         if (nation.c === "ETH") {
             highlights = ["GERD Strategic Leverage", "Red Sea Access Strategy"];
             status = "IMPROVING";
