@@ -229,9 +229,12 @@ async function main() {
         .filter((r): r is PromiseFulfilledResult<any[]> => r.status === 'fulfilled')
         .flatMap(r => r.value);
 
-    if (allIntel.length > 0) {
-        const { error } = await supabase.from('intelligence_alerts').upsert(allIntel, { onConflict: 'title' });
-        console.log(`Upserted ${allIntel.length} alerts. Error:`, error);
+    const uniqueIntel = Array.from(new Map(allIntel.map(item => [item.title, item])).values());
+    if (uniqueIntel.length > 0) {
+        const titles = uniqueIntel.map(i => i.title);
+        await supabase.from('intelligence_alerts').delete().in('title', titles);
+        const { error } = await supabase.from('intelligence_alerts').insert(uniqueIntel);
+        console.log(`Upserted ${uniqueIntel.length} alerts. Error:`, error);
     }
 
     const blogResults = await Promise.allSettled(MEDIUM_SOURCES.map(scrapeBlogSource));
@@ -239,9 +242,12 @@ async function main() {
         .filter((r): r is PromiseFulfilledResult<any[]> => r.status === 'fulfilled')
         .flatMap(r => r.value);
 
-    if (allBlogs.length > 0) {
-        const { error } = await supabase.from('blog_posts').upsert(allBlogs, { onConflict: 'url' });
-        console.log(`Upserted ${allBlogs.length} blogs. Error:`, error);
+    const uniqueBlogs = Array.from(new Map(allBlogs.map(item => [item.url, item])).values());
+    if (uniqueBlogs.length > 0) {
+        const urls = uniqueBlogs.map(b => b.url);
+        await supabase.from('blog_posts').delete().in('url', urls);
+        const { error } = await supabase.from('blog_posts').insert(uniqueBlogs);
+        console.log(`Upserted ${uniqueBlogs.length} blogs. Error:`, error);
     }
 
     console.log("Scrape complete.");
