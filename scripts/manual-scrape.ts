@@ -167,7 +167,9 @@ async function scrapeIntelligenceSource(source: any) {
             ...a,
             source: source.name,
             isoCode: (a.isoCode || "").toUpperCase().trim(),
-            actor: a.actor || null,
+            category: ["SOVEREIGNTY RISK", "OUTSIDE INFLUENCE"].includes(a.category) ? a.category : "SOVEREIGNTY RISK",
+            severity: ["HIGH", "MEDIUM", "LOW"].includes(a.severity) ? a.severity : "MEDIUM",
+            actor: a.actor === "N/A" || a.actor === "NONE" ? null : (a.actor || null),
             created_at: new Date().toISOString()
         }))
         .filter((a: any) => VALID_ISO_CODES.has(a.isoCode));
