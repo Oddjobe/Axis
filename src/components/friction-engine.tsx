@@ -382,32 +382,32 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
                                         animate={{ opacity: 1, x: 0 }}
                                         exit={{ opacity: 0, x: -20 }}
                                         transition={{ delay: idx * 0.1, duration: 0.3 }}
-                                        className="flex items-center w-full min-h-[85px] bg-background/60 dark:bg-onyx/40 hover:bg-background/80 dark:hover:bg-onyx/60 border border-border/40 dark:border-white/5 rounded-2xl backdrop-blur-md transition-all duration-300 hover:scale-[1.01] group cursor-pointer overflow-hidden p-2.5"
+                                        className="flex items-start sm:items-center w-full min-h-[75px] sm:min-h-[85px] bg-background/60 dark:bg-onyx/40 hover:bg-background/80 dark:hover:bg-onyx/60 border border-border/40 dark:border-white/5 rounded-xl sm:rounded-2xl backdrop-blur-md transition-all duration-300 hover:scale-[1.01] group cursor-pointer overflow-hidden p-2 sm:p-2.5"
                                     >
-                                        <div className="w-[60px] h-[60px] lg:w-[65px] lg:h-[65px] shrink-0 rounded-xl overflow-hidden border border-orange-500/20 group-hover:border-orange-500/40 transition-colors">
+                                        <div className="w-[45px] h-[45px] sm:w-[60px] sm:h-[60px] lg:w-[65px] lg:h-[65px] shrink-0 rounded-lg sm:rounded-xl overflow-hidden border border-orange-500/20 group-hover:border-orange-500/40 transition-colors mt-0.5 sm:mt-0">
                                             <SafeImage src={alert.imageUrl} fallbackIcon={ShieldAlert} className="w-full h-full grayscale group-hover:grayscale-0 transition-opacity duration-500 scale-105 group-hover:scale-100" width={65} height={65} />
                                         </div>
-                                        <div className="flex-1 ml-3 min-w-0 pr-2">
-                                            <div className="flex items-center justify-between mb-1">
-                                                <h3 className="text-[13px] font-bold text-foreground dark:text-white truncate uppercase tracking-tight">{alert.title}</h3>
-                                                <span className="text-[9px] text-orange-500/80 font-mono whitespace-nowrap ml-2">
+                                        <div className="flex-1 ml-2.5 sm:ml-3 min-w-0 pr-1 sm:pr-2">
+                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-0.5 sm:mb-1 gap-0.5">
+                                                <h3 className="text-[12px] sm:text-[13px] font-bold text-foreground dark:text-white line-clamp-2 sm:truncate uppercase tracking-tight leading-snug sm:leading-tight">{alert.title}</h3>
+                                                <span className="text-[8px] sm:text-[9px] text-orange-500/80 font-mono whitespace-nowrap sm:ml-2">
                                                     {getLiveTimeAgo(alert.timestamp)}
                                                 </span>
                                             </div>
-                                            <p className="text-[11px] text-slate-light font-light line-clamp-2 leading-tight">
+                                            <p className="text-[10px] sm:text-[11px] text-slate-light font-light line-clamp-2 leading-tight">
                                                 {alert.summary}
                                             </p>
-                                            <div className="mt-1 flex items-center gap-2">
-                                                <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded uppercase ${alert.severity === "HIGH" ? "bg-red-500/20 text-red-500" :
+                                            <div className="mt-1 flex items-center gap-1.5 sm:gap-2">
+                                                <span className={`text-[7px] sm:text-[8px] font-bold px-1.5 py-0.5 rounded-sm sm:rounded uppercase ${alert.severity === "HIGH" ? "bg-red-500/20 text-red-500" :
                                                     alert.severity === "MEDIUM" ? "bg-orange-500/20 text-orange-500" :
                                                         "bg-emerald-500/20 text-emerald-500"
                                                     }`}>
                                                     {alert.severity}
                                                 </span>
-                                                <span className="text-[8px] text-slate-light/40 uppercase tracking-widest">{alert.isoCode}</span>
+                                                <span className="text-[7px] sm:text-[8px] text-slate-light/40 uppercase tracking-widest">{alert.isoCode}</span>
                                             </div>
                                         </div>
-                                        <div className="opacity-0 group-hover:opacity-100 transition-opacity pr-2">
+                                        <div className="hidden sm:block opacity-0 group-hover:opacity-100 transition-opacity pr-2">
                                             <ArrowUpRight className="w-4 h-4 text-orange-500" />
                                         </div>
                                     </motion.a>
@@ -472,24 +472,24 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
                                 href={news.url || "#"}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex items-center w-full min-h-[85px] bg-background/60 dark:bg-onyx/40 hover:bg-background/80 dark:hover:bg-onyx/60 border border-border/40 dark:border-white/5 rounded-2xl backdrop-blur-md transition-all duration-300 hover:scale-[1.01] group cursor-pointer overflow-hidden p-2.5"
+                                className="flex items-start sm:items-center w-full min-h-[75px] sm:min-h-[85px] bg-background/60 dark:bg-onyx/40 hover:bg-background/80 dark:hover:bg-onyx/60 border border-border/40 dark:border-white/5 rounded-xl sm:rounded-2xl backdrop-blur-md transition-all duration-300 hover:scale-[1.01] group cursor-pointer overflow-hidden p-2 sm:p-2.5"
                             >
-                                <div className="w-[60px] h-[60px] lg:w-[65px] lg:h-[65px] shrink-0 rounded-xl overflow-hidden border border-border/40 dark:border-white/10 group-hover:border-cobalt/40 transition-colors">
+                                <div className="w-[45px] h-[45px] sm:w-[60px] sm:h-[60px] lg:w-[65px] lg:h-[65px] shrink-0 rounded-lg sm:rounded-xl overflow-hidden border border-border/40 dark:border-white/10 group-hover:border-cobalt/40 transition-colors mt-0.5 sm:mt-0">
                                     <SafeImage src={news.imageUrl} fallbackIcon={Newspaper} className="w-full h-full grayscale group-hover:grayscale-0 transition-opacity duration-500 scale-105 group-hover:scale-100" width={65} height={65} />
                                 </div>
-                                <div className="flex-1 ml-3 min-w-0 pr-2">
-                                    <div className="flex items-center justify-between mb-1">
-                                        <h3 className="text-[13px] font-bold text-foreground dark:text-white truncate uppercase tracking-tight">{news.title}</h3>
-                                        <span className="text-[9px] text-cobalt/80 font-mono whitespace-nowrap ml-2">{getLiveTimeAgo(news.timestamp)}</span>
+                                <div className="flex-1 ml-2.5 sm:ml-3 min-w-0 pr-1 sm:pr-2">
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-0.5 sm:mb-1 gap-0.5">
+                                        <h3 className="text-[12px] sm:text-[13px] font-bold text-foreground dark:text-white line-clamp-2 sm:truncate uppercase tracking-tight leading-snug sm:leading-tight">{news.title}</h3>
+                                        <span className="text-[8px] sm:text-[9px] text-cobalt/80 font-mono whitespace-nowrap sm:ml-2">{getLiveTimeAgo(news.timestamp)}</span>
                                     </div>
-                                    <p className="text-[11px] text-slate-light font-light line-clamp-2 leading-tight">
+                                    <p className="text-[10px] sm:text-[11px] text-slate-light font-light line-clamp-2 leading-tight">
                                         {news.summary}
                                     </p>
                                     <div className="mt-1">
-                                        <span className="text-[8px] font-bold text-cobalt uppercase tracking-widest">{news.source || "OSINT WIRE"}</span>
+                                        <span className="text-[7px] sm:text-[8px] font-bold text-cobalt uppercase tracking-widest">{news.source || "OSINT WIRE"}</span>
                                     </div>
                                 </div>
-                                <div className="opacity-0 group-hover:opacity-100 transition-opacity pr-2">
+                                <div className="hidden sm:block opacity-0 group-hover:opacity-100 transition-opacity pr-2">
                                     <ArrowUpRight className="w-4 h-4 text-cobalt" />
                                 </div>
                             </a>
@@ -519,24 +519,24 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
                                     href={post.url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="flex items-center w-full min-h-[85px] bg-background/60 dark:bg-onyx/40 hover:bg-background/80 dark:hover:bg-onyx/60 border border-border/40 dark:border-white/5 rounded-2xl backdrop-blur-md transition-all duration-300 hover:scale-[1.01] group cursor-pointer overflow-hidden p-2.5"
+                                    className="flex items-start sm:items-center w-full min-h-[75px] sm:min-h-[85px] bg-background/60 dark:bg-onyx/40 hover:bg-background/80 dark:hover:bg-onyx/60 border border-border/40 dark:border-white/5 rounded-xl sm:rounded-2xl backdrop-blur-md transition-all duration-300 hover:scale-[1.01] group cursor-pointer overflow-hidden p-2 sm:p-2.5"
                                 >
-                                    <div className="w-[60px] h-[60px] lg:w-[65px] lg:h-[65px] shrink-0 rounded-xl overflow-hidden border border-white/10 group-hover:border-green-500/40 transition-colors">
+                                    <div className="w-[45px] h-[45px] sm:w-[60px] sm:h-[60px] lg:w-[65px] lg:h-[65px] shrink-0 rounded-lg sm:rounded-xl overflow-hidden border border-white/10 group-hover:border-green-500/40 transition-colors mt-0.5 sm:mt-0">
                                         <SafeImage src={post.imageUrl} fallbackIcon={BookOpen} className="w-full h-full grayscale group-hover:grayscale-0 transition-opacity duration-500 scale-105 group-hover:scale-100" width={65} height={65} />
                                     </div>
-                                    <div className="flex-1 ml-3 min-w-0 pr-2">
-                                        <div className="flex items-center justify-between mb-1">
-                                            <h3 className="text-[13px] font-bold text-foreground dark:text-white truncate uppercase tracking-tight">{post.title}</h3>
-                                            <span className="text-[9px] text-green-500/80 font-mono whitespace-nowrap ml-2 uppercase">{post.tag}</span>
+                                    <div className="flex-1 ml-2.5 sm:ml-3 min-w-0 pr-1 sm:pr-2">
+                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-0.5 sm:mb-1 gap-0.5">
+                                            <h3 className="text-[12px] sm:text-[13px] font-bold text-foreground dark:text-white line-clamp-2 sm:truncate uppercase tracking-tight leading-snug sm:leading-tight">{post.title}</h3>
+                                            <span className="text-[8px] sm:text-[9px] text-green-500/80 font-mono whitespace-nowrap sm:ml-2 uppercase">{post.tag}</span>
                                         </div>
-                                        <p className="text-[11px] text-slate-light font-light line-clamp-2 leading-tight">
+                                        <p className="text-[10px] sm:text-[11px] text-slate-light font-light line-clamp-2 leading-tight">
                                             {post.summary}
                                         </p>
-                                        <div className="mt-1 flex items-center gap-1.5 font-mono text-[8px] text-green-500/60 font-bold uppercase tracking-wider">
+                                        <div className="mt-1 flex items-center gap-1.5 font-mono text-[7px] sm:text-[8px] text-green-500/60 font-bold uppercase tracking-wider">
                                             <Users className="w-2.5 h-2.5" /> {post.author}
                                         </div>
                                     </div>
-                                    <div className="opacity-0 group-hover:opacity-100 transition-opacity pr-2">
+                                    <div className="hidden sm:block opacity-0 group-hover:opacity-100 transition-opacity pr-2">
                                         <ArrowUpRight className="w-4 h-4 text-green-500" />
                                     </div>
                                 </a>
