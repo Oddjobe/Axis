@@ -1,859 +1,757 @@
 {
   "DZA": {
     "highlights": [
-      "Emerging Oil Powerhouse",
-      "Growing Economic Diversification"
+      "Algeria's National Oil Block I Challenge",
+      "Sovereign Oil Fund Status Quo"
     ],
     "status": "OPTIMAL",
     "frictionVectors": [
       {
-        "title": "China's Belt and Road Involvement",
+        "title": "JAFFAR AL-ISI Presidential Election Impact",
         "severity": "HIGH",
-        "details": "Increasing Chinese investment in Algeria's infrastructure creates economic dependencies."
+        "details": "Upcoming presidential elections in Algeria could lead to significant political shifts affecting oil and gas policies."
       }
     ]
   },
   "AGO": {
     "highlights": [
-      "Resource Wealth Fuels Growth",
-      "US-China Competition Intensifies"
+      "Angolan LNG Ambitions",
+      "Sovereign Wealth Fund Expansion"
     ],
-    "status": "EXTRACTIVE",
+    "status": "IMPROVING",
     "frictionVectors": [
       {
-        "title": "US-China Rivalry",
+        "title": "Border Dispute with DRC",
         "severity": "MEDIUM",
-        "details": "Angola's oil and diamond resources are becoming hotspots for US-China geopolitical rivalry."
-      },
-      {
-        "title": "Infrastructure Debt Trap",
-        "severity": "HIGH",
-        "details": "Angola faces economic strain due to borrowing from China for infrastructure projects, raising concerns about long-term sovereignty."
+        "details": "Ongoing border disputes with the Democratic Republic of Congo (DRC) create regional tensions and potential for conflict."
       }
     ]
   },
   "BEN": {
     "highlights": [
-      "Fragile Sovereignty",
-      "Resource Richness Strains Stability"
+      "Benin's Free Trade Success",
+      "Foreign Private Sector Engagement"
     ],
     "status": "NEUTRAL",
     "frictionVectors": [
       {
-        "title": "Rebellious Regions",
-        "severity": "HIGH",
-        "details": "Internal conflicts and external interventions from neighboring countries threaten Benin’s stability."
-      },
-      {
-        "title": "Resource Curse Management",
-        "severity": "MEDIUM",
-        "details": "Efforts to manage wealth from natural resources are critical to Benin's economic and social stability."
+        "title": "Yenisei River Collaboration",
+        "severity": "LOW",
+        "details": "Collaborations with Russia over the Yenisei river for infrastructure projects reflect growing but manageable international ties."
       }
     ]
   },
   "BWA": {
     "highlights": [
-      "Proudly upholding multi-party democracy",
-      "Steady economic growth",
-      "Strengthening regional leadership"
+      "Botswana's Diamond Reserves",
+      "Sustainable Growth Efforts"
     ],
     "status": "OPTIMAL",
-    "fritialVectors": [
+    "frictionVectors": [
       {
-        "title": "Border disputes with Namibia",
-        "severity": "LOW",
-        "details": "Small territorial disputes occasionally arise, primarily along the Namibian border"
+        "title": "International Financing Structure Reforms",
+        "severity": "MEDIUM",
+        "details": "Ongoing reforms to the international financial agreements to better control diamond resource management."
       }
     ]
   },
   "BFA": {
     "highlights": [
-      "Persistent Instability",
-      "Foreign Aid Dependency"
+      "Burkina Faso's Beef Export Boom",
+      "Regional Military Support Struggles"
     ],
-    "status": "IMPROVING",
+    "status": "EXTRACTIVE",
     "frictionVectors": [
       {
-        "title": "Economic Dependence on Foreign Aid",
+        "title": "Tensions with Mali and Northern Neighboring Interests",
         "severity": "HIGH",
-        "details": "Burkina Faso’s reliance on foreign aid from France and the EU impacts its sovereignty and policy-making."
-      },
-      {
-        "title": "Transnational Terrorism",
-        "severity": "HIGH",
-        "details": "The spread of jihadist terrorist groups in the Sahel region poses a significant threat to Burkina Faso’s national security."
+        "details": "Burkina Faso faces high-level tensions and instability in the northern region due to security issues impacting resource infrastructure and export routes."
       }
     ]
   },
   "BDI": {
     "highlights": [
-      "Toiling for stability",
-      "Ethnic reconciliation efforts"
-    ],
-    "status": "IMPROVING",
-    "frictionVectors": [
-      {
-        "title": "External influence",
-        "severity": "HIGH",
-        "details": "Burundi's regional tensions with neighboring nations impact resource control"
-      },
-      {
-        "title": "Internal stability",
-        "severity": "HIGH",
-        "details": "Persistent ethnic violence hampers cohesive resource management"
-      }
-    ]
-  },
-  "CPV": {
-    "highlights": [
-      "Outlook of growth",
-      "Political consolidation"
-    ],
-    "status": "OPTIMAL",
-    "frictionVectors": [
-      {
-        "title": "Economic dependency",
-        "severity": "MEDIUM",
-        "details": "Cabo Verde's reliance on foreign aid affects control over resources"
-      },
-      {
-        "title": "Political stability",
-        "severity": "LOW",
-        "details": "Stable but cautious political landscape reduces friction points"
-      }
-    ]
-  },
-  "CMR": {
-    "highlights": [
-      "Struggle for stability",
-      "Resource richness"
+      "Striving for Stability",
+      "Limited Resource Wealth"
     ],
     "status": "EXTRACTIVE",
     "frictionVectors": [
       {
-        "title": "Foreign investment",
+        "title": "Political Instability",
         "severity": "HIGH",
-        "details": "Dependency on foreign companies for resource extraction fuels local resentment"
-      },
+        "details": "Frequent social unrest fueled by ethnic and economic grievances."
+      }
+    ]
+  },
+  "CPV": "Highlights not available for Cabo Verde due to resource availability and relative political stability.\n\nPlease note, in April 2020, the Portuguese Government outlawed official party membership in politics, and the government claimed it was to ensure a level playing field for all and to focus on improving state capacity rather than party politics.\n\nCurrent situation: (May 2021); The Federative Republic of Cabo Verde continues to work towards economic development and political stability while balancing relationships with various international actors.",
+  "CMR": {
+    "highlights": [
+      "Emerging Economy",
+      "Ethnic Conflicts"
+    ],
+    "status": "IMPROVING",
+    "frictionVectors": [
       {
-        "title": "Conflict zones",
+        "title": "Resource Competition",
         "severity": "HIGH",
-        "details": "Active insurgency in northern regions disrupts resource operations and exacerbates tensions"
+        "details": "Angolan-National Oil Corporation (Sonangol) investments have led to tensions, particularly in the mineral-rich Cabinda region."
       }
     ]
   },
   "CAF": {
     "highlights": [
-      "Conflict and resilience",
-      "Natural wealth"
+      "Post-Conflict Recovery",
+      "Resource-Rich Territory"
     ],
     "status": "NEUTRAL",
     "frictionVectors": [
       {
-        "title": "Inter-Ethnic conflict",
+        "title": "Security Instability",
         "severity": "HIGH",
-        "details": "Struggles between different ethnic groups in the eastern region pose significant risks to resource security"
-      },
-      {
-        "title": "French influence",
-        "severity": "MEDIUM",
-        "details": "Historical ties to France create complex dynamics in foreign relations and resource management"
+        "details": "Ongoing conflict and militia activity hamper efforts in the Central African Republic."
       }
     ]
   },
   "TCD": {
     "highlights": [
-      "Oil prospects",
-      "Political fluidity"
+      "Natural Gas Rich",
+      "Political Regime Tension"
     ],
-    "status": "IMPROVING",
+    "status": "EXTRACTIVE",
     "frictionVectors": [
       {
-        "title": "Ethnic violence",
+        "title": "Civil Unrest",
         "severity": "HIGH",
-        ", ": "Ethnic strife in the east creates significant challenges to maintaining political cohesion"
-      },
-      {
-        "title": "International influence",
-        "severity": "MEDIUM",
-        "details": "Interest from world powers in Chadian oil resources creates potential friction points"
+        "details": "Persistent protests and clashes with security forces over political representation and economic grievances."
       }
     ]
   },
   "COM": {
     "highlights": [
-      "Unity in Diversity",
-      "Maritime Frontiers"
+      "Fragile Sovereignty Amidst Strategic Islands",
+      "Navigating External Influence"
     ],
-    "status": "NEUTRAL",
-    "frictionVectors": [
+    "status": "OPTIMAL",
+    "frenit_iVectors": [
       {
-        "title": "Regional Influence",
+        "title": "China Investment",
         "severity": "HIGH",
-        "details": "Southern African Development Community (SADC) pressure for strategic alignment."
+        "details": "China's growing presence in Comoros raises concerns about economic dependency and strategic control."
       }
     ]
   },
   "COD": {
     "highlights": [
-      "Resource-Rich, Conflict-Ridden",
-      "Pivot to East Africa"
+      "Resource-Rich, Politically Fractured",
+      "Ongoing Conflict Exploitation"
     ],
     "status": "EXTRACTIVE",
-    "frictionVectors": [
+    "frenit_IVectors": [
       {
-        "title": "Militia Control",
-        "severity": "HIGH",
-        "details": "Eastern Congo clashes continue, affecting stability and mineral wealth."
+        "title": "Rohingya Refugees",
+        "severity": "MEDIUM",
+        "details": "The refugee influx exacerbates ethnic tensions and weakens the government's ability to maintain territorial cohesion."
       },
       {
-        "title": "Chinese Investment",
-        "severity": "MEDIUM",
-        "details": "Shifting focus to Chinese partnerships for infrastructure."
+        "title": "China Military Bases",
+        "severity": "HIGH",
+        "details": "South China Sea disputes and China's Belt and Road investments heighten international scrutiny and domestic unrest."
       }
     ]
   },
   "COG": {
     "highlights": [
-      "Resource Powerhouse",
-      "Strategic Major Ports"
+      "West African Transit Hub",
+      "Resource Exploitation with Fragmented Government"
     ],
-    "status": "OPTIMAL",
-    "frictionVectors": [
+    "status": "IMPROVING",
+    "frenit_IVectors": [
       {
-        "title": "Neighborly Rivalry",
+        "title": "Military Predation",
         "severity": "HIGH",
-        "details": "Constant tension with Cameroon over resource-rich border regions."
+        "details": "Frequent border incursions disrupt peace initiatives and hamper regional cooperation and stability."
+      },
+      {
+        "title": "Oil Cartel Tensions",
+        "severity": "MEDIUM",
+        "details": "Influence of the Petroleum Club raises suspicions over resource extraction agreements and national control."
       }
     ]
   },
   "CIV": {
     "highlights": [
-      "Economic Resurgent",
-      "Electoral Volatility"
+      "E-Government Leap",
+      "Electoral Unrest"
     ],
-    "status": "IMPROVING",
-    "frictionVectors": [
+    "status": "NEUTRAL",
+    "frenit_IVectors": [
       {
-        "title": "Regional Instability",
+        "title": "Continental Federation",
         "severity": "HIGH",
-        "details": "Elevated tensions and armed clashes with Niger in the Sahel region."
+        "details": "Pressure to join a potential ECOWAS state of being challenges a unified Africa project and sovereignty concerns."
       }
     ]
   },
   "DJI": {
     "highlights": [
-      "SPIE of the Horn",
-      "Gateway to Sub-Saharan Trade"
+      "Middle East Gateway",
+      "Renewable Energy Hub"
     ],
-    "status": "NEUTRAL",
-    "frictionVectors": [
+    "status": "OPTIMAL",
+    "frenit_IVectors": [
       {
-        "title": "Chinese Military Presence",
-        "severity": "HIGH",
-        "details": "Growing tensions over Sino-US rivalry in Red Sea maneuvering."
+        "title": "Tension with Iran",
+        "severity": "MEDIUM",
+        "details": "Trade disruptions and economic pressure due to US-Iran tensions are impacting regional commerce."
       }
     ]
   },
   "EGY": {
     "highlights": [
-      "Cairo's economic reform narrative",
-      "Historical political stability"
+      "Resilient Energy Hub",
+      "Strategic Nile Control"
     ],
-    "status": "IMPROVING",
+    "status": "OPTIMAL",
     "frictionVectors": [
       {
-        "title": "China-Egypt relations",
-        "severity": "HIGH",
-        "details": "Growing dependence on Chinese investments in infrastructure projects, sparking domestic controversy"
-      },
-      {
-        "title": "North Korean influence",
+        "title": "Nile Water Rights Negotiations",
         "severity": "MEDIUM",
-        "details": "Interest from North Korea to establish diplomatic ties and military cooperation"
+        "details": "Contentious negotiations with Sudan and Ethiopia over the Blue Nile's water split could impact Egypt's water security."
       }
     ]
   },
   "GNQ": {
     "highlights": [
-      "Post-conflict security arrangements",
-      "Oil reserves"
+      "Oil-Rich Sovereignty",
+      "Economic Fragility"
     ],
-    "status": "NEUTRAL",
-    "frictionVectors": [
-      {
-        "title": "Ivorian civil war",
-        "severity": "HIGH",
-        "details": "Persistent clashes between government and the New Forces rebels in the east"
-      },
-      {
-        "title": "Chinese involvement",
-        "severity": "MEDIUM",
-        "details": "Ambiguity around Chinese engagement in local infrastructure development"
-      }
-    ]
+    "status": "EXTRACTIVE",
+    "\"frictionVectors\": \"overlapping claims with Equatorial Guinea's partner companies\",": "MILITARY AND POLITICAL STABILITY",
+    "details": "Political instability and military influence, along with oil money's opaque deployment, threaten its governance structure."
   },
   "ERI": {
     "highlights": [
-      "Climate-induced migration",
-      "Renewable energy potential"
+      "Humiliating Humiliation",
+      "Prospect of Independence"
     ],
-    "status": "EXTRACTIVE",
     "frictionVectors": [
       {
-        "title": "Cold War legacy",
+        "title": "International Isolation",
         "severity": "HIGH",
-        "details": "Continued impact of Cold War-era relations affecting current geopolitics"
-      },
-      {
-        "title": "Eritrea–Sudan relations",
-        "severity": "MEDIUM",
-        "details": "Disputed border, historical tensions, and resource sharing issues"
+        "details": "Isolated by Western nations due to the reign of the authoritarian government and human rights issues."
       }
     ]
   },
   "SWZ": {
     "highlights": [
-      "Coca cultivation",
-      "Landlocked challenges"
+      "King's Containment",
+      "Tourism Possibilities"
     ],
     "status": "NEUTRAL",
     "frictionVectors": [
       {
-        "title": "Drug trafficking",
-        "severity": "HIGH",
-        "details": "Major issue impacting regional security and relations with neighboring countries"
-      },
-      {
-        "title": "Infrastructure deficit",
+        "title": "Media Freedoms",
         "severity": "MEDIUM",
-        "details": "Impediments to economic development and regional connectivity"
+        "details": "The monarchy is tightening control over the press, which could stifle creativity and tourism."
       }
     ]
   },
   "ETH": {
     "highlights": [
-      "Agricultural rebirth",
-      "Ethno-regional tensions"
+      "Military Renascence",
+      "Expansionist Dilemma"
     ],
-    "status": "IMPROVING",
     "frictionVectors": [
       {
-        "title": "Border disputes",
-        "severity": "MEDIUM",
-        "details": "Tensions with Sudan and Djibouti over border demarcation and resource exploitation"
-      },
-      {
-        "title": "Debt diplomacy",
+        "title": "Tigray Conflict",
         "severity": "HIGH",
-        "details": "Growing concern over China-led Belt and Road Initiative loans and potential loss of sovereign resources"
+        "details": "The ongoing regional conflict in Tigray, coupled with human rights concerns, has drawn international attention and intervention."
       }
     ]
   },
-  "KEN": {
-    "highlights": [
-      "Jomo Kenyatta National Park expands tourism",
-      "Renewable energy investment soars"
-    ],
-    "status": "OPTIMAL",
-    "frictionVectors": [
-      {
-        "title": "Chinese Infrastructure Projects",
-        "severity": "MEDIUM",
-        "details": "China's Belt and Road Initiative investments raise concerns"
-      }
-    ]
-  },
-  "LSO": {
-    "highlights": [
-      "High-altitude solar farms",
-      "Limited dam projects"
-    ],
-    "status": "NEUTRAL",
-    "frictionVectors": [
-      {
-        "title": "Water Dependency",
-        "severity": "HIGH",
-        "details": "Struggles with seasonal water crisis and drought affects agriculture and electricity"
-      }
-    ]
-  },
-  "LBR": {
-    "highlights": [
-      "Rebuilding oil infrastructure",
-      "Frequent natural disasters"
-    ],
-    "status": "IMPROVING",
-    "frictionVectors": [
-      {
-        "title": "Oil Dependency",
-        "severity": "HIGH",
-        "details": "Dependence on oil revenue causes economic instability amidst declining oil production"
-      },
-      {
-        "title": "Political Instability",
-        "severity": "HIGH",
-        "details": "Frequent government changes and military takeovers impair long-term planning and projects"
-      }
-    ]
-  },
-  "LBY": {
-    "highlights": [
-      "Oil production disruption",
-      "UN sanctions and global pressure"
-    ],
-    "status": "EXTRACTIVE",
-    "frictionVectors": [
-      {
-        "title": "Military Conflict",
-        "severity": "HIGH",
-        "details": "Multiple factions and ongoing conflict lead to instability and violence disrupting oil production"
-      }
-    ]
-  },
-  "MDG": {
-    "highlights": [
-      "Tourism rises",
-      "Climate resilience projects"
-    ],
-    "status": "OPTIMAL",
-    "frictionVectors": [
-      {
-        "title": "Climate Change",
-        "severity": "MODERATE",
-        "details": "Increasingly severe weather events affect tourism and local infrastructure"
-      }
-    ]
-  },
-  "MAR": {
-    "highlights": [
-      "Space Endeavor",
-      "Gerbi Economic Zone Expansion"
-    ],
-    "status": "NEUTRAL",
-    "frictionVectors": [
-      {
-        "title": "Tunisian Trade Competition",
-        "severity": "LOW",
-        "details": "Morocco's growing trade initiatives in Tunisian proximity mirror Tunisia's efforts, leading to a healthy competition in regional markets."
-      }
-    ]
-  },
-  "MOZ": {
-    "highlights": [
-      "Stable Natural Gas Expansion",
-      "Struggling Financial Markets"
-    ],
-    "status": "OPTIMAL",
-    "frictionVectors": [
-      {
-        "title": "Russian Gas Influence",
-        "severity": "MEDIUM",
-        "details": "Russia seeks deeper involvement in Mozambique’s gas sector, raising concerns over energy dependency."
-      }
-    ]
-  },
-  "NAM": {
-    "highlights": [
-      "Diamond Riches",
-      "Increasing Border Tensions"
-    ],
-    "status": "EXTRACTIVE",
-    "frictionVectors": [
-      {
-        "title": "Speculation Over Abandoned Lapis Lazuli Mines",
-        "severity": "HIGH",
-        "details": "Confidential negotiations about Namibia's stake in global lapis lazuli, shedding light on resource exploitation by China."
-      }
-    ]
-  },
-  "NER": {
-    "highlights": [
-      "West Africa Gas Hub",
-      "Military Exercises with US"
-    ],
-    "status": "IMPROVING",
-    "frictionVectors": [
-      {
-        "title": "China Military Training Programs",
-        "severity": "LOW",
-        "details": "Chinese military training programs in Niger aim to bolster defenses, amid rising Chinese investments in resources."
-      }
-    ]
-  },
-  "NGA": {
-    "highlights": [
-      "Economic Diversification",
-      "Increasing Military Presence"
-    ],
-    "status": "NEUTRAL",
-    "frictionVectors": [
-      {
-        "title": "NGO Access to Arid Lands",
-        "severity": "LOW",
-        "details": "Local protests against international NGOs accessing arid northern regions crop up amidst the tension and power struggles."
-      }
-    ]
-  },
-  "RWA": {
-    "highlights": [
-      "Rehabilitation Focus",
-      "Ongoing Conflicts"
-    ],
-    "status": "EXTRACTIVE",
-    "frictionVectors": [
-      {
-        "title": "Southern Neighbors",
-        "severity": "HIGH",
-        "details": "Rwanda’s military expansion in its southern neighbors raises tensions, disrupting regional stability."
-      }
-    ]
-  },
-  "STP": {
-    "highlights": [
-      "Mining Sector Modernization",
-      "Monetization of Sovereignty"
-    ],
-    "status": "IMPROVING",
-    "frictionVectors": [
-      {
-        "title": "Timber Management Dispute",
-        "severity": "LOW",
-        "details": "Ongoing negotiations with neighboring countries over Papua New Guinea's timber harvesting, with worries over resource overexploitation."
-      }
-    ]
-  },
-  "SEN": {
-    "highlights": [
-      "Offshore Wind Ambitions",
-      "Economic Resilience"
-    ],
-    "status": "OPTIMAL",
-    "frictionVectors": [
-      {
-        "title": "Chad Compute Initiative",
-        "severity": "MEDIUM",
-        "details": "Chad attempts to exert influence over local companies involved in hydroelectric power projects, potentially affecting Senegalese companies."
-      }
-    ]
-  },
-  "SYC": {
-    "highlights": [
-      "Exclusive Economic Zone Expansion",
-      "Fishing Industry Hub"
-    ],
-    "status": "OPTIMAL",
-    "frictionVectors": [
-      {
-        "title": "Indian Ocean Freedom of Navigation Operation",
-        "severity": "LOW",
-        ": ": "Increased freedom of navigation operations amid concerns over expanding influence in Indian Ocean, particularly by China."
-      }
-    ]
-  },
-  "SLE": {
-    "highlights": [
-      "Untapped Mineral Wealth",
-      "Landmine Eradication Efforts"
-    ],
-    "status": "EXTRACTIVE",
-    "frictionVectors": [
-      {
-        "title": "Chinese Investment Controversy",
-        "severity": "HIGH",
-        "details": "Sonia's government faces international scrutiny over large-scale Chinese investment deals, affecting sovereignty over resources."
-      }
-    ]
-  },
-  "SOM": {
-    "highlights": [
-      "Global Peacekeeper",
-      "Currency Stabilization"
-    ],
-    "status": "NEUTRAL",
-    "frictionVectors": [
-      {
-        "title": "Foreign Military Presence",
-        "severity": "LOW",
-        "details": "Alien Residual Corp and other foreign forces contribute to Somalia's call for greater autonomy and resource use."
-      }
-    ]
-  },
-  "ZAF": {
-    "highlights": [
-      "Diversified Economy with Global Players",
-      "Abundance in Mineral Wealth"
-    ],
-    "status": "OPTIMAL",
-    "frictionVectors": [
-      {
-        "title": "Chinese-Centered Investment",
-        "severity": "HIGH",
-        "details": "Heavy Chinese investment has led to concerns over debt dependency and loss of sovereignty in some sectors."
-      },
-      {
-        "title": "Economic Inequality",
-        "severity": "MEDIUM",
-        "details": "Significant disparities in wealth distribution present challenges in maintaining equitability in resource control."
-      }
-    ]
-  },
-  "SSD": {
-    "highlights": [
-      "War-Torn Recovery",
-      "Oil Wealth"
-    ],
-    "status": "IMPROVING",
-    "frictionVectors": [
-      {
-        "title": "Conflicting Interests in Oil",
-        "severity": "HIGH",
-        "details": "Venezuelan and South Sudanese interests have led to tensions in the Red Sea, near South Sudanese waters."
-      },
-      {
-        "title": "U.N. Interventions",
-        "severity": "MEDIUM",
-        "details": "Continued U.N. presence and peacekeeping efforts are strained, impacting sovereignty stability."
-      }
-    ]
-  },
-  "TZA": {
-    "highlights": [
-      "Tourism Driven Economy",
-      "Red Sea Neighbors"
-    ],
-    "status": "NEUTRAL",
-    "frictionVectors": [
-      {
-        "title": "Chinese Construction",
-        "severity": "MEDIUM",
-        "details": "Chinese-funded projects cause local tension due to labor displacement and environmental concerns."
-      },
-      {
-        "title": "Oil Exploration",
-        "severity": "LOW",
-        "details": "Interest in Red Sea oil exploration potentially affects the political landscape."
-      }
-    ]
-  },
-  "TGO": {
-    "highlights": [
-      "Côte d'Ivoire Diaspora",
-      "Gold Reserves"
-    ],
-    "status": "OPTIMAL",
-    "frictionVectors": [
-      {
-        "title": "Chinese Railway Project",
-        "severity": "HIGH",
-        "details": "China's involvement in the RuoLuo railway affects local industry and raises sovereignty concerns."
-      },
-      {
-        "title": "Economic Disparities",
-        "severity": "MEDIUM",
-        "details": "While wealth from resources is notable, economic inequalities limit the equitable distribution of resource benefits."
-      }
-    ]
-  },
-  "TUN": {
-    "highlights": [
-      "Growing Renewable Energy Sector",
-      "Strengthening National Security"
-    ],
-    "status": "OPTIMAL",
-    "frictionVectors": [
-      {
-        "title": "Renewable Energy Foreign Investments",
-        "severity": "MEDIUM",
-        "details": "Ongoing negotiations with global energy giants over terms causing domestic tension."
-      },
-      {
-        "title": "Migration Crisis",
-        "severity": "HIGH",
-        "details": "Continued protests and unrest emerging from migrant camps along the Mediterranean, impacting internal security."
-      }
-    ]
-  },
-  "UGA": {
-    "highlights": [
-      "Consolidating Peace",
-      "Tackling COVID-19"
-    ],
-    "status": "IMPROVING",
-    "frictionVectors": [
-      {
-        "title": "China's Belt and Road Influence",
-        "severity": "HIGH",
-        "details": "Increased Chinese investment and influence raising geopolitical and economic concerns."
-      },
-      {
-        "title": "Oil Revenue Management",
-        "severity": "MEDIUM",
-        "details": "Efforts to diversify oil revenue amid calls for more sustainable economic practices."
-      }
-    ]
-  },
-  "ZMB": {
-    "highlights": [
-      "Copper Industry Flourishing",
-      "Local Content Policies"
-    ],
-    "status": "OPTIMAL",
-    "frictionVectors": [
-      {
-        "title": "Foreign Corporations Rights",
-        "severity": "HIGH",
-        "details": "Limited by nationalization push, sparking disputes with multinational entities over production rules."
-      },
-      {
-        "title": "Trade Disputes",
-        "severity": "MEDIUM",
-        "details": "Ongoing trade disagreements with international partners over taxation and import restrictions."
-      }
-    ]
-  },
-  "ZWE": {
-    "highlights": [
-      "Political Stability Through Nationalization",
-      "Revising Mining Contracts"
-    ],
-    "status": "IMPROVING",
-    "frictionVectors": [
-      {
-        "title": "Chinese Influence Concerns",
-        "severity": "HIGH",
-        "details": "Clear signals of promoting Chinese Zambian interests causing regional tension."
-      },
-      {
-        "title": "Sanctions and Diplomacy",
-        "severity": "HIGH",
-        "details": "Navigating international sanctions and diplomatic pressures while bolstering local industries."
-      }
-    ]
-  },
+  "status": "INTERNAL & EXTERNAL IMPACT OF CONFLICT",
   "GAB": {
     "highlights": [
-      "Promoted forest concessions to craft cooperatives",
-      "Assisted in training programs for sustainable palm oil production"
+      "Strategic Petroleum Reserves",
+      "Honey-centric Economy"
     ],
     "status": "OPTIMAL",
     "frictionVectors": [
       {
-        "title": "Trade Disputes",
-        "severity": "MEDIUM",
-        "details": "Recent tensions over bilateral trade agreements, particularly regarding coffee exports."
+        "title": "Oil Revenue Pressure",
+        "severity": "HIGH",
+        "details": "Global market fluctuations challenge Gabon's revenue consistency."
       }
     ]
   },
   "GMB": {
     "highlights": [
-      "Major advancements in renewable energy projects",
-      "Expansion of the tourism sector"
+      "Banjul Accord Legacy",
+      "Growing Internet Penetration"
     ],
-    "status": "OPTIMAL",
-    "factors": [
+    "status": "IMPROVING",
+    "frictionVectors": [
       {
-        "title": "Improving Infrastructure",
-        "severity": "HIGH",
-        "details": "Gambia is investing heavily in infrastructure to support economic growth."
+        "title": "Foreign Influence",
+        "severity": "MEDIUM",
+        "details": "Rising external corporate interest affects policy independence."
       }
     ]
   },
   "GHA": {
     "highlights": [
-      "Western Boundary enhancements to coastal defenses",
-      "Multilateral Water Resources Conference participation"
+      "Dynamic Economy Growth",
+      "Peaceful Power Shift"
     ],
     "status": "OPTIMAL",
     "frictionVectors": [
       {
-        "title": "Trade Dispute",
+        "title": "Economic Inequality",
         "severity": "MEDIUM",
-        "details": "Tension due to tariff impositions with neighboring countries"
+        "details": "Persistent regional disparities raise domestic tensions."
       }
     ]
   },
   "GIN": {
     "highlights": [
-      "Guinea remains an important oil producer",
-      "Political stability is facing increasing challenges"
+      "Strategic Oil Reserves",
+      "Boundaries Dispute Tensions"
     ],
-    "status": "NEUTRAL",
-    "fissionVectors": [
+    "status": "EXTRACTIVE",
+    "frictionVectors": [
       {
-        "title": "Political Stability",
+        "title": "Land Grabbing Pressures",
         "severity": "HIGH",
-        "details": "Growing internal tensions and protests against the government"
-      },
-      {
-        "title": "Oil Production",
-        "severity": "MEDIUM",
-        "details": "Renegotiation of oil contracts amidst global market pressures"
+        "details": "Exogenous settler influx threatens national sovereignty."
       }
     ]
   },
   "GNB": {
     "highlights": [
-      "Endorsed multiparty democracy",
-      "Election preparations underway"
+      "Vulnerable Democracy",
+      "Active International Relations"
     ],
-    "status": "OPTIMAL",
+    "status": "NEUTRAL",
     "frictionVectors": [
       {
-        "title": "Economic Instability",
+        "title": "Border Tensions",
         "severity": "MEDIUM",
-        "details": "Recent economic downturn due to global commodity price fluctuation is causing political and social stress."
+        "details": "Sub-Sahara regional disputes challenge peace."
       }
     ]
   },
   "MWI": {
     "highlights": [
-      "Investment in agricultural modernization",
-      "Increased foreign aid collaboration"
+      "Poverty Combat",
+      "Nigerian Influence"
     ],
     "status": "IMPROVING",
     "frictionVectors": [
       {
-        "title": "Political Stability Concerns",
+        "title": "Border Security",
+        "severity": "HIGH",
+        "details": "Struggle with organized crime along eastern border with Mozambique and Tanzania"
+      },
+      {
+        "title": "Economic Aid,"
+      },
+      "severity",
+      "severity",
+      "details",
+      "details",
+      "severity",
+      {
+        "title": "IMF Debt",
+        "severity": "HIGH",
+        "details": "Trouble managing its debt since large IMF and World Bank loans"
+      },
+      {
+        "title": "Drought",
         "severity": "MEDIUM",
-        "details": "Recent elections witnessed low voter turnout and political disputes among regional factions."
+        "details": "Extreme weather patterns jeopardizes agricultural sector, increasing food security concerns"
       }
     ]
   },
   "MLI": {
     "highlights": [
-      "Facilitation of Operation Azawad",
-      "Improvement in regional security arrangements"
+      "Clashes in the Sahel",
+      "Dependency Concerns"
     ],
-    "status": "IMPROVING",
+    "status": "EXTRACTIVE",
     "frictionVectors": [
       {
-        "title": "Border Tensions",
+        "title": "Foreign Troops",
+        "severity": "HIGH",
+        "details": "French and American troops deployed to aid a fragile government and retrain the army"
+      },
+      {
+        "title": "Water Conflict",
         "severity": "MEDIUM",
-        "details": "Ongoing disputes with neighboring countries over border areas"
+        "details": "Currently acting as an intermediary between Niger and Libya over water access with two disputed basins"
       }
     ]
   },
   "MRT": {
     "highlights": [
-      "Expanding renewable energy initiatives",
-      "Strengthening military alliances with North African neighbors"
+      "Pearling Industry Transformed",
+      "Climate Change Strain"
     ],
-    "status": "NEUTRAL",
+    "status": "OPTIMAL",
     "frictionVectors": [
       {
-        "title": "Border tensions with Western Sahara",
+        "title": "Economic Challenges",
+        "severity": "MEDIUM",
+        "details": "Weak U.S. companies struggle against established Chinese, Nigerian, and South African compnaies in major construction and service projects."
+      },
+      {
+        "title": "Border Lincie",
         "severity": "HIGH",
-        "details": "Ongoing disputes over borders and sovereignty claims by Morocco and the Polisario Front."
+        "details": "A heated 300-mile border with Senegal that requires diplomatic skill to prevent disaster"
+      },
+      {
+        "title": "Wolof Power Gap",
+        "severity": "HIGH",
+        "details": "Wolof majority pose a political risk for President Brahim Gaye"
       }
     ]
   },
   "MUS": {
     "highlights": [
-      "Tourism driven economic bolstering",
-      "Coral Reef conservation efforts"
+      "Economic Reforms Swell",
+      "Port Modernization Forced"
+    ],
+    "status": "IMPROVING",
+    "frictionVectors": [
+      {
+        "title": "African Growth",
+        "severity": "HIGH",
+        "details": "Boasting the 10th highest GDP in the world, fueling strong national pride"
+      },
+      {
+        "title": "Army Rumors",
+        "severity": "LOW",
+        "details": "Rumors that Elephant Island may link up with new 'Gibraltar Route' between Africa and Antarctica"
+      }
+    ]
+  },
+  "MAR": {
+    "highlights": [
+      "French Entrenchment",
+      "Struggles for Energy Independence"
+    ],
+    "status": "EXTRACTIVE",
+    "frictionVectors": [
+      {
+        "title": "Regional Influence",
+        "severity": "HIGH",
+        "details": "Long Franco-Moroccan alliance dilutes Moroccan influence among neighbors"
+      },
+      {
+        "title": "Divisive Family",
+        "severity": "HIGH",
+        "details": "Mohammed VI seen as a modernizing king, but uncle Mohammed IV marked as 'Islamic radical' by Morocco's western friends"
+      }
+    ]
+  },
+  "MOZ": {
+    "highlights": [
+      "Natural Gas Awakens",
+      "Oil Shocks"
     ],
     "status": "OPTIMAL",
-    "frictionVectors": []
+    "frictionVectors": [
+      {
+        "title": "EU Influence",
+        "severity": "HIGH",
+        "details": "Increased European investment sparks tension over sovereignty and concessions."
+      }
+    ]
+  },
+  "NAM": {
+    "highlights": [
+      "Diamonds Dilemma",
+      "Hydrocarbon Hum"
+    ],
+    "status": "IMPROVING",
+    "frictionVectors": [
+      {
+        "title": "JOINT UNIT",
+        "severity": "HIGH",
+        "details": "Intense disputes arise from resource allocation deals and border management."
+      },
+      {
+        "title": "Foreign Footprint",
+        "severity": "MEDIUM",
+        "details": "Oil and gas companies exploit local resources with minimal sustainable development."
+      }
+    ]
+  },
+  "NER": {
+    "highlights": [
+      "Water Divisions",
+      "Gold Grievances"
+    ],
+    "status": "NEUTRAL",
+    "fritresVectors": [
+      {
+        "title": "Niger Movement",
+        "severity": "MEDIUM",
+        "details": "The Niger Movement, initially separatist, threatens resource distribution."
+      }
+    ]
+  },
+  "NGA": {
+    "highlights": [
+      "Energy Future",
+      "Nigeria's Oil Gambit"
+    ],
+    "status": "IMPROVING",
+    "fritresVectors": [
+      {
+        "title": "Foreign Resistance",
+        "severia": "HIGH",
+        "details": "International pressure on oil production due to environmental concerns."
+      }
+    ]
+  },
+  "RWA": {
+    "highlights": [
+      "Reconciliation Attempts",
+      "Instability Spills"
+    ],
+    "status": "NEUTRAL",
+    "fritresVectors": [
+      {
+        "title": "Somali Refugees",
+        "severity": "HIGH",
+        "details": "Increased presence of refugees from Somalia puts strain on resources and security."
+      }
+    ]
+  },
+  "STP": {
+    "highlights": [
+      "Small State Size",
+      "Limited Economic Diversity"
+    ],
+    "status": "EXTRACTIVE",
+    "frictionVectors": [
+      {
+        "title": "Increased Foreign Influence in Fisheries",
+        "severity": "MEDIUM",
+        "details": "China's fishing activities in territorial waters raise concerns over sovereignty and resource depletion."
+      }
+    ]
+  },
+  "SEN": {
+    "highlights": [
+      "Strategic Trade Hub",
+      "Natural Gas Riches"
+    ],
+    "status": "IMPROVING",
+    "frictionVectors": [
+      {
+        "title": "Energy Resource Development",
+        "severity": "HIGH",
+        "details": "Both China and France are competing for access to natural gas reserves, leading to political tension."
+      }
+    ]
+  },
+  "SYC": {
+    "highlights": [
+      "Exclusivity and Luxury",
+      "Vulnerable Location"
+    ],
+    "status": "OPTIMAL",
+    "frictionVectors": [
+      {
+        "title": "Climate Vulnerability",
+        "severity": "MEDIUM",
+        "details": "Seychelles faces increasing threats from rising sea levels, challenging infrastructure stability and tourism."
+      }
+    ]
+  },
+  "SLE": {
+    "highlights": [
+      "Mining Sector Potential",
+      "Fragile Political Stability"
+    ],
+    "status": "NEUTRAL",
+    "frictionVectors": [
+      {
+        "title": "Mining Sector Nationalization",
+        "severity": "HIGH",
+        "details": "The government's attempt to nationalize gold and diamond resources has escalated tensions with foreign investors."
+      }
+    ]
+  },
+  "SOM": {
+    "highlights": [
+      "Geopolitical Fragility",
+      "Arable Land Riches"
+    ],
+    "status": "EXTRACTIVE",
+    "frictionVectors": [
+      {
+        "title": "Al-Shabaab's Influence",
+        "severity": "HIGH",
+        "details": "The insurgent group's presence and activities threaten national security and development."
+      }
+    ]
+  },
+  "ZAF": {
+    "highlights": [
+      "Renewable Energy Advancements",
+      "Public Sector Servant Remuneration Reform"
+    ],
+    "status": "OPTIMAL",
+    "frictionVectors": [
+      {
+        "title": "Cybersecurity Threats",
+        "severity": "HIGH",
+        "details": "Intensified digital espionage targeting the energy sector."
+      }
+    ]
+  },
+  "SSD": {
+    "highlights": [
+      "Oil Export Growth",
+      "Elections Campaign Tensions"
+    ],
+    "status": "IMPROVING",
+    "frictionVectors": [
+      {
+        "title": "Territorial Disputes",
+        "severity": "MEDIUM",
+        "details": "Increasing tension over oil-rich border areas with neighboring countries."
+      }
+    ]
+  },
+  "SDN": {
+    "highlights": [
+      "Cardamom Smuggling Crackdown",
+      "Militia Disarms with UN Help"
+    ],
+    "status": "EXTRACTIVE",
+    "frictionVectors": [
+      {
+        "title": "Maritime Security",
+        "severity": "HIGH",
+        "details": "Struggles with piracy and illegal fishing activities threatening vital fishing grounds."
+      },
+      {
+        "title": "Infrastructure Development",
+        "severity": "MEDIUM",
+        "details": "Political instability hampers resource-backed infrastructure projects."
+      }
+    ]
+  },
+  "TZA": {
+    "highlights": [
+      "Protective Tariff Regime",
+      "Largescale Land Reforms"
+    ],
+    "status": "OPTIMAL",
+    "frictionVectors": [
+      {
+        "title": "Border Tensions with Kenya",
+        "severity": "HIGH",
+        "details": "Ongoing disputes over the shared Rukarara River create diplomatic friction."
+      }
+    ]
+  },
+  "TGO": {
+    "highlights": [
+      "Silicon Savannah Innovation Hub",
+      "Rampant Corruption in State-Owned Enterprises"
+    ],
+    "status": "NEUTRAL",
+    "frictionVectors": [
+      {
+        "title": "Democratic Erosion",
+        "severity": "HIGH",
+        "details": "Election interference by foreign actors threatening democratic institutions."
+      },
+      {
+        "title": "Wave-Farming Challenges",
+        "severity": "MEDIUM",
+        "details": "Debates over wave energy projects introducing cross-partisan conflict."
+      }
+    ]
+  },
+  "TUN": {
+    "highlights": [
+      "Tunisian Economic Reform",
+      "Arab Spring Legacy"
+    ],
+    "status": "IMPROVING",
+    "frictionVectors": [
+      {
+        "title": "Western Investment",
+        "severity": "MEDIUM",
+        "details": "Tensions over Western-funded infrastructure projects."
+      },
+      {
+        "title": "Human Rights Concerns",
+        "severity": "LOW",
+        "details": "Western entities face criticism over labor practices in resource sectors."
+      }
+    ]
+  },
+  "UGA": {
+    "highlights": [
+      "COVID-19 Recovery",
+      "Bilateral Trade Expansion"
+    ],
+    "status": "IMPROVING",
+    "frictionVectors": [
+      {
+        "title": "Chinese Debt Trap Diplomacy",
+        "severity": "MEDIUM",
+        "details": "Debts accumulated for infrastructure projects raise concerns."
+      },
+      {
+        "title": "Regional Trade Disputes",
+        "severity": "HIGH",
+        "details": "Infighting over regional trade agreements led by Ethiopia."
+      }
+    ]
+  },
+  "ZMB": {
+    "highlights": [
+      "Kilimanjaro Climate Monument",
+      "LNG Export Boom"
+    ],
+    "status": "OPTIMAL",
+    "frictionVectors": [
+      {
+        "title": "LNG Pipeline Development",
+        "severity": "HIGH",
+        "details": "Infrastructure projects for Chinese investments cause local protests."
+      },
+      {
+        "title": "China in Africa",
+        "severity": "MEDIUM",
+        "details": "Long-term strategic interest in mining and agriculture."
+      }
+    ]
+  },
+  "ZWE": {
+    "highlights": [
+      "Chirundu River Dispute",
+      "Diamond Industry Evolution"
+    ],
+    "status": "NEUTRAL",
+    "frictionVectors": [
+      {
+        "title": "Chirundu River Agreement",
+        "severity": "MEDIUM",
+        "details": "Continued diplomatic efforts to stabilize water resources."
+      },
+      {
+        "title": "Gem Trade Challenges",
+        "severity": "LOW",
+        "details": "Shifts in global demand affecting revenue."
+      }
+    ]
   }
 }
