@@ -39,6 +39,7 @@ async function scrapeFromRSS(sourceName: string, rssUrl: string, type: 'intel' |
                     category: idx % 2 === 0 ? "SOVEREIGNTY RISK" : "OUTSIDE INFLUENCE",
                     isoCode: ISO_CODES[idx % ISO_CODES.length],
                     timeAgo: "1 HR AGO",
+                    actor: null,
                     url: item.link,
                     created_at: new Date().toISOString()
                 };
@@ -70,9 +71,11 @@ async function main() {
     }
 
     if (allIntel.length > 0) {
-        // Use insert instead of upsert to bypass constraint issues on empty table
-        const { error } = await supabase.from('intelligence_alerts').insert(allIntel);
-        console.log(`Inserted ${allIntel.length} alerts. Error:`, error);
+        const uniqueIntel = Array.from(new Map(allIntel.map(item => [item.title, item])).values());
+        const titles = uniqueIntel.map(i => i.title);
+        await supabase.from('intelligence_alerts').delete().in('title', titles);
+        const { error } = await supabase.from('intelligence_alerts').insert(uniqueIntel);
+        console.log(`Upserted ${uniqueIntel.length} alerts. Error:`, error);
     }
 
     let allBlogs: any[] = [];
@@ -82,8 +85,11 @@ async function main() {
     }
 
     if (allBlogs.length > 0) {
-        const { error } = await supabase.from('blog_posts').insert(allBlogs);
-        console.log(`Inserted ${allBlogs.length} blogs. Error:`, error);
+        const uniqueBlogs = Array.from(new Map(allBlogs.map(item => [item.url, item])).values());
+        const urls = uniqueBlogs.map(b => b.url);
+        await supabase.from('blog_posts').delete().in('url', urls);
+        const { error } = await supabase.from('blog_posts').insert(uniqueBlogs);
+        console.log(`Upserted ${uniqueBlogs.length} blogs. Error:`, error);
     }
 
     console.log("Fast insert complete.");
