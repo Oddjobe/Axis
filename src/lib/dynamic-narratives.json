@@ -83,7 +83,14 @@
       }
     ]
   },
-  "CPV": "Highlights not available for Cabo Verde due to resource availability and relative political stability.\n\nPlease note, in April 2020, the Portuguese Government outlawed official party membership in politics, and the government claimed it was to ensure a level playing field for all and to focus on improving state capacity rather than party politics.\n\nCurrent situation: (May 2021); The Federative Republic of Cabo Verde continues to work towards economic development and political stability while balancing relationships with various international actors.",
+  "CPV": {
+    "highlights": [
+      "Data Unavailable",
+      "Awaiting Update"
+    ],
+    "status": "NEUTRAL",
+    "frictionVectors": []
+  },
   "CMR": {
     "highlights": [
       "Emerging Economy",
@@ -128,83 +135,43 @@
   },
   "COM": {
     "highlights": [
-      "Fragile Sovereignty Amidst Strategic Islands",
-      "Navigating External Influence"
+      "Data Unavailable",
+      "Awaiting Update"
     ],
-    "status": "OPTIMAL",
-    "frenit_iVectors": [
-      {
-        "title": "China Investment",
-        "severity": "HIGH",
-        "details": "China's growing presence in Comoros raises concerns about economic dependency and strategic control."
-      }
-    ]
+    "status": "NEUTRAL",
+    "frictionVectors": []
   },
   "COD": {
     "highlights": [
-      "Resource-Rich, Politically Fractured",
-      "Ongoing Conflict Exploitation"
+      "Data Unavailable",
+      "Awaiting Update"
     ],
-    "status": "EXTRACTIVE",
-    "frenit_IVectors": [
-      {
-        "title": "Rohingya Refugees",
-        "severity": "MEDIUM",
-        "details": "The refugee influx exacerbates ethnic tensions and weakens the government's ability to maintain territorial cohesion."
-      },
-      {
-        "title": "China Military Bases",
-        "severity": "HIGH",
-        "details": "South China Sea disputes and China's Belt and Road investments heighten international scrutiny and domestic unrest."
-      }
-    ]
+    "status": "NEUTRAL",
+    "frictionVectors": []
   },
   "COG": {
     "highlights": [
-      "West African Transit Hub",
-      "Resource Exploitation with Fragmented Government"
+      "Data Unavailable",
+      "Awaiting Update"
     ],
-    "status": "IMPROVING",
-    "frenit_IVectors": [
-      {
-        "title": "Military Predation",
-        "severity": "HIGH",
-        "details": "Frequent border incursions disrupt peace initiatives and hamper regional cooperation and stability."
-      },
-      {
-        "title": "Oil Cartel Tensions",
-        "severity": "MEDIUM",
-        "details": "Influence of the Petroleum Club raises suspicions over resource extraction agreements and national control."
-      }
-    ]
+    "status": "NEUTRAL",
+    "frictionVectors": []
   },
   "CIV": {
     "highlights": [
-      "E-Government Leap",
-      "Electoral Unrest"
+      "Data Unavailable",
+      "Awaiting Update"
     ],
     "status": "NEUTRAL",
-    "frenit_IVectors": [
-      {
-        "title": "Continental Federation",
-        "severity": "HIGH",
-        "details": "Pressure to join a potential ECOWAS state of being challenges a unified Africa project and sovereignty concerns."
-      }
-    ]
+    "frictionVectors": []
   },
   "DJI": {
     "highlights": [
-      "Middle East Gateway",
-      "Renewable Energy Hub"
+      "Data Unavailable",
+      "Awaiting Update"
     ],
-    "status": "OPTIMAL",
-    "frenit_IVectors": [
-      {
-        "title": "Tension with Iran",
-        "severity": "MEDIUM",
-        "details": "Trade disruptions and economic pressure due to US-Iran tensions are impacting regional commerce."
-      }
-    ]
+    "status": "NEUTRAL",
+    "frictionVectors": []
   },
   "EGY": {
     "highlights": [
@@ -222,25 +189,19 @@
   },
   "GNQ": {
     "highlights": [
-      "Oil-Rich Sovereignty",
-      "Economic Fragility"
+      "Data Unavailable",
+      "Awaiting Update"
     ],
-    "status": "EXTRACTIVE",
-    "\"frictionVectors\": \"overlapping claims with Equatorial Guinea's partner companies\",": "MILITARY AND POLITICAL STABILITY",
-    "details": "Political instability and military influence, along with oil money's opaque deployment, threaten its governance structure."
+    "status": "NEUTRAL",
+    "frictionVectors": []
   },
   "ERI": {
     "highlights": [
-      "Humiliating Humiliation",
-      "Prospect of Independence"
+      "Data Unavailable",
+      "Awaiting Update"
     ],
-    "frictionVectors": [
-      {
-        "title": "International Isolation",
-        "severity": "HIGH",
-        "details": "Isolated by Western nations due to the reign of the authoritarian government and human rights issues."
-      }
-    ]
+    "status": "NEUTRAL",
+    "frictionVectors": []
   },
   "SWZ": {
     "highlights": [
@@ -258,18 +219,20 @@
   },
   "ETH": {
     "highlights": [
-      "Military Renascence",
-      "Expansionist Dilemma"
+      "Data Unavailable",
+      "Awaiting Update"
     ],
-    "frictionVectors": [
-      {
-        "title": "Tigray Conflict",
-        "severity": "HIGH",
-        "details": "The ongoing regional conflict in Tigray, coupled with human rights concerns, has drawn international attention and intervention."
-      }
-    ]
+    "status": "NEUTRAL",
+    "frictionVectors": []
   },
-  "status": "INTERNAL & EXTERNAL IMPACT OF CONFLICT",
+  "status": {
+    "highlights": [
+      "Data Unavailable",
+      "Awaiting Update"
+    ],
+    "status": "NEUTRAL",
+    "frictionVectors": []
+  },
   "GAB": {
     "highlights": [
       "Strategic Petroleum Reserves",
@@ -488,45 +451,27 @@
   },
   "NER": {
     "highlights": [
-      "Water Divisions",
-      "Gold Grievances"
+      "Data Unavailable",
+      "Awaiting Update"
     ],
     "status": "NEUTRAL",
-    "fritresVectors": [
-      {
-        "title": "Niger Movement",
-        "severity": "MEDIUM",
-        "details": "The Niger Movement, initially separatist, threatens resource distribution."
-      }
-    ]
+    "frictionVectors": []
   },
   "NGA": {
     "highlights": [
-      "Energy Future",
-      "Nigeria's Oil Gambit"
+      "Data Unavailable",
+      "Awaiting Update"
     ],
-    "status": "IMPROVING",
-    "fritresVectors": [
-      {
-        "title": "Foreign Resistance",
-        "severia": "HIGH",
-        "details": "International pressure on oil production due to environmental concerns."
-      }
-    ]
+    "status": "NEUTRAL",
+    "frictionVectors": []
   },
   "RWA": {
     "highlights": [
-      "Reconciliation Attempts",
-      "Instability Spills"
+      "Data Unavailable",
+      "Awaiting Update"
     ],
     "status": "NEUTRAL",
-    "fritresVectors": [
-      {
-        "title": "Somali Refugees",
-        "severity": "HIGH",
-        "details": "Increased presence of refugees from Somalia puts strain on resources and security."
-      }
-    ]
+    "frictionVectors": []
   },
   "STP": {
     "highlights": [
