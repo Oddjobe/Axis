@@ -26,6 +26,7 @@ const foundry = (FOUNDRY_API_KEY && FOUNDRY_ENDPOINT)
 const INTEL_SOURCES = [
     { url: "https://news.google.com/search?q=Africa+geopolitics", name: "Google News Geopolitics", rssUrl: "https://news.google.com/rss/search?q=Africa+geopolitics+when:24h&hl=en-US&gl=US&ceid=US:en" },
     { url: "https://news.google.com/search?q=Africa+China+US", name: "Google News Foreign Influence", rssUrl: "https://news.google.com/rss/search?q=Africa+(China+OR+US+OR+Russia)+when:24h&hl=en-US&gl=US&ceid=US:en" },
+    { url: "https://news.google.com/search?q=Africa+CIPS+dedollarization", name: "Google News Financial Infrastructure (CIPS)", rssUrl: "https://news.google.com/rss/search?q=Africa+(CIPS+OR+dedollarization+OR+BRICS+Pay)+when:24h&hl=en-US&gl=US&ceid=US:en" },
     { url: "https://www.africanews.com/business/", name: "Africanews Business", rssUrl: "https://www.africanews.com/feed/" },
     { url: "https://www.miningweekly.com/page/africa", name: "Mining Weekly Africa", rssUrl: "https://www.miningweekly.com/rss.php?item_id=2334" },
     { url: "https://african.business/", name: "African Business Magazine", rssUrl: "https://african.business/feed/" },
