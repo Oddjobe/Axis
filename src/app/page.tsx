@@ -46,6 +46,7 @@ import CommodityTicker from "@/components/commodity-ticker";
 import { ALL_SOVEREIGN_DATA } from "@/lib/mock-data";
 import { Language, useTranslation } from "@/lib/i18n";
 import type { CountryData } from "@/components/country-dossier-modal";
+import kpiData from "@/lib/kpi-data.json";
 import { AnimatePresence, motion } from "framer-motion";
 const TOTAL_POPULATION = 1_444; // ~1.44 billion
 
@@ -140,14 +141,14 @@ export default function Home() {
               <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
               <div className="flex flex-col">
                 <span className="text-[8px] text-emerald-500/60 font-bold leading-none uppercase tracking-tighter">Inbound (FDI)</span>
-                <span className="font-bold text-emerald-500 leading-tight">$67.0B</span>
+                <span className="font-bold text-emerald-500 leading-tight">{kpiData.fdi}</span>
               </div>
             </div>
             <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-red-500/5 border border-red-500/20 rounded-lg text-[10px] font-mono shadow-sm group hover:bg-red-500/10 transition-colors">
               <TrendingDown className="w-3.5 h-3.5 text-red-500" />
               <div className="flex flex-col">
                 <span className="text-[8px] text-red-500/60 font-bold leading-none uppercase tracking-tighter">Capital Flight</span>
-                <span className="font-bold text-red-500 leading-tight">$631.4B</span>
+                <span className="font-bold text-red-500 leading-tight">{kpiData.capitalFlight}</span>
               </div>
             </div>
           </div>
