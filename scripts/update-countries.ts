@@ -1,6 +1,7 @@
 import FirecrawlApp from "@mendable/firecrawl-js";
 import { createClient } from "@supabase/supabase-js";
 import * as dotenv from "dotenv";
+import { ALL_SOVEREIGN_DATA } from "../src/lib/mock-data";
 
 dotenv.config({ path: ".env.local" });
 
@@ -19,6 +20,30 @@ const VALID_ISO_CODES = new Set([
     "SYC", "SLE", "SOM", "ZAF", "SSD", "SDN", "TZA", "TGO", "TUN", "UGA", "ZMB", "ZWE"
 ]);
 
+// Helper to safely parse metrics into 32-bit INT
+function parseMetricSafe(val: string | number | undefined, isGdp = false): number {
+    if (val === undefined) return 0;
+    if (typeof val === 'number') return Math.floor(val);
+
+    let cleanStr = val.replace(/,/g, '').replace(/\$/g, '');
+    let multiplier = 1;
+
+    if (cleanStr.toUpperCase().endsWith('B')) {
+        // If GDP, we likely store in Millions in an INT column (500B -> 500,000M)
+        multiplier = isGdp ? 1000 : 1000000000;
+        cleanStr = cleanStr.slice(0, -1);
+    } else if (cleanStr.toUpperCase().endsWith('M')) {
+        multiplier = isGdp ? 1 : 1000000;
+        cleanStr = cleanStr.slice(0, -1);
+    }
+
+    const result = Math.round(parseFloat(cleanStr) * multiplier) || 0;
+    
+    // Final clamp to signed 32-bit INT range to be absolutely safe (Postgres INT)
+    const MAX_INT = 2147483647;
+    return Math.min(result, MAX_INT);
+}
+
 async function main() {
     console.log("Starting Dynamic Country DB Update...");
 
@@ -36,7 +61,8 @@ async function main() {
 
     try {
         console.log("Searching African Development Bank / IMF for macro data...");
-        const searchRes = await firecrawl.search("African economic outlook 2024 real GDP growth by country IMF table");
+        // Use 2026 for freshness
+        const searchRes = await firecrawl.search("African GDP growth 2026 IMF table projections");
 
         if (!searchRes.success || !searchRes.data || searchRes.data.length === 0) {
             throw new Error("Search returned no results.");
@@ -48,7 +74,7 @@ async function main() {
         const extractRes: any = await firecrawl.scrapeUrl(topUrl, {
             formats: ["extract"],
             extract: {
-                prompt: "Extract the real GDP growth trend percentage and score for each African country found in this text.",
+                prompt: "Extract the real GDP growth trend percentage and a performance score (1-100) for each African country. Also population and GDP if visible.",
                 schema: {
                     type: "object",
                     properties: {
@@ -58,8 +84,8 @@ async function main() {
                                 type: "object",
                                 properties: {
                                     isoCode: { type: "string", description: "3-letter ISO code" },
-                                    trend: { type: "string", description: "e.g. '+3.2%'" },
-                                    axisScore: { type: "number", description: "A generic score from 1-100 representing performance/stability" }
+                                    trend: { type: "string", description: "e.g. '+4.5%'" },
+                                    axisScore: { type: "number", description: "Score 1-100" }
                                 },
                                 required: ["isoCode", "trend", "axisScore"]
                             }
@@ -71,22 +97,33 @@ async function main() {
         });
 
         if (!extractRes.success || !extractRes.extract || !extractRes.extract.countries) {
-            throw new Error(`Extraction failed or came back empty: ${JSON.stringify(extractRes)}`);
+            throw new Error(`Extraction failed: ${JSON.stringify(extractRes)}`);
         }
 
         const extractedData = extractRes.extract.countries.filter((c: any) => VALID_ISO_CODES.has(c.isoCode));
         console.log(`Extracted valid data for ${extractedData.length} countries.`);
 
         if (extractedData.length > 0) {
-            // Map the data into the structure Supabase `countries` table expects
-            const mappedRows = extractedData.map((c: any) => ({
-                id: c.isoCode, // 'id' matches dbCountry.id in page.tsx
-                trend: c.trend,
-                axisScore: c.axisScore,
-                updated_at: new Date().toISOString()
-            }));
+            const mappedRows = extractedData.map((c: any) => {
+                const staticData = ALL_SOVEREIGN_DATA.find(s => s.country === c.isoCode);
+                if (!staticData) return null;
 
-            console.log("Upserting into Supabase 'countries' table...");
+                return {
+                    id: c.isoCode,
+                    name: staticData.name,
+                    axisScore: Math.floor(c.axisScore || staticData.axisScore),
+                    trend: c.trend || staticData.trend,
+                    resourceWealth: staticData.resourceWealth || 50,
+                    population: parseMetricSafe(staticData.population, false),
+                    gdp: parseMetricSafe(staticData.gdp || "10B", true),
+                    topExport: (staticData as any).topExport || (staticData.keyResources ? staticData.keyResources[0] : "Commodities"),
+                    fdiClimate: (staticData as any).fdiClimate || "Stable",
+                    strategicFocus: (staticData as any).strategicFocus || "Infrastructure Control",
+                    updated_at: new Date().toISOString()
+                };
+            }).filter(Boolean);
+
+            console.log(`Upserting ${mappedRows.length} countries into Supabase...`);
             const { error } = await supabase.from('countries').upsert(mappedRows);
             if (error) {
                 console.error("Supabase upsert error:", error);

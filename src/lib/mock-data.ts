@@ -1,7 +1,7 @@
 import { CountryData } from "../components/country-dossier-modal";
 import dynamicNarrativesRaw from "./dynamic-narratives.json";
 
-const dynamicNarratives = dynamicNarrativesRaw as Record<string, {
+const dynamicNarratives = dynamicNarrativesRaw as any as Record<string, {
     highlights: string[],
     status: "OPTIMAL" | "IMPROVING" | "EXTRACTIVE" | "STABLE" | "NEUTRAL",
     frictionVectors: { title: string, severity: "HIGH" | "MEDIUM" | "LOW", details: string }[]
@@ -134,10 +134,15 @@ const generateMockData = (): CountryData[] => {
         ].slice(0, (index % 3) + 1);
 
         // AI Dynamic Narratives
-        if (dynamicNarratives[nation.c]) {
-            highlights = dynamicNarratives[nation.c].highlights;
-            status = dynamicNarratives[nation.c].status;
-            frictionVectors = dynamicNarratives[nation.c].frictionVectors;
+        const narrative = dynamicNarratives[nation.c];
+        if (narrative && typeof narrative === 'object') {
+            highlights = (Array.isArray(narrative.highlights) && narrative.highlights.length > 0)
+                ? narrative.highlights
+                : highlights;
+            status = narrative.status || status;
+            frictionVectors = (Array.isArray(narrative.frictionVectors) && narrative.frictionVectors.length > 0)
+                ? narrative.frictionVectors
+                : frictionVectors;
         }
 
         // Hardcoded Geopolitical Overrides for Legacy / Specific Milestone Context
