@@ -648,6 +648,19 @@ export default function Home() {
         )}
       </AnimatePresence>
 
+      {/* Site Navigation Footer */}
+      <footer className="h-8 flex items-center justify-center gap-4 sm:gap-6 px-4 border-t border-border bg-panel/50 text-[9px] font-mono tracking-wider shrink-0 overflow-x-auto">
+        <a href="/methodology" className="text-slate-light hover:text-cobalt transition-colors whitespace-nowrap">METHODOLOGY</a>
+        <span className="text-border">|</span>
+        <a href="/docs" className="text-slate-light hover:text-cobalt transition-colors whitespace-nowrap">API DOCS</a>
+        <span className="text-border">|</span>
+        <a href="/feed.xml" target="_blank" rel="noopener" className="text-slate-light hover:text-cobalt transition-colors whitespace-nowrap">RSS FEED</a>
+        <span className="text-border hidden sm:inline">|</span>
+        <a href="https://github.com/Oddjobe/Axis" target="_blank" rel="noopener" className="text-slate-light hover:text-cobalt transition-colors whitespace-nowrap hidden sm:inline">GITHUB</a>
+        <span className="text-border hidden sm:inline">|</span>
+        <span className="text-zinc-600 hidden sm:inline">© {new Date().getFullYear()} AXIS AFRICA</span>
+      </footer>
+
       {/* Modals */}
       <MissionModal isOpen={missionOpen} onClose={() => setMissionOpen(false)} />
       <AnalyticsModal

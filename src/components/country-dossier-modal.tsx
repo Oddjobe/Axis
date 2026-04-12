@@ -126,22 +126,42 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
     const handleShare = async () => {
         if (!countryData) return;
         const shareUrl = `${window.location.origin}?country=${countryData.country}`;
-        const shareData = {
-            title: `${countryData.name} — AXIS Africa Intelligence`,
-            text: `${countryData.name} | Score: ${countryData.axisScore}/100 | Status: ${countryData.status} — AXIS Africa Open Source Intelligence`,
-            url: shareUrl,
-        };
+        const shareText = `${countryData.name} | Score: ${countryData.axisScore}/100 | Status: ${countryData.status} — AXIS Africa Open Source Intelligence`;
         
-        if (navigator.share) {
+        // Try native share first (mobile)
+        if (typeof navigator.share === 'function') {
             try {
-                await navigator.share(shareData);
-            } catch (e) {
-                // User cancelled or share failed
+                await navigator.share({
+                    title: `${countryData.name} — AXIS Africa Intelligence`,
+                    text: shareText,
+                    url: shareUrl,
+                });
+                return;
+            } catch {
+                // User cancelled or not supported — fall through to clipboard
             }
-        } else {
-            await navigator.clipboard.writeText(shareUrl);
+        }
+        
+        // Clipboard fallback with multiple strategies
+        try {
+            if (navigator.clipboard && window.isSecureContext) {
+                await navigator.clipboard.writeText(shareUrl);
+            } else {
+                // Fallback for non-HTTPS or older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = shareUrl;
+                textArea.style.cssText = 'position:fixed;left:-9999px;top:-9999px';
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+            }
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
+        } catch {
+            // Last resort: prompt user to copy manually
+            window.prompt('Copy this link:', shareUrl);
         }
     };
 
