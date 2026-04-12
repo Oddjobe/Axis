@@ -148,6 +148,23 @@ export default function Home() {
             <span className="font-bold text-zinc-400 dark:text-zinc-200 ml-0.5 lg:ml-1">{displayPop}</span>
           </div>
 
+          {/* Sovereignty Alert Index */}
+          {countryDataMaster.length > 0 && (() => {
+            const axisIndex = Math.round(countryDataMaster.reduce((sum, c) => sum + (c.axisScore || 0), 0) / countryDataMaster.length);
+            const indexColor = axisIndex >= 70 ? 'text-emerald-500 border-emerald-500/20 bg-emerald-500/5' 
+              : axisIndex >= 50 ? 'text-amber-500 border-amber-500/20 bg-amber-500/5' 
+              : 'text-red-500 border-red-500/20 bg-red-500/5';
+            return (
+              <div className={`hidden sm:flex items-center gap-1.5 px-2 lg:px-3 py-1 lg:py-1.5 border rounded-lg text-[10px] lg:text-xs font-mono shadow-sm ${indexColor}`}>
+                <Activity className="w-3 h-3 lg:w-3.5 lg:h-3.5" />
+                <div className="flex flex-col leading-none">
+                  <span className="text-[7px] lg:text-[8px] font-bold opacity-60 uppercase tracking-tighter">AXIS INDEX</span>
+                  <span className="font-bold leading-tight">{axisIndex}/100</span>
+                </div>
+              </div>
+            );
+          })()}
+
           <div className="hidden lg:flex h-6 w-px bg-border/50" />
 
           {/* Group 2: Capital Flow KPIs */}

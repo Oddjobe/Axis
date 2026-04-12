@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { TrendingUp, TrendingDown, ShieldCheck, Globe2 } from 'lucide-react';
+import { TrendingUp, TrendingDown, ShieldCheck, Globe2, Clock } from 'lucide-react';
 
 interface Commodity {
     id: string;
@@ -12,9 +12,23 @@ interface Commodity {
     currency: string;
     trend: number;
     source: string;
+    sourceUrl?: string;
     lastUpdated: string;
+    frequency?: string;
     category: string;
     color: string;
+}
+
+function relativeTime(dateStr: string): string {
+    const now = new Date();
+    const then = new Date(dateStr);
+    const diffMs = now.getTime() - then.getTime();
+    const diffH = Math.floor(diffMs / 3600000);
+    const diffD = Math.floor(diffMs / 86400000);
+    if (diffD > 30) return `${Math.floor(diffD / 30)}mo ago`;
+    if (diffD > 0) return `${diffD}d ago`;
+    if (diffH > 0) return `${diffH}h ago`;
+    return 'just now';
 }
 
 export default function CommodityTicker() {
@@ -94,7 +108,14 @@ export default function CommodityTicker() {
                             <span className="text-[7px] font-mono font-bold text-slate-light uppercase">{item.source}</span>
                         </div>
 
-                        {/* Separator */}
+                        {/* Data freshness badge */}
+                        <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-white/5">
+                            <Clock className="w-2 h-2 text-zinc-500" />
+                            <span className="text-[6px] font-mono text-zinc-500 uppercase">
+                                {item.frequency === 'daily' ? relativeTime(item.lastUpdated) : item.frequency?.toUpperCase() || relativeTime(item.lastUpdated)}
+                            </span>
+                        </div>
+
                         <div className="w-px h-4 bg-border/50 ml-6" />
                     </div>
                 ))}

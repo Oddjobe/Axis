@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Globe, ShieldAlert, BarChart3, ArrowRight, Activity, Cpu, Download, Star, BrainCircuit, Newspaper, TrendingUp } from "lucide-react";
+import { X, Globe, ShieldAlert, BarChart3, ArrowRight, Activity, Cpu, Download, Star, BrainCircuit, Newspaper, TrendingUp, Share2, Copy, Check } from "lucide-react";
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import html2canvas from "html2canvas-pro";
@@ -55,6 +55,8 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
     const [activeTab, setActiveTab] = useState<"STRATEGY" | "EXPORTS" | "FRICTION" | "INTEL" | "TRAJECTORY">("STRATEGY");
     const [mounted, setMounted] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
+    const [copied, setCopied] = useState(false);
+    const [showEmbed, setShowEmbed] = useState(false);
     const [intelAlerts, setIntelAlerts] = useState<IntelligenceAlert[]>([]);
     const [intelLoading, setIntelLoading] = useState(false);
     const { watchlist, togglePin } = useWatchlist();
@@ -118,6 +120,28 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
         if (mins < 60) return `${mins}m ago`;
         if (hrs < 24) return `${hrs}h ago`;
         return `${days}d ago`;
+    };
+
+    const handleShare = async () => {
+        if (!countryData) return;
+        const shareUrl = `${window.location.origin}?country=${countryData.country}`;
+        const shareData = {
+            title: `${countryData.name} — AXIS Africa Intelligence`,
+            text: `${countryData.name} | Score: ${countryData.axisScore}/100 | Status: ${countryData.status} — AXIS Africa Open Source Intelligence`,
+            url: shareUrl,
+        };
+        
+        if (navigator.share) {
+            try {
+                await navigator.share(shareData);
+            } catch (e) {
+                // User cancelled or share failed
+            }
+        } else {
+            await navigator.clipboard.writeText(shareUrl);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        }
     };
 
     const handleExportPDF = async () => {
@@ -217,11 +241,35 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
                             >
                                 <Download className="w-3.5 h-3.5" /> <span className="whitespace-nowrap">{isExporting ? "ENCRYPTING PDF..." : "EXPORT DOSSIER"}</span>
                             </button>
+                            <button
+                                onClick={handleShare}
+                                className="flex items-center gap-2 px-3 py-1.5 rounded bg-cobalt/10 border border-cobalt/30 text-[10px] font-bold tracking-widest text-cobalt hover:bg-cobalt/20 hover:border-cobalt/50 transition-colors shrink-0"
+                                title="Share this country dossier"
+                            >
+                                {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Share2 className="w-3.5 h-3.5" />}
+                                <span className="whitespace-nowrap hidden sm:inline">{copied ? "COPIED!" : "SHARE"}</span>
+                            </button>
+                            <button
+                                onClick={() => setShowEmbed(!showEmbed)}
+                                className="flex items-center gap-2 px-3 py-1.5 rounded bg-cobalt/10 border border-cobalt/30 text-[10px] font-bold tracking-widest text-cobalt hover:bg-cobalt/20 hover:border-cobalt/50 transition-colors shrink-0"
+                                title="Embed this country card"
+                            >
+                                <Cpu className="w-3.5 h-3.5" />
+                                <span className="whitespace-nowrap hidden sm:inline">EMBED</span>
+                            </button>
                         </div>
                         <button onClick={onClose} className="absolute top-4 right-4 sm:static p-2 hover:bg-black/10 dark:hover:bg-white/10 rounded-full transition-colors text-slate-light hover:text-foreground shrink-0">
                             <X className="w-6 h-6" />
                         </button>
                     </div>
+                    {showEmbed && (
+                        <div className="mx-4 sm:mx-6 mt-2 p-3 bg-black/20 border border-cobalt/20 rounded-lg">
+                            <p className="text-[9px] font-mono text-slate-light mb-2 tracking-wider">EMBED THIS COUNTRY CARD:</p>
+                            <code className="block text-[9px] font-mono text-cobalt bg-black/40 p-2 rounded break-all select-all">
+                                {`<iframe src="https://axis-mocha.vercel.app/embed/${countryData.country}" width="400" height="280" frameborder="0" style="border-radius:12px;overflow:hidden"></iframe>`}
+                            </code>
+                        </div>
+                    )}
 
                     {/* Tabs */}
                     <div className="flex border-b border-border px-4 sm:px-6 mt-4 gap-6 text-sm font-mono tracking-wider overflow-x-auto hide-scrollbar whitespace-nowrap">
