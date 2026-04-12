@@ -30,6 +30,7 @@ import {
 import { useTheme } from "next-themes";
 import dynamic from "next/dynamic";
 import AfcftaMatrix from "@/components/afcfta-matrix";
+import ErrorBoundary from "@/components/error-boundary";
 
 const AfricaMap = dynamic(() => import("@/components/africa-map"), {
   ssr: false,
@@ -72,6 +73,18 @@ export default function Home() {
 
   useEffect(() => {
     setMounted(true);
+
+    // Read ?compare=NGA,GHA,KEN from URL to auto-open compare modal
+    const params = new URLSearchParams(window.location.search);
+    const compareParam = params.get("compare");
+    if (compareParam) {
+      const codes = compareParam.split(",").map(c => c.trim().toUpperCase()).filter(Boolean);
+      if (codes.length > 0) {
+        setSelectedCodes(codes);
+        setComparativeOpen(true);
+      }
+    }
+
     // Fetch live data or use mock if no DB connectivity
     import("@/lib/supabase").then(({ supabase }) => {
       supabase.from('countries').select('*').then(({ data, error }) => {
@@ -109,7 +122,9 @@ export default function Home() {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden">
-      <CommodityTicker />
+      <ErrorBoundary>
+        <CommodityTicker />
+      </ErrorBoundary>
       {/* Top Navigation / Dashboard Header */}
       <header className="h-14 lg:h-16 flex items-center justify-between px-3 lg:px-6 border-b border-border bg-panel backdrop-blur-md z-10 shrink-0">
         <div className="flex items-center gap-2 lg:gap-4">
@@ -297,18 +312,20 @@ export default function Home() {
               GEO ENGINE
             </div>
 
-            <AfricaMap
-              selectedCountryCodes={selectedCodes}
-              onToggleCountry={(code, isShift) => {
-                if (isShift) {
-                  setSelectedCodes(prev => prev.includes(code) ? prev.filter(c => c !== code) : [...prev, code]);
-                } else {
-                  setSelectedCodes(prev => prev.length === 1 && prev[0] === code ? [] : [code]);
-                }
-              }}
-              timeValue={timeValue}
-              selectedResource={selectedResource}
-            />
+            <ErrorBoundary>
+              <AfricaMap
+                selectedCountryCodes={selectedCodes}
+                onToggleCountry={(code, isShift) => {
+                  if (isShift) {
+                    setSelectedCodes(prev => prev.includes(code) ? prev.filter(c => c !== code) : [...prev, code]);
+                  } else {
+                    setSelectedCodes(prev => prev.length === 1 && prev[0] === code ? [] : [code]);
+                  }
+                }}
+                timeValue={timeValue}
+                selectedResource={selectedResource}
+              />
+            </ErrorBoundary>
 
             {/* Resource Filter Pills - Better horizontal scroll and sizing */}
             <div className="absolute top-2 left-2 lg:top-4 lg:left-4 right-2 lg:right-auto flex items-center gap-1.5 z-20 overflow-x-auto no-scrollbar py-1">

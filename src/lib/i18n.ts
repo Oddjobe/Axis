@@ -1,4 +1,4 @@
-export type Language = "en" | "fr" | "sw";
+export type Language = "en" | "fr" | "sw" | "pt";
 
 export const translations: Record<Language, Record<string, string>> = {
     en: {
@@ -42,6 +42,20 @@ export const translations: Record<Language, Record<string, string>> = {
         map: "RAMANI",
         intel: "INTEL",
         filtering: "KUCHUJA:"
+    },
+    pt: {
+        dashboard_title: "Eixo África",
+        subtitle: "SISTEMA DE INTELIGÊNCIA E RAIO-X AFRICANO · V1.0",
+        population: "POPULAÇÃO",
+        selected_population: "POPULAÇÃO SELECIONADA",
+        about: "SOBRE",
+        sovereignty: "SOBERANIA",
+        outside_influence: "INFLUÊNCIA EXTERNA",
+        live: "AO VIVO",
+        index: "ÍNDICE",
+        map: "MAPA",
+        intel: "INTEL",
+        filtering: "FILTRANDO:"
     }
 };
 

@@ -17,5 +17,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
             changeFrequency: 'monthly',
             priority: 0.8,
         },
+        {
+            url: 'https://axis-mocha.vercel.app/feed.xml',
+            lastModified: new Date(),
+            changeFrequency: 'always',
+            priority: 0.6,
+        },
     ];
 }
