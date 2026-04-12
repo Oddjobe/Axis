@@ -69,6 +69,13 @@ export default function MissionModal({ isOpen, onClose }: { isOpen: boolean, onC
                                 &quot;The Africa we want is a continent that is integrated, prosperous, and peaceful, driven by its own citizens.&quot; This platform is a digital infrastructure step toward that sovereign future.
                             </p>
                         </div>
+
+                        <a
+                            href="/methodology"
+                            className="block w-full text-center text-xs font-mono font-bold tracking-widest uppercase px-4 py-3 border border-cobalt/40 bg-cobalt/10 text-cobalt rounded-lg hover:bg-cobalt/20 transition-colors"
+                        >
+                            VIEW FULL METHODOLOGY →
+                        </a>
                     </div>
                 </motion.div>
             </motion.div>

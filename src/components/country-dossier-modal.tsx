@@ -1,11 +1,12 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Globe, ShieldAlert, BarChart3, ArrowRight, Activity, Cpu, Download, Star, BrainCircuit, Newspaper } from "lucide-react";
+import { X, Globe, ShieldAlert, BarChart3, ArrowRight, Activity, Cpu, Download, Star, BrainCircuit, Newspaper, TrendingUp } from "lucide-react";
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import html2canvas from "html2canvas-pro";
 import { jsPDF } from "jspdf";
 import { useWatchlist } from "@/lib/use-watchlist";
 import { supabase } from "@/lib/supabase";
+import SovereigntyTrendlineChart from "./sovereignty-trendline-chart";
 
 export interface CountryData {
     country: string;
@@ -51,7 +52,7 @@ export interface CountryDossierProps {
 }
 
 export default function CountryDossierModal({ isOpen, onClose, countryData }: CountryDossierProps) {
-    const [activeTab, setActiveTab] = useState<"STRATEGY" | "EXPORTS" | "FRICTION" | "INTEL">("STRATEGY");
+    const [activeTab, setActiveTab] = useState<"STRATEGY" | "EXPORTS" | "FRICTION" | "INTEL" | "TRAJECTORY">("STRATEGY");
     const [mounted, setMounted] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
     const [intelAlerts, setIntelAlerts] = useState<IntelligenceAlert[]>([]);
@@ -250,6 +251,12 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
                             {intelAlerts.length > 0 && (
                                 <span className="text-[9px] px-1.5 py-0.5 bg-amber-500/20 text-amber-500 rounded-full font-bold">{intelAlerts.length}</span>
                             )}
+                        </button>
+                        <button
+                            onClick={() => setActiveTab("TRAJECTORY")}
+                            className={`pb-3 border-b-2 transition-colors flex items-center gap-2 shrink-0 ${activeTab === "TRAJECTORY" ? "border-cyan-500 text-cyan-500 font-bold" : "border-transparent text-slate-light hover:text-foreground"}`}
+                        >
+                            <TrendingUp className="w-4 h-4" /> TRAJECTORY
                         </button>
                     </div>
 
@@ -633,6 +640,12 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
                                         </div>
                                     ))
                                 )}
+                            </div>
+                        )}
+
+                        {activeTab === "TRAJECTORY" && (
+                            <div className="animate-in fade-in slide-in-from-right-4 duration-500">
+                                <SovereigntyTrendlineChart key={countryData.country} data={[countryData]} />
                             </div>
                         )}
                     </div>

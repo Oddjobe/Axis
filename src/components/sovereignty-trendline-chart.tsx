@@ -76,7 +76,7 @@ export default function SovereigntyTrendlineChart({ data }: SovereigntyTrendline
     if (!activeCountry) return <div className="p-4 text-center text-slate-light font-mono text-xs">NO DATA AVAILABLE</div>;
 
     return (
-        <div className="w-full h-full min-h-[400px] flex flex-col">
+        <div className="w-full h-full min-h-[250px] sm:min-h-[300px] flex flex-col">
             <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                     <h3 className="text-sm font-bold font-mono tracking-widest uppercase mb-1 flex items-center gap-2">
@@ -88,7 +88,8 @@ export default function SovereigntyTrendlineChart({ data }: SovereigntyTrendline
                     </p>
                 </div>
 
-                {/* Country Selector */}
+                {/* Country Selector — hidden when single country context */}
+                {data.length > 1 && (
                 <select
                     value={activeCountry.country}
                     onChange={(e) => {
@@ -103,6 +104,7 @@ export default function SovereigntyTrendlineChart({ data }: SovereigntyTrendline
                         </option>
                     ))}
                 </select>
+                )}
             </div>
 
             <div className="flex-1 w-full relative min-w-[1px] min-h-[1px]">

@@ -86,6 +86,32 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-background text-foreground transition-colors duration-300`}
       >
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebApplication",
+              "name": "AXIS AFRICA",
+              "alternateName": "African X-Ray Intelligence System",
+              "url": "https://axis-mocha.vercel.app",
+              "description": "Real-time strategic intelligence platform tracking sovereignty, resource wealth, and outside influence across all 54 African nations.",
+              "applicationCategory": "BusinessApplication",
+              "operatingSystem": "Web",
+              "offers": {
+                "@type": "Offer",
+                "price": "0",
+                "priceCurrency": "USD"
+              },
+              "creator": {
+                "@type": "Organization",
+                "name": "AXIS AFRICA Intelligence",
+                "url": "https://axis-mocha.vercel.app"
+              },
+              "keywords": "Africa, geopolitics, sovereignty, OSINT, commodities, AfCFTA, strategic intelligence"
+            })
+          }}
+        />
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
