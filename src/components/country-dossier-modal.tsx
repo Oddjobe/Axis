@@ -55,6 +55,7 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
     const [activeTab, setActiveTab] = useState<"STRATEGY" | "EXPORTS" | "FRICTION" | "INTEL" | "TRAJECTORY">("STRATEGY");
     const [mounted, setMounted] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
+    const [isGeneratingBrief, setIsGeneratingBrief] = useState(false);
     const [copied, setCopied] = useState(false);
     const [showEmbed, setShowEmbed] = useState(false);
     const [intelAlerts, setIntelAlerts] = useState<IntelligenceAlert[]>([]);
@@ -185,6 +186,90 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
         }
     };
 
+    const handleAIBrief = async () => {
+        if (!countryData || isGeneratingBrief) return;
+        setIsGeneratingBrief(true);
+
+        try {
+            const res = await fetch('/api/briefing', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    country: countryData.name,
+                    isoCode: countryData.country,
+                    axisScore: countryData.axisScore,
+                    status: countryData.status,
+                    keyResources: countryData.keyResources,
+                    infrastructureControl: countryData.infrastructureControl,
+                    policyIndependence: countryData.policyIndependence,
+                    currencyStability: countryData.currencyStability,
+                    resourceWealth: countryData.resourceWealth,
+                }),
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) throw new Error(data.error || 'Brief generation failed');
+            if (!data.briefing) throw new Error('No briefing generated');
+
+            const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+            const pageWidth = doc.internal.pageSize.getWidth();
+
+            // Header bar
+            doc.setFillColor(10, 10, 15);
+            doc.rect(0, 0, pageWidth, 40, 'F');
+            doc.setFillColor(37, 99, 235);
+            doc.rect(0, 38, pageWidth, 2, 'F');
+
+            // Title
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(18);
+            doc.setTextColor(228, 228, 231);
+            doc.text('AXIS AFRICA \u2014 AI INTELLIGENCE BRIEF', 15, 18);
+
+            doc.setFontSize(10);
+            doc.setTextColor(161, 161, 170);
+            doc.text(`${countryData.name.toUpperCase()} | ${countryData.country} | SCORE: ${countryData.axisScore}/100 | STATUS: ${countryData.status}`, 15, 28);
+
+            doc.setFontSize(7);
+            doc.text(`Generated: ${new Date().toISOString().split('T')[0]} | AXIS Africa Open Source Intelligence`, 15, 35);
+
+            // Body
+            doc.setTextColor(60, 60, 60);
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+
+            const briefText = data.briefing;
+            const lines = doc.splitTextToSize(briefText, pageWidth - 30);
+
+            let y = 50;
+            const lineHeight = 5;
+            const maxY = doc.internal.pageSize.getHeight() - 20;
+
+            for (const line of lines) {
+                if (y > maxY) {
+                    doc.addPage();
+                    y = 20;
+                }
+                doc.text(line, 15, y);
+                y += lineHeight;
+            }
+
+            // Footer
+            const footerY = doc.internal.pageSize.getHeight() - 10;
+            doc.setFontSize(7);
+            doc.setTextColor(161, 161, 170);
+            doc.text('CONFIDENTIAL \u2014 AXIS AFRICA OSINT PLATFORM \u2014 axis-mocha.vercel.app', 15, footerY);
+
+            doc.save(`AXIS-AI-Brief-${countryData.country}-${new Date().toISOString().split('T')[0]}.pdf`);
+        } catch (error) {
+            console.error('AI brief generation failed:', error);
+            alert('AI Brief generation failed. The AI service may be temporarily unavailable.');
+        } finally {
+            setIsGeneratingBrief(false);
+        }
+    };
+
     if (!isOpen || !countryData || !mounted) return null;
 
     return createPortal(
@@ -240,6 +325,16 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
                                 className={`flex items-center gap-2 px-3 py-1.5 rounded bg-cobalt/10 border border-cobalt/30 text-[10px] font-bold tracking-widest transition-colors shrink-0 ${isExporting ? "opacity-50 cursor-not-allowed text-cobalt/50" : "text-cobalt hover:bg-cobalt/20 hover:border-cobalt/50"}`}
                             >
                                 <Download className="w-3.5 h-3.5" /> <span className="whitespace-nowrap">{isExporting ? "ENCRYPTING PDF..." : "EXPORT DOSSIER"}</span>
+                            </button>
+                            <button
+                                onClick={handleAIBrief}
+                                disabled={isGeneratingBrief}
+                                className={`flex items-center gap-2 px-3 py-1.5 rounded bg-purple-500/10 border border-purple-500/30 text-[10px] font-bold tracking-widest transition-colors shrink-0 ${
+                                    isGeneratingBrief ? "opacity-50 cursor-not-allowed text-purple-500/50" : "text-purple-500 hover:bg-purple-500/20 hover:border-purple-500/50"
+                                }`}
+                            >
+                                <BrainCircuit className="w-3.5 h-3.5" />
+                                <span className="whitespace-nowrap hidden sm:inline">{isGeneratingBrief ? "GENERATING..." : "AI BRIEF"}</span>
                             </button>
                             <button
                                 onClick={handleShare}

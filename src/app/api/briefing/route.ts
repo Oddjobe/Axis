@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { supabase } from '@/lib/supabase';
 
 export async function GET() {
@@ -127,4 +127,96 @@ export async function GET() {
             { status: 500 }
         );
     }
+}
+
+export async function POST(request: NextRequest) {
+    try {
+        const body = await request.json();
+        const {
+            country,
+            isoCode,
+            axisScore,
+            status,
+            keyResources,
+            infrastructureControl,
+            policyIndependence,
+            currencyStability,
+            resourceWealth,
+        } = body;
+
+        if (!country || !isoCode) {
+            return NextResponse.json(
+                { success: false, error: 'country and isoCode are required' },
+                { status: 400 }
+            );
+        }
+
+        const prompt = `You are a Pan-African strategic intelligence analyst for the AXIS Africa OSINT platform. Generate a concise 1-page intelligence brief for ${country} (${isoCode}).
+
+Context data:
+- AXIS Sovereignty Score: ${axisScore ?? 'N/A'}/100
+- Status: ${status ?? 'N/A'}
+- Key Resources: ${Array.isArray(keyResources) ? keyResources.join(', ') : 'N/A'}
+- Infrastructure Control: ${infrastructureControl ?? 'N/A'}%
+- Policy Independence: ${policyIndependence ?? 'N/A'}%
+- Currency Stability: ${currencyStability ?? 'N/A'}%
+- Resource Wealth: ${resourceWealth ?? 'N/A'}%
+
+Structure the brief with these sections:
+1. EXECUTIVE SUMMARY (2-3 sentences)
+2. SOVEREIGNTY ASSESSMENT (key strengths and vulnerabilities)
+3. RESOURCE STRATEGY (mineral wealth, trade corridors, value-chain positioning)
+4. RISK VECTORS (external pressures, debt exposure, infrastructure dependencies)
+5. STRATEGIC OUTLOOK (12-month forecast and recommended actions)
+
+Use a professional, analytical tone. Focus on African agency, sovereignty, and intra-continental trade under AfCFTA. Keep the total output under 600 words.`;
+
+        const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY;
+
+        if (apiKey) {
+            const { GoogleGenerativeAI } = await import('@google/generative-ai');
+            const genAI = new GoogleGenerativeAI(apiKey);
+            const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+            const result = await model.generateContent(prompt);
+            const briefing = result.response.text();
+
+            return NextResponse.json({ success: true, briefing });
+        }
+
+        // Fallback: generate a structured brief without AI
+        const briefing = generateFallbackBrief({ country, isoCode, axisScore, status, keyResources, infrastructureControl, policyIndependence, currencyStability, resourceWealth });
+        return NextResponse.json({ success: true, briefing, fallback: true });
+
+    } catch (error: any) {
+        console.error('AI Brief POST error:', error);
+        const isQuota = error?.message?.includes('quota') || error?.message?.includes('429') || error?.status === 429;
+        return NextResponse.json(
+            { success: false, error: isQuota ? 'AI quota exceeded. Please try again later.' : (error.message || 'Brief generation failed') },
+            { status: isQuota ? 429 : 500 }
+        );
+    }
+}
+
+function generateFallbackBrief(data: { country: string; isoCode: string; axisScore?: number; status?: string; keyResources?: string[]; infrastructureControl?: number; policyIndependence?: number; currencyStability?: number; resourceWealth?: number }) {
+    const score = data.axisScore ?? 50;
+    const tier = score >= 70 ? 'HIGH SOVEREIGNTY' : score >= 45 ? 'MODERATE SOVEREIGNTY' : 'AT-RISK';
+    const resources = Array.isArray(data.keyResources) && data.keyResources.length > 0 ? data.keyResources.join(', ') : 'diversified commodities';
+
+    return `EXECUTIVE SUMMARY
+${data.country} (${data.isoCode}) registers an AXIS Sovereignty Score of ${score}/100, placing it in the ${tier} tier. The nation's strategic posture is classified as "${data.status || 'Under Assessment'}", reflecting its current balance of resource autonomy and external dependency pressures.
+
+SOVEREIGNTY ASSESSMENT
+Infrastructure Control stands at ${data.infrastructureControl ?? 'N/A'}%, indicating ${(data.infrastructureControl ?? 50) >= 60 ? 'meaningful domestic oversight of critical logistics and energy systems' : 'continued reliance on externally managed logistics corridors'}. Policy Independence at ${data.policyIndependence ?? 'N/A'}% reflects the government's capacity to set sovereign economic agendas. Currency Stability at ${data.currencyStability ?? 'N/A'}% ${(data.currencyStability ?? 50) >= 60 ? 'provides a stable macroeconomic foundation for long-term planning' : 'remains a vulnerability requiring monetary policy coordination within regional blocs'}.
+
+RESOURCE STRATEGY
+Key strategic resources include ${resources}. With a Resource Wealth index of ${data.resourceWealth ?? 'N/A'}%, ${data.country} holds significant leverage in global value chains. The priority should be advancing domestic beneficiation capacity and negotiating favorable terms under AfCFTA protocols to capture more value within the continent.
+
+RISK VECTORS
+Primary risks include exposure to external commodity pricing volatility, potential debt-trap dynamics from infrastructure financing, and dependency on foreign technical expertise for resource extraction. Monitoring of foreign military basing agreements and exclusive trade concessions is recommended.
+
+STRATEGIC OUTLOOK
+Over the next 12 months, ${data.country} should prioritize regional trade corridor integration, domestic processing facility expansion, and strengthening institutional frameworks for resource governance. Participation in Pan-African digital trade standardisation will be critical for maintaining competitive positioning.
+
+---
+Note: This brief was generated using AXIS analytical models. For AI-enhanced analysis, configure a Gemini API key.`;
 }

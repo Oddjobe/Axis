@@ -43,6 +43,7 @@ import AnalyticsModal from "@/components/analytics-modal";
 import AiNexusModal from "@/components/ai-nexus-modal";
 import AiBriefingModal from "@/components/ai-briefing-modal";
 import ComparativeAnalyticsModal from "@/components/comparative-analytics-modal";
+import TradeIntelligenceModal from "@/components/trade-intelligence-modal";
 import CommodityTicker from "@/components/commodity-ticker";
 import { ALL_SOVEREIGN_DATA } from "@/lib/mock-data";
 import { Language, useTranslation } from "@/lib/i18n";
@@ -60,6 +61,7 @@ export default function Home() {
   const [aiNexusOpen, setAiNexusOpen] = useState(false);
   const [briefingOpen, setBriefingOpen] = useState(false);
   const [comparativeOpen, setComparativeOpen] = useState(false);
+  const [tradeIntelOpen, setTradeIntelOpen] = useState(false);
   const [mobilePanel, setMobilePanel] = useState<"map" | "index" | "intel">("map");
   const [mobileSettingsOpen, setMobileSettingsOpen] = useState(false);
   const [selectedResource, setSelectedResource] = useState<string | null>(null);
@@ -248,6 +250,14 @@ export default function Home() {
               >
                 <Combine className="w-4 h-4" />
                 <span className="hidden xl:inline">COMPARE</span>
+              </button>
+              <button
+                onClick={() => setTradeIntelOpen(true)}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-cyan-500/10 text-cyan-500 hover:bg-cyan-500/20 transition-all border border-cyan-500/20 shadow-[0_0_15px_rgba(6,182,212,0.1)]"
+                title="Trade Intelligence"
+              >
+                <ArrowUpRight className="w-4 h-4" />
+                <span className="hidden xl:inline">TRADE</span>
               </button>
             </div>
 
@@ -661,6 +671,7 @@ export default function Home() {
         allData={ALL_SOVEREIGN_DATA}
         initialSelectedCodes={selectedCodes}
       />
+      <TradeIntelligenceModal isOpen={tradeIntelOpen} onClose={() => setTradeIntelOpen(false)} />
     </div>
   );
 }
