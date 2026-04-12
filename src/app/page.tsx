@@ -247,7 +247,7 @@ export default function Home() {
           {/* Group 4: Settings & Locales (desktop only) */}
           <div className="hidden md:flex items-center gap-2">
             <div className="flex bg-background border border-border rounded-lg overflow-hidden text-[10px] font-bold shadow-sm">
-              {(["en", "fr", "sw"] as Language[]).map(lang => (
+              {(["en", "fr", "sw", "pt"] as Language[]).map(lang => (
                 <button
                   key={lang}
                   onClick={() => setLanguage(lang)}
@@ -550,8 +550,8 @@ export default function Home() {
                 {/* Language */}
                 <div>
                   <p className="text-[10px] font-mono text-slate-light mb-2 tracking-wider">LANGUAGE</p>
-                  <div className="grid grid-cols-3 gap-2">
-                    {(["en", "fr", "sw"] as Language[]).map(lang => (
+                  <div className="grid grid-cols-4 gap-2">
+                    {(["en", "fr", "sw", "pt"] as Language[]).map(lang => (
                       <button
                         key={lang}
                         onClick={() => { setLanguage(lang); }}
