@@ -49,6 +49,7 @@ import { Language, useTranslation } from "@/lib/i18n";
 import type { CountryData } from "@/components/country-dossier-modal";
 import kpiData from "@/lib/kpi-data.json";
 import { AnimatePresence, motion } from "framer-motion";
+import { useRealtimeAlerts } from "@/lib/use-realtime-alerts";
 const TOTAL_POPULATION = 1_444; // ~1.44 billion
 
 export default function Home() {
@@ -68,6 +69,7 @@ export default function Home() {
   const [countryDataMaster, setCountryDataMaster] = useState<CountryData[]>([]);
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const { newAlertCount, clearNewAlerts } = useRealtimeAlerts();
 
   const t = useTranslation(language);
 
@@ -85,19 +87,37 @@ export default function Home() {
       }
     }
 
-    // Fetch live data or use mock if no DB connectivity
-    import("@/lib/supabase").then(({ supabase }) => {
-      supabase.from('countries').select('*').then(({ data, error }) => {
+    // Fetch live data, cache in IndexedDB for offline use, or use static fallback
+    import("@/lib/supabase").then(async ({ supabase }) => {
+      try {
+        const { data, error } = await supabase.from('countries').select('*');
         if (!error && data) {
           const merged = data.map((dbCountry: any) => {
             const staticData = ALL_SOVEREIGN_DATA.find(s => s.country === dbCountry.id);
             return { ...staticData, ...dbCountry, country: dbCountry.id };
           });
           setCountryDataMaster(merged as CountryData[]);
+          // Cache for offline use
+          import("@/lib/use-offline-cache").then(({ cacheData }) => {
+            cacheData('countryDataMaster', merged);
+          });
         } else {
+          throw new Error('Supabase fetch failed');
+        }
+      } catch {
+        // Try IndexedDB cache
+        try {
+          const { getCachedData } = await import("@/lib/use-offline-cache");
+          const cached = await getCachedData<CountryData[]>('countryDataMaster');
+          if (cached) {
+            setCountryDataMaster(cached);
+          } else {
+            setCountryDataMaster(ALL_SOVEREIGN_DATA as CountryData[]);
+          }
+        } catch {
           setCountryDataMaster(ALL_SOVEREIGN_DATA as CountryData[]);
         }
-      });
+      }
     }).catch(() => setCountryDataMaster(ALL_SOVEREIGN_DATA as CountryData[]));
   }, []);
 
@@ -470,9 +490,14 @@ export default function Home() {
         </button>
 
         <button
-          onClick={() => setMobilePanel("intel")}
+          onClick={() => { setMobilePanel("intel"); clearNewAlerts(); }}
           className={`group flex flex-1 flex-col items-center justify-center gap-1 transition-all relative ${mobilePanel === "intel" ? "text-cobalt" : "text-slate-light"}`}
         >
+          {newAlertCount > 0 && (
+            <span className="absolute top-1 right-1/4 w-4 h-4 bg-red-500 rounded-full text-[8px] font-bold flex items-center justify-center text-white z-10">
+              {newAlertCount > 9 ? '9+' : newAlertCount}
+            </span>
+          )}
           {mobilePanel === "intel" && (
             <motion.span
               layoutId="navGlow"
