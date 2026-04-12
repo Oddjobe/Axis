@@ -3,31 +3,33 @@ import { createClient } from '@supabase/supabase-js';
 
 export const revalidate = 3600; // Revalidate every hour
 
+// Verified benchmark prices as of April 12, 2026
+// Sources: Kitco, LME, TradingEconomics, SunSirs, S&P Global Platts
 const FALLBACK_DATA = [
     {
         id: "lithium",
         name: "LITHIUM (CARBONATE)",
-        price: 23067,
+        price: 27000,
         unit: "T",
         currency: "USD",
-        trend: +1.12,
-        source: "Sunsirs / BenchMark",
+        trend: +3.8,
+        source: "SunSirs / Benchmark Mineral",
         sourceUrl: "https://www.sunsirs.com/uk/prodetail-2023.html",
-        lastUpdated: "2025-01-15",
-        frequency: "monthly",
+        lastUpdated: "2026-04-12",
+        frequency: "weekly",
         category: "CRITICAL",
         color: "#3b82f6"
     },
     {
         id: "cobalt",
         name: "COBALT (99.8%)",
-        price: 58293,
+        price: 56290,
         unit: "T",
         currency: "USD",
-        trend: +0.42,
-        source: "LME / Fastmarkets",
-        sourceUrl: "https://www.lme.com/Metals/EV/Cobalt",
-        lastUpdated: "2025-01-15",
+        trend: +0.0,
+        source: "LME / TradingEconomics",
+        sourceUrl: "https://tradingeconomics.com/commodity/cobalt",
+        lastUpdated: "2026-04-09",
         frequency: "weekly",
         category: "CRITICAL",
         color: "#10b981"
@@ -35,13 +37,13 @@ const FALLBACK_DATA = [
     {
         id: "copper",
         name: "COPPER (GRADE A)",
-        price: 12829,
+        price: 12660,
         unit: "T",
         currency: "USD",
-        trend: +0.50,
-        source: "COMEX / TradingEconomics",
+        trend: +0.35,
+        source: "LME / Westmetall",
         sourceUrl: "https://tradingeconomics.com/commodity/copper",
-        lastUpdated: "2025-01-15",
+        lastUpdated: "2026-04-10",
         frequency: "daily",
         category: "STRATEGIC",
         color: "#f59e0b"
@@ -49,27 +51,27 @@ const FALLBACK_DATA = [
     {
         id: "gold",
         name: "GOLD (SPOT)",
-        price: 3250,
+        price: 4750,
         unit: "OZ",
         currency: "USD",
-        trend: +0.45,
+        trend: +0.82,
         source: "LBMA / Kitco",
         sourceUrl: "https://www.kitco.com/gold-price-today-usa/",
-        lastUpdated: "2025-01-15",
+        lastUpdated: "2026-04-12",
         frequency: "daily",
         category: "RESERVE",
         color: "#fbbf24"
     },
     {
         id: "bauxite",
-        name: "BAUXITE (GUINEA)",
-        price: 77.91,
+        name: "BAUXITE (GUINEA FOB)",
+        price: 65.00,
         unit: "T",
         currency: "USD",
-        trend: +2.15,
-        source: "AfDB Portal",
-        sourceUrl: "https://www.afdb.org/en/knowledge/statistics",
-        lastUpdated: "2025-01-15",
+        trend: -1.5,
+        source: "S&P Global Platts / IndexBox",
+        sourceUrl: "https://www.spglobal.com/commodityinsights/",
+        lastUpdated: "2026-04-01",
         frequency: "monthly",
         category: "REFRACTORY",
         color: "#ef4444"

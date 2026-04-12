@@ -24,15 +24,16 @@ const AFRICAN_NATIONS = [
     { c: "ZMB", n: "Zambia" }, { c: "ZWE", n: "Zimbabwe" }
 ];
 
+// Population data (millions) — Worldometer 2026 estimates
 const POP_MAP: Record<string, number> = {
-    "NGA": 218.5, "ETH": 123.4, "EGY": 111.0, "COD": 99.0, "TZA": 65.5, "ZAF": 59.9, "KEN": 54.0,
-    "UGA": 47.1, "SDN": 46.9, "DZA": 44.9, "MAR": 37.5, "AGO": 35.6, "GHA": 33.5, "MOZ": 33.0,
-    "MDG": 29.6, "CIV": 28.2, "CMR": 27.9, "NER": 26.2, "BFA": 22.7, "MLI": 22.6, "MWI": 20.4,
-    "ZMB": 20.0, "TCD": 17.7, "SOM": 17.6, "SEN": 17.3, "ZWE": 16.3, "GIN": 13.9, "RWA": 13.6,
-    "BEN": 13.3, "BDI": 12.9, "TUN": 12.4, "SSD": 10.9, "TGO": 8.8, "SLE": 8.6, "LBY": 6.8,
-    "COG": 6.0, "CAF": 5.6, "LBR": 5.3, "MRT": 4.7, "ERI": 3.6, "GMB": 2.7, "BWA": 2.6,
-    "NAM": 2.6, "GNB": 2.1, "LSO": 2.3, "GNQ": 1.7, "MUS": 1.3, "SWZ": 1.2, "DJI": 1.1,
-    "COM": 0.8, "CPV": 0.6, "STP": 0.2, "SYC": 0.1
+    "NGA": 242.4, "ETH": 138.9, "EGY": 120.1, "COD": 116.5, "TZA": 68.6, "ZAF": 62.3, "KEN": 57.1,
+    "UGA": 50.5, "SDN": 49.1, "DZA": 46.5, "MAR": 38.6, "AGO": 37.9, "GHA": 35.0, "MOZ": 34.8,
+    "MDG": 31.4, "CIV": 30.1, "CMR": 29.6, "NER": 28.4, "BFA": 24.0, "MLI": 24.0, "MWI": 21.6,
+    "ZMB": 21.3, "TCD": 19.1, "SOM": 18.9, "SEN": 18.4, "ZWE": 17.0, "GIN": 14.8, "RWA": 14.3,
+    "BEN": 14.1, "BDI": 13.6, "TUN": 12.6, "SSD": 11.5, "TGO": 9.4, "SLE": 9.1, "LBY": 7.1,
+    "COG": 6.3, "CAF": 5.9, "LBR": 5.6, "MRT": 4.9, "ERI": 3.8, "GMB": 2.8, "BWA": 2.7,
+    "NAM": 2.7, "GNB": 2.2, "LSO": 2.4, "GNQ": 1.8, "MUS": 1.3, "SWZ": 1.2, "DJI": 1.2,
+    "COM": 0.9, "CPV": 0.6, "STP": 0.2, "SYC": 0.1
 };
 
 // Resource wealth scores and key resources per country (based on real-world data)
