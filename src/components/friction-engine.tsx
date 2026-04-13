@@ -444,7 +444,7 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
                                         </div>
                                         <div className="flex-1 ml-2.5 sm:ml-3 min-w-0 pr-1 sm:pr-2">
                                             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-0.5 sm:mb-1 gap-0.5">
-                                                <h3 className="text-[12px] sm:text-[13px] font-bold text-foreground dark:text-white line-clamp-2 sm:truncate uppercase tracking-tight leading-snug sm:leading-tight">{alert.title}</h3>
+                                                <h3 className="text-[13px] sm:text-sm font-semibold text-foreground dark:text-white line-clamp-2 sm:line-clamp-1 leading-snug">{alert.title}</h3>
                                                 <span className="text-[8px] sm:text-[9px] text-orange-500/80 font-mono whitespace-nowrap sm:ml-2">
                                                     {getLiveTimeAgo(alert.timestamp)}
                                                 </span>
@@ -508,7 +508,7 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
                                             {filteredAlerts[0].source || "INTEL"} • {getLiveTimeAgo(filteredAlerts[0].timestamp)}
                                         </span>
                                     </div>
-                                    <h2 className="text-lg lg:text-2xl font-black text-white leading-tight mb-1.5 group-hover:text-cobalt transition-colors duration-300 line-clamp-2">
+                                    <h2 className="text-lg lg:text-xl font-bold text-white leading-snug mb-1.5 group-hover:text-cobalt transition-colors duration-300 line-clamp-2">
                                         {filteredAlerts[0].title}
                                     </h2>
                                     <p className="text-[10px] lg:text-sm text-white/60 font-light line-clamp-2 max-w-[95%] leading-relaxed mb-3 lg:mb-4">
@@ -543,7 +543,7 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
                                 </div>
                                 <div className="flex-1 ml-2.5 sm:ml-3 min-w-0 pr-1 sm:pr-2">
                                     <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-0.5 sm:mb-1 gap-0.5">
-                                        <h3 className="text-[12px] sm:text-[13px] font-bold text-foreground dark:text-white line-clamp-2 sm:truncate uppercase tracking-tight leading-snug sm:leading-tight">{news.title}</h3>
+                                        <h3 className="text-[13px] sm:text-sm font-semibold text-foreground dark:text-white line-clamp-2 sm:line-clamp-1 leading-snug">{news.title}</h3>
                                         <span className="text-[8px] sm:text-[9px] text-cobalt/80 font-mono whitespace-nowrap sm:ml-2">{getLiveTimeAgo(news.timestamp)}</span>
                                     </div>
                                     <p className="text-[10px] sm:text-[11px] text-slate-light font-light line-clamp-2 leading-tight">
@@ -596,7 +596,7 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
                                             {blogs[0].tag && <span className="text-[8px] text-green-500/60 font-mono uppercase">{blogs[0].tag}</span>}
                                             {blogs[0].readingTime && <span className="text-[8px] text-slate-light/40 font-mono ml-auto">{blogs[0].readingTime} READ</span>}
                                         </div>
-                                        <h3 className="text-[14px] sm:text-[16px] font-black text-foreground dark:text-white leading-snug group-hover:text-green-400 transition-colors line-clamp-2 uppercase tracking-tight">
+                                        <h3 className="text-[15px] sm:text-lg font-bold text-foreground dark:text-white leading-snug group-hover:text-green-400 transition-colors line-clamp-2">
                                             {blogs[0].title}
                                         </h3>
                                         <p className="text-[11px] text-slate-light font-light line-clamp-3 leading-relaxed">{blogs[0].summary}</p>
@@ -627,7 +627,7 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
                                         </div>
                                         <div className="flex-1 ml-2.5 sm:ml-3 min-w-0 pr-1 sm:pr-2">
                                             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-0.5 sm:mb-1 gap-0.5">
-                                                <h3 className="text-[12px] sm:text-[13px] font-bold text-foreground dark:text-white line-clamp-2 sm:truncate uppercase tracking-tight leading-snug sm:leading-tight">{post.title}</h3>
+                                                <h3 className="text-[13px] sm:text-sm font-semibold text-foreground dark:text-white line-clamp-2 sm:line-clamp-1 leading-snug">{post.title}</h3>
                                                 {post.readingTime && <span className="text-[8px] sm:text-[9px] text-green-500/70 font-mono whitespace-nowrap sm:ml-2">{post.readingTime}</span>}
                                             </div>
                                             <p className="text-[10px] sm:text-[11px] text-slate-light font-light line-clamp-2 leading-tight">
