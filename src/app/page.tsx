@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Globe,
   Search,
@@ -25,7 +25,8 @@ import {
   List,
   Map as LucideMap,
   Check,
-  Settings2
+  Settings2,
+  BrainCircuit
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import dynamic from "next/dynamic";
@@ -44,6 +45,7 @@ import AiNexusModal from "@/components/ai-nexus-modal";
 import AiBriefingModal from "@/components/ai-briefing-modal";
 import ComparativeAnalyticsModal from "@/components/comparative-analytics-modal";
 import TradeIntelligenceModal from "@/components/trade-intelligence-modal";
+import SearchCommand from "@/components/search-command";
 import CommodityTicker from "@/components/commodity-ticker";
 import { ALL_SOVEREIGN_DATA } from "@/lib/mock-data";
 import { Language, useTranslation } from "@/lib/i18n";
@@ -72,6 +74,18 @@ export default function Home() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const { newAlertCount, clearNewAlerts } = useRealtimeAlerts();
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  const openTool = useCallback((action: string) => {
+    switch (action) {
+      case "mission": setMissionOpen(true); break;
+      case "analytics": setAnalyticsOpen(true); break;
+      case "nexus": setAiNexusOpen(true); break;
+      case "briefing": setBriefingOpen(true); break;
+      case "compare": setComparativeOpen(true); break;
+      case "trade": setTradeIntelOpen(true); break;
+    }
+  }, []);
 
   const t = useTranslation(language);
 
@@ -121,6 +135,31 @@ export default function Home() {
         }
       }
     }).catch(() => setCountryDataMaster(ALL_SOVEREIGN_DATA as CountryData[]));
+  }, []);
+
+  // Global keyboard shortcuts
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      const isInput = tag === "INPUT" || tag === "TEXTAREA" || (e.target as HTMLElement)?.isContentEditable;
+
+      // Ctrl/Cmd+K — always open search
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setSearchOpen(true);
+        return;
+      }
+
+      // Skip other shortcuts when typing in inputs
+      if (isInput) return;
+
+      if (e.key === "/") {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
   }, []);
 
   const selectedCountries = selectedCodes
@@ -209,6 +248,15 @@ export default function Home() {
 
           {/* Group 2: Tools/Modals - Consolidate on mobile */}
           <div className="flex items-center gap-1.5 lg:gap-2">
+            {/* Search button — always visible */}
+            <button
+              onClick={() => setSearchOpen(true)}
+              className="flex items-center gap-1.5 px-2 lg:px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-light hover:text-cobalt hover:bg-cobalt/10 transition-all border border-transparent hover:border-cobalt/20"
+              title="Search (⌘K)"
+            >
+              <Search className="w-4 h-4" />
+              <kbd className="hidden xl:flex items-center gap-0.5 px-1.5 py-0.5 rounded border border-border bg-background text-[9px] font-mono text-slate-light/50">⌘K</kbd>
+            </button>
             {/* Desktop-only individual tool buttons */}
             <div className="hidden lg:flex items-center gap-2">
               <button
@@ -261,13 +309,13 @@ export default function Home() {
               </button>
             </div>
 
-            {/* Mobile-only "Active Action" or "Quick Link" if needed, otherwise just use settings */}
+            {/* Mobile-only search button */}
             <button
-              onClick={() => setBriefingOpen(true)}
-              className="flex lg:hidden items-center justify-center w-9 h-9 rounded-lg bg-amber-500/10 text-amber-500 border border-amber-500/20"
-              title="Quick Brief"
+              onClick={() => setSearchOpen(true)}
+              className="flex lg:hidden items-center justify-center w-9 h-9 rounded-lg bg-cobalt/10 text-cobalt border border-cobalt/20"
+              title="Search"
             >
-              <ShieldAlert className="w-4 h-4" />
+              <Search className="w-4 h-4" />
             </button>
           </div>
 
@@ -642,6 +690,52 @@ export default function Home() {
                     </button>
                   </div>
                 </div>
+
+                {/* Tools */}
+                <div>
+                  <p className="text-[10px] font-mono text-slate-light mb-2 tracking-wider">TOOLS</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { label: "SEARCH", icon: Search, color: "cobalt", action: () => { setMobileSettingsOpen(false); setTimeout(() => setSearchOpen(true), 200); } },
+                      { label: "BRIEFING", icon: ShieldAlert, color: "amber-500", action: () => { setMobileSettingsOpen(false); setBriefingOpen(true); } },
+                      { label: "ANALYTICS", icon: BarChart3, color: "emerald-500", action: () => { setMobileSettingsOpen(false); setAnalyticsOpen(true); } },
+                      { label: "AI NEXUS", icon: Share2, color: "cobalt", action: () => { setMobileSettingsOpen(false); setAiNexusOpen(true); } },
+                      { label: "COMPARE", icon: Combine, color: "emerald-500", action: () => { setMobileSettingsOpen(false); setComparativeOpen(true); } },
+                      { label: "TRADE", icon: ArrowUpRight, color: "cyan-500", action: () => { setMobileSettingsOpen(false); setTradeIntelOpen(true); } },
+                      { label: "ABOUT", icon: Info, color: "slate-light", action: () => { setMobileSettingsOpen(false); setMissionOpen(true); } },
+                      { label: "AI BRIEF", icon: BrainCircuit, color: "purple-500", action: () => { setMobileSettingsOpen(false); setBriefingOpen(true); } },
+                    ].map(tool => (
+                      <button
+                        key={tool.label}
+                        onClick={tool.action}
+                        className={`flex items-center gap-2 px-3 py-2.5 rounded-xl font-bold text-xs transition-all border bg-background border-border text-slate-light hover:border-${tool.color}/40 hover:text-${tool.color}`}
+                      >
+                        <tool.icon className="w-4 h-4" />
+                        {tool.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Links */}
+                <div>
+                  <p className="text-[10px] font-mono text-slate-light mb-2 tracking-wider">PAGES</p>
+                  <div className="grid grid-cols-3 gap-2 text-center">
+                    {[
+                      { label: "METHODOLOGY", href: "/methodology" },
+                      { label: "API DOCS", href: "/docs" },
+                      { label: "RSS FEED", href: "/feed.xml" },
+                    ].map(link => (
+                      <a
+                        key={link.label}
+                        href={link.href}
+                        className="px-2 py-2.5 rounded-xl text-[10px] font-bold tracking-wider transition-all border bg-background border-border text-slate-light hover:text-cobalt hover:border-cobalt/40"
+                      >
+                        {link.label}
+                      </a>
+                    ))}
+                  </div>
+                </div>
               </div>
             </motion.div>
           </>
@@ -662,6 +756,12 @@ export default function Home() {
       </footer>
 
       {/* Modals */}
+      <SearchCommand
+        isOpen={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        onSelectCountry={(iso) => { setSelectedCodes([iso]); setSearchOpen(false); }}
+        onOpenTool={(action) => { openTool(action); setSearchOpen(false); }}
+      />
       <MissionModal isOpen={missionOpen} onClose={() => setMissionOpen(false)} />
       <AnalyticsModal
         isOpen={analyticsOpen}
