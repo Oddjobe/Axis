@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from "react"
 import Image from "next/image"
-import { ShieldAlert, Newspaper, Video, BookOpen, Lightbulb, Globe, Play, Square, ArrowUpRight, Users } from "lucide-react"
+import { ShieldAlert, Newspaper, Video, BookOpen, Lightbulb, Globe, Play, Square, ArrowUpRight, Users, Radio, Wifi, WifiOff } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useWatchlist } from "@/lib/use-watchlist"
 import type { IntelligenceAlert } from "./country-dossier-modal"
@@ -63,6 +63,61 @@ const SafeImage = ({ src, fallbackIcon: Icon, className, width, height, fill }: 
         />
     );
 }
+
+// ISO → flag emoji helper
+const isoToFlag = (iso: string) => {
+    const map: Record<string, string> = {
+        NGA: "🇳🇬", ETH: "🇪🇹", EGY: "🇪🇬", COD: "🇨🇩", TZA: "🇹🇿", ZAF: "🇿🇦", KEN: "🇰🇪",
+        UGA: "🇺🇬", SDN: "🇸🇩", DZA: "🇩🇿", MAR: "🇲🇦", AGO: "🇦🇴", GHA: "🇬🇭", MOZ: "🇲🇿",
+        MDG: "🇲🇬", CIV: "🇨🇮", CMR: "🇨🇲", NER: "🇳🇪", BFA: "🇧🇫", MLI: "🇲🇱", MWI: "🇲🇼",
+        ZMB: "🇿🇲", TCD: "🇹🇩", SOM: "🇸🇴", SEN: "🇸🇳", ZWE: "🇿🇼", GIN: "🇬🇳", RWA: "🇷🇼",
+        BEN: "🇧🇯", BDI: "🇧🇮", TUN: "🇹🇳", SSD: "🇸🇸", TGO: "🇹🇬", SLE: "🇸🇱", LBY: "🇱🇾",
+        COG: "🇨🇬", CAF: "🇨🇫", LBR: "🇱🇷", MRT: "🇲🇷", ERI: "🇪🇷", GMB: "🇬🇲", BWA: "🇧🇼",
+        NAM: "🇳🇦", GNB: "🇬🇼", LSO: "🇱🇸", GNQ: "🇬🇶", MUS: "🇲🇺", SWZ: "🇸🇿", DJI: "🇩🇯",
+        COM: "🇰🇲", CPV: "🇨🇻", STP: "🇸🇹", SYC: "🇸🇨"
+    };
+    return map[iso?.toUpperCase()] || "🌍";
+};
+
+// Reading time estimate
+const estimateReadTime = (text?: string) => {
+    if (!text) return "1 MIN";
+    const words = text.split(/\s+/).length;
+    return `${Math.max(1, Math.ceil(words / 120))} MIN`;
+};
+
+// Skeleton loading components
+const FeedCardSkeleton = () => (
+    <div className="flex items-center w-full min-h-[75px] sm:min-h-[85px] bg-background/40 dark:bg-onyx/20 border border-border/20 dark:border-white/5 rounded-xl sm:rounded-2xl p-2 sm:p-2.5 animate-pulse">
+        <div className="w-[45px] h-[45px] sm:w-[60px] sm:h-[60px] shrink-0 rounded-lg sm:rounded-xl bg-white/5" />
+        <div className="flex-1 ml-2.5 sm:ml-3 space-y-2">
+            <div className="h-3 bg-white/5 rounded w-3/4" />
+            <div className="h-2 bg-white/5 rounded w-full" />
+            <div className="h-2 bg-white/5 rounded w-1/3" />
+        </div>
+    </div>
+);
+
+const HeroCardSkeleton = () => (
+    <div className="rounded-[24px] overflow-hidden border border-border/20 dark:border-white/5 h-[220px] mb-6 animate-pulse bg-white/5">
+        <div className="h-full p-4 lg:p-6 flex flex-col justify-end">
+            <div className="h-3 bg-white/5 rounded w-24 mb-3" />
+            <div className="h-5 bg-white/5 rounded w-3/4 mb-2" />
+            <div className="h-3 bg-white/5 rounded w-full mb-2" />
+            <div className="h-2 bg-white/5 rounded w-20" />
+        </div>
+    </div>
+);
+
+const EmptyState = ({ icon: Icon, message, sub }: { icon: React.ComponentType<{ className?: string }>; message: string; sub: string }) => (
+    <div className="flex flex-col items-center justify-center py-16 opacity-60 space-y-3">
+        <div className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
+            <Icon className="w-5 h-5 text-slate-light/50" />
+        </div>
+        <span className="text-xs font-mono font-bold tracking-widest">{message}</span>
+        <span className="text-[10px] text-slate-light/40 text-center px-6 max-w-[240px]">{sub}</span>
+    </div>
+);
 
 export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVEREIGNTY" | "OUTSIDE INFLUENCE"; filterCountries: string[] | null }) {
     const [alerts, setAlerts] = useState<Article[]>([])
@@ -355,14 +410,11 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
                             </button>
                         </div>
                         {loading && alerts.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center h-full opacity-50 space-y-2">
-                                <span className="text-xs font-mono animate-pulse">EXTRACTING LIVE INTEL...</span>
-                                <div className="text-[10px] text-slate-light text-center px-4">Firecrawl Engine initializing deep scan of geopolitical signals across Africa.</div>
+                            <div className="space-y-3">
+                                {[...Array(5)].map((_, i) => <FeedCardSkeleton key={i} />)}
                             </div>
                         ) : filteredAlerts.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center h-full opacity-50">
-                                <span className="text-xs font-mono">NO ACTIVE {mode} ALERTS DETECTED.</span>
-                            </div>
+                            <EmptyState icon={ShieldAlert} message={`NO ${mode} SIGNALS`} sub="No active intelligence signals match your current filter criteria." />
                         ) : (
                             <AnimatePresence mode="popLayout">
                                 {(isMounted ? [...(filteredAlerts || [])].sort((a, b) => {
@@ -381,9 +433,12 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
                                         initial={{ opacity: 0, x: 20 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         exit={{ opacity: 0, x: -20 }}
-                                        transition={{ delay: idx * 0.1, duration: 0.3 }}
-                                        className="flex items-start sm:items-center w-full min-h-[75px] sm:min-h-[85px] bg-background/60 dark:bg-onyx/40 hover:bg-background/80 dark:hover:bg-onyx/60 border border-border/40 dark:border-white/5 rounded-xl sm:rounded-2xl backdrop-blur-md transition-all duration-300 hover:scale-[1.01] group cursor-pointer overflow-hidden p-2 sm:p-2.5"
+                                        transition={{ delay: idx * 0.08, duration: 0.3 }}
+                                        className={`relative flex items-start sm:items-center w-full min-h-[75px] sm:min-h-[85px] bg-background/60 dark:bg-onyx/40 hover:bg-background/80 dark:hover:bg-onyx/60 border border-border/40 dark:border-white/5 rounded-xl sm:rounded-2xl backdrop-blur-md transition-all duration-300 hover:scale-[1.01] group cursor-pointer overflow-hidden p-2 sm:p-2.5 ${alert.severity === "HIGH" ? "border-l-4 border-l-red-500" : alert.severity === "MEDIUM" ? "border-l-4 border-l-orange-500" : "border-l-4 border-l-emerald-500"}`}
                                     >
+                                        {alert.severity === "HIGH" && (
+                                            <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.6)]" />
+                                        )}
                                         <div className="w-[45px] h-[45px] sm:w-[60px] sm:h-[60px] lg:w-[65px] lg:h-[65px] shrink-0 rounded-lg sm:rounded-xl overflow-hidden border border-orange-500/20 group-hover:border-orange-500/40 transition-colors mt-0.5 sm:mt-0">
                                             <SafeImage src={alert.imageUrl} fallbackIcon={ShieldAlert} className="w-full h-full grayscale group-hover:grayscale-0 transition-opacity duration-500 scale-105 group-hover:scale-100" width={65} height={65} />
                                         </div>
@@ -404,6 +459,7 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
                                                     }`}>
                                                     {alert.severity}
                                                 </span>
+                                                <span className="text-[9px]">{isoToFlag(alert.isoCode)}</span>
                                                 <span className="text-[7px] sm:text-[8px] text-slate-light/40 uppercase tracking-widest">{alert.isoCode}</span>
                                             </div>
                                         </div>
@@ -419,7 +475,12 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
 
                 {activeTab === "NEWS" && (
                     <div className="space-y-4">
-                        {filteredAlerts.length > 0 ? (
+                        {loading && filteredAlerts.length === 0 ? (
+                            <>
+                                <HeroCardSkeleton />
+                                {[...Array(3)].map((_, i) => <FeedCardSkeleton key={i} />)}
+                            </>
+                        ) : filteredAlerts.length > 0 ? (
                             <motion.a
                                 href={filteredAlerts[0].url || "#"}
                                 target="_blank"
@@ -459,11 +520,11 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
                                 </div>
                             </motion.a>
                         ) : (
-                            <div className="p-4 border border-white/5 border-dashed rounded-[20px] text-center opacity-30 h-[100px] flex items-center justify-center">
-                                <span className="text-[10px] font-mono tracking-widest text-white">NO TOP STORIES DETECTED</span>
-                            </div>
+                            <EmptyState icon={Newspaper} message="NO TOP STORIES" sub="Intelligence feeds are being scanned. Check back shortly for macroeconomic updates." />
                         )}
 
+                        {filteredAlerts.length > 0 && (
+                        <>
                         <div className="text-[10px] font-mono text-slate-light border-b border-border pb-1 mt-6 mb-2">MACROECONOMIC CONTEXT & FORESIGHT</div>
 
                         {filteredAlerts.slice(1, 8).map((news, idx) => (
@@ -474,8 +535,11 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
                                 rel="noopener noreferrer"
                                 className="flex items-start sm:items-center w-full min-h-[75px] sm:min-h-[85px] bg-background/60 dark:bg-onyx/40 hover:bg-background/80 dark:hover:bg-onyx/60 border border-border/40 dark:border-white/5 rounded-xl sm:rounded-2xl backdrop-blur-md transition-all duration-300 hover:scale-[1.01] group cursor-pointer overflow-hidden p-2 sm:p-2.5"
                             >
-                                <div className="w-[45px] h-[45px] sm:w-[60px] sm:h-[60px] lg:w-[65px] lg:h-[65px] shrink-0 rounded-lg sm:rounded-xl overflow-hidden border border-border/40 dark:border-white/10 group-hover:border-cobalt/40 transition-colors mt-0.5 sm:mt-0">
-                                    <SafeImage src={news.imageUrl} fallbackIcon={Newspaper} className="w-full h-full grayscale group-hover:grayscale-0 transition-opacity duration-500 scale-105 group-hover:scale-100" width={65} height={65} />
+                                <div className="w-[28px] h-[28px] sm:w-[32px] sm:h-[32px] shrink-0 rounded-lg bg-cobalt/10 border border-cobalt/20 flex items-center justify-center mr-2 mt-0.5 sm:mt-0">
+                                    <span className="text-cobalt font-mono font-black text-[11px] sm:text-[13px]">{String(idx + 1).padStart(2, '0')}</span>
+                                </div>
+                                <div className="w-[45px] h-[45px] sm:w-[55px] sm:h-[55px] shrink-0 rounded-lg sm:rounded-xl overflow-hidden border border-border/40 dark:border-white/10 group-hover:border-cobalt/40 transition-colors mt-0.5 sm:mt-0">
+                                    <SafeImage src={news.imageUrl} fallbackIcon={Newspaper} className="w-full h-full grayscale group-hover:grayscale-0 transition-opacity duration-500 scale-105 group-hover:scale-100" width={55} height={55} />
                                 </div>
                                 <div className="flex-1 ml-2.5 sm:ml-3 min-w-0 pr-1 sm:pr-2">
                                     <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-0.5 sm:mb-1 gap-0.5">
@@ -485,8 +549,12 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
                                     <p className="text-[10px] sm:text-[11px] text-slate-light font-light line-clamp-2 leading-tight">
                                         {news.summary}
                                     </p>
-                                    <div className="mt-1">
+                                    <div className="mt-1 flex items-center gap-2 flex-wrap">
                                         <span className="text-[7px] sm:text-[8px] font-bold text-cobalt uppercase tracking-widest">{news.source || "OSINT WIRE"}</span>
+                                        {news.category && (
+                                            <span className="text-[7px] px-1.5 py-0.5 rounded bg-cobalt/10 text-cobalt/80 font-mono font-bold uppercase tracking-wider">{news.category}</span>
+                                        )}
+                                        <span className="text-[7px] text-slate-light/30 font-mono">{estimateReadTime(news.summary)} READ</span>
                                     </div>
                                 </div>
                                 <div className="hidden sm:block opacity-0 group-hover:opacity-100 transition-opacity pr-2">
@@ -494,6 +562,8 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
                                 </div>
                             </a>
                         ))}
+                        </>
+                        )}
                     </div>
                 )}
 
@@ -504,43 +574,79 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
                             MEDIUM GEOPOLITICAL ANALYSIS
                         </div>
                         {blogsLoading && blogs.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center py-12 opacity-50 space-y-2">
-                                <span className="text-xs font-mono animate-pulse">SCRAPING MEDIUM BLOGS...</span>
-                                <div className="text-[10px] text-slate-light text-center px-4">Firecrawl extracting geopolitical analysis from Medium publications.</div>
+                            <div className="space-y-3">
+                                {[...Array(4)].map((_, i) => <FeedCardSkeleton key={i} />)}
                             </div>
                         ) : blogs.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center py-12 opacity-50">
-                                <span className="text-xs font-mono">NO BLOG POSTS AVAILABLE.</span>
-                            </div>
+                            <EmptyState icon={BookOpen} message="NO BLOG POSTS" sub="Geopolitical analysis feed is warming up. Medium publications will appear here." />
                         ) : (
-                            blogs.map((post, idx) => (
+                            <>
+                            {/* Featured first blog */}
+                            {blogs[0] && (
+                                <a
+                                    href={blogs[0].url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="block group relative rounded-2xl overflow-hidden border border-green-500/20 hover:border-green-500/40 bg-gradient-to-br from-green-500/5 to-transparent transition-all duration-500 hover:scale-[1.01]"
+                                >
+                                    <div className="h-1 bg-gradient-to-r from-green-500 via-emerald-400 to-green-600" />
+                                    <div className="p-4 space-y-2.5">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-[8px] font-bold px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 uppercase tracking-widest">FEATURED</span>
+                                            {blogs[0].tag && <span className="text-[8px] text-green-500/60 font-mono uppercase">{blogs[0].tag}</span>}
+                                            {blogs[0].readingTime && <span className="text-[8px] text-slate-light/40 font-mono ml-auto">{blogs[0].readingTime} READ</span>}
+                                        </div>
+                                        <h3 className="text-[14px] sm:text-[16px] font-black text-foreground dark:text-white leading-snug group-hover:text-green-400 transition-colors line-clamp-2 uppercase tracking-tight">
+                                            {blogs[0].title}
+                                        </h3>
+                                        <p className="text-[11px] text-slate-light font-light line-clamp-3 leading-relaxed">{blogs[0].summary}</p>
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-1.5 text-[8px] text-green-500/60 font-mono font-bold uppercase tracking-wider">
+                                                <Users className="w-2.5 h-2.5" /> {blogs[0].author || "ANALYST"}
+                                            </div>
+                                            <div className="flex items-center text-green-500 text-[9px] font-bold uppercase tracking-widest group-hover:translate-x-1 transition-transform">
+                                                READ <ArrowUpRight className="ml-1 w-2.5 h-2.5" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </a>
+                            )}
+                            {/* Remaining blog cards with accent bar */}
+                            {blogs.slice(1).map((post, idx) => (
                                 <a
                                     key={idx}
                                     href={post.url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="flex items-start sm:items-center w-full min-h-[75px] sm:min-h-[85px] bg-background/60 dark:bg-onyx/40 hover:bg-background/80 dark:hover:bg-onyx/60 border border-border/40 dark:border-white/5 rounded-xl sm:rounded-2xl backdrop-blur-md transition-all duration-300 hover:scale-[1.01] group cursor-pointer overflow-hidden p-2 sm:p-2.5"
+                                    className="relative flex items-start sm:items-center w-full min-h-[75px] sm:min-h-[85px] bg-background/60 dark:bg-onyx/40 hover:bg-background/80 dark:hover:bg-onyx/60 border border-border/40 dark:border-white/5 rounded-xl sm:rounded-2xl backdrop-blur-md transition-all duration-300 hover:scale-[1.01] group cursor-pointer overflow-hidden"
                                 >
-                                    <div className="w-[45px] h-[45px] sm:w-[60px] sm:h-[60px] lg:w-[65px] lg:h-[65px] shrink-0 rounded-lg sm:rounded-xl overflow-hidden border border-white/10 group-hover:border-green-500/40 transition-colors mt-0.5 sm:mt-0">
-                                        <SafeImage src={post.imageUrl} fallbackIcon={BookOpen} className="w-full h-full grayscale group-hover:grayscale-0 transition-opacity duration-500 scale-105 group-hover:scale-100" width={65} height={65} />
-                                    </div>
-                                    <div className="flex-1 ml-2.5 sm:ml-3 min-w-0 pr-1 sm:pr-2">
-                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-0.5 sm:mb-1 gap-0.5">
-                                            <h3 className="text-[12px] sm:text-[13px] font-bold text-foreground dark:text-white line-clamp-2 sm:truncate uppercase tracking-tight leading-snug sm:leading-tight">{post.title}</h3>
-                                            <span className="text-[8px] sm:text-[9px] text-green-500/80 font-mono whitespace-nowrap sm:ml-2 uppercase">{post.tag}</span>
+                                    <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-green-500/60 via-emerald-400/40 to-transparent" />
+                                    <div className="flex items-start sm:items-center w-full p-2 sm:p-2.5">
+                                        <div className="w-[45px] h-[45px] sm:w-[60px] sm:h-[60px] lg:w-[65px] lg:h-[65px] shrink-0 rounded-lg sm:rounded-xl overflow-hidden border border-white/10 group-hover:border-green-500/40 transition-colors mt-0.5 sm:mt-0">
+                                            <SafeImage src={post.imageUrl} fallbackIcon={BookOpen} className="w-full h-full grayscale group-hover:grayscale-0 transition-opacity duration-500 scale-105 group-hover:scale-100" width={65} height={65} />
                                         </div>
-                                        <p className="text-[10px] sm:text-[11px] text-slate-light font-light line-clamp-2 leading-tight">
-                                            {post.summary}
-                                        </p>
-                                        <div className="mt-1 flex items-center gap-1.5 font-mono text-[7px] sm:text-[8px] text-green-500/60 font-bold uppercase tracking-wider">
-                                            <Users className="w-2.5 h-2.5" /> {post.author}
+                                        <div className="flex-1 ml-2.5 sm:ml-3 min-w-0 pr-1 sm:pr-2">
+                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-0.5 sm:mb-1 gap-0.5">
+                                                <h3 className="text-[12px] sm:text-[13px] font-bold text-foreground dark:text-white line-clamp-2 sm:truncate uppercase tracking-tight leading-snug sm:leading-tight">{post.title}</h3>
+                                                {post.readingTime && <span className="text-[8px] sm:text-[9px] text-green-500/70 font-mono whitespace-nowrap sm:ml-2">{post.readingTime}</span>}
+                                            </div>
+                                            <p className="text-[10px] sm:text-[11px] text-slate-light font-light line-clamp-2 leading-tight">
+                                                {post.summary}
+                                            </p>
+                                            <div className="mt-1 flex items-center gap-2">
+                                                <span className="flex items-center gap-1 font-mono text-[7px] sm:text-[8px] text-green-500/60 font-bold uppercase tracking-wider">
+                                                    <Users className="w-2.5 h-2.5" /> {post.author}
+                                                </span>
+                                                {post.tag && <span className="text-[7px] px-1.5 py-0.5 rounded bg-green-500/10 text-green-500/70 font-mono font-bold uppercase">{post.tag}</span>}
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div className="hidden sm:block opacity-0 group-hover:opacity-100 transition-opacity pr-2">
-                                        <ArrowUpRight className="w-4 h-4 text-green-500" />
+                                        <div className="hidden sm:block opacity-0 group-hover:opacity-100 transition-opacity pr-2">
+                                            <ArrowUpRight className="w-4 h-4 text-green-500" />
+                                        </div>
                                     </div>
                                 </a>
-                            ))
+                            ))}
+                            </>
                         )}
                     </div>
                 )}
@@ -552,37 +658,51 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
                             EXTERNAL OSINT MEDIA SOURCES
                         </div>
                         {[
-                            { name: "Into Africa (CSIS)", handle: "@csis", focus: "African Political, Economic & Security Issues", url: "https://www.youtube.com/@csis" },
-                            { name: "African Geopolitics in Action", handle: "#Geopolitics", focus: "Policy & Strategic Shifts", url: "https://www.youtube.com/results?search_query=African+Geopolitics+in+Action" },
-                            { name: "Africa World Hour", handle: "@sabcnews", focus: "African Perspectives on Regional Developments", url: "https://www.youtube.com/results?search_query=Africa+World+Hour" },
-                            { name: "Geopolitical Monitor", handle: "Geopolitics", focus: "Security, Resources & Strategic Developments", url: "https://www.youtube.com/results?search_query=Geopolitical+Monitor+Africa" },
-                            { name: "Peter Zeihan", handle: "@ZeihanOnGeopolitics", focus: "Data-Driven Analysis on African Infrastructure & Resources", url: "https://www.youtube.com/@ZeihanOnGeopolitics" }
+                            { name: "Into Africa (CSIS)", handle: "@csis", focus: "African Political, Economic & Security Issues", url: "https://www.youtube.com/@csis", badge: "RECOMMENDED" },
+                            { name: "African Geopolitics in Action", handle: "#Geopolitics", focus: "Policy & Strategic Shifts", url: "https://www.youtube.com/results?search_query=African+Geopolitics+in+Action", badge: null },
+                            { name: "Africa World Hour", handle: "@sabcnews", focus: "African Perspectives on Regional Developments", url: "https://www.youtube.com/results?search_query=Africa+World+Hour", badge: null },
+                            { name: "Geopolitical Monitor", handle: "Geopolitics", focus: "Security, Resources & Strategic Developments", url: "https://www.youtube.com/results?search_query=Geopolitical+Monitor+Africa", badge: "RECOMMENDED" },
+                            { name: "Peter Zeihan", handle: "@ZeihanOnGeopolitics", focus: "Data-Driven Analysis on African Infrastructure & Resources", url: "https://www.youtube.com/@ZeihanOnGeopolitics", badge: "RECOMMENDED" }
                         ].map((channel, idx) => (
-                            <a
+                            <motion.a
                                 key={idx}
                                 href={channel.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex items-start gap-4 p-4 bg-background/60 dark:bg-[#252525] hover:bg-background/80 dark:hover:bg-[#353535] border border-border/40 dark:border-white/5 rounded-[20px] backdrop-blur-[10px] transition-all duration-500 ease-in-out hover:scale-[1.02] group cursor-pointer overflow-hidden"
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: idx * 0.08 }}
+                                className="relative flex items-start gap-4 p-4 bg-background/60 dark:bg-[#252525] hover:bg-background/80 dark:hover:bg-[#353535] border border-border/40 dark:border-white/5 rounded-[20px] backdrop-blur-[10px] transition-all duration-500 ease-in-out hover:scale-[1.02] group cursor-pointer overflow-hidden"
                             >
-                                <div className="w-12 h-12 shrink-0 rounded-[12px] bg-red-500/10 border border-red-500/20 flex items-center justify-center transition-all duration-500 group-hover:bg-red-500/20">
+                                <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-red-500/40 via-red-400/20 to-transparent" />
+                                <div className="relative w-14 h-14 shrink-0 rounded-[14px] bg-red-500/10 border border-red-500/20 flex items-center justify-center transition-all duration-500 group-hover:bg-red-500/20 group-hover:shadow-[0_0_20px_rgba(239,68,68,0.15)]">
                                     <div className="text-red-500"><YouTubeIcon /></div>
+                                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <div className="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center shadow-lg">
+                                            <Play className="w-3 h-3 text-white ml-0.5" fill="white" />
+                                        </div>
+                                    </div>
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <h3 className="text-[14px] font-bold text-foreground dark:text-white mb-1 group-hover:text-red-500 transition-colors">
-                                        {channel.name}
-                                    </h3>
-                                    <div className="text-[10px] font-mono text-red-500/60 mb-2 uppercase tracking-tight">
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <h3 className="text-[14px] font-bold text-foreground dark:text-white group-hover:text-red-500 transition-colors truncate">
+                                            {channel.name}
+                                        </h3>
+                                        {channel.badge && (
+                                            <span className="shrink-0 text-[7px] font-bold px-1.5 py-0.5 rounded-full bg-red-500/15 text-red-400 border border-red-500/20 uppercase tracking-widest">{channel.badge}</span>
+                                        )}
+                                    </div>
+                                    <div className="text-[10px] font-mono text-red-500/60 mb-1.5 uppercase tracking-tight">
                                         {channel.handle}
                                     </div>
                                     <div className="text-[9px] text-slate-light/60 font-mono leading-tight">
                                         {channel.focus.toUpperCase()}
                                     </div>
                                 </div>
-                                <div className="opacity-0 group-hover:opacity-100 transition-all transform translate-x-1 group-hover:translate-x-0">
+                                <div className="opacity-0 group-hover:opacity-100 transition-all transform translate-x-1 group-hover:translate-x-0 self-center">
                                     <ArrowUpRight className="w-4 h-4 text-red-500" />
                                 </div>
-                            </a>
+                            </motion.a>
                         ))}
                     </div>
                 )}
