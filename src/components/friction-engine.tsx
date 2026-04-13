@@ -64,20 +64,7 @@ const SafeImage = ({ src, fallbackIcon: Icon, className, width, height, fill }: 
     );
 }
 
-// ISO → flag emoji helper
-const isoToFlag = (iso: string) => {
-    const map: Record<string, string> = {
-        NGA: "🇳🇬", ETH: "🇪🇹", EGY: "🇪🇬", COD: "🇨🇩", TZA: "🇹🇿", ZAF: "🇿🇦", KEN: "🇰🇪",
-        UGA: "🇺🇬", SDN: "🇸🇩", DZA: "🇩🇿", MAR: "🇲🇦", AGO: "🇦🇴", GHA: "🇬🇭", MOZ: "🇲🇿",
-        MDG: "🇲🇬", CIV: "🇨🇮", CMR: "🇨🇲", NER: "🇳🇪", BFA: "🇧🇫", MLI: "🇲🇱", MWI: "🇲🇼",
-        ZMB: "🇿🇲", TCD: "🇹🇩", SOM: "🇸🇴", SEN: "🇸🇳", ZWE: "🇿🇼", GIN: "🇬🇳", RWA: "🇷🇼",
-        BEN: "🇧🇯", BDI: "🇧🇮", TUN: "🇹🇳", SSD: "🇸🇸", TGO: "🇹🇬", SLE: "🇸🇱", LBY: "🇱🇾",
-        COG: "🇨🇬", CAF: "🇨🇫", LBR: "🇱🇷", MRT: "🇲🇷", ERI: "🇪🇷", GMB: "🇬🇲", BWA: "🇧🇼",
-        NAM: "🇳🇦", GNB: "🇬🇼", LSO: "🇱🇸", GNQ: "🇬🇶", MUS: "🇲🇺", SWZ: "🇸🇿", DJI: "🇩🇯",
-        COM: "🇰🇲", CPV: "🇨🇻", STP: "🇸🇹", SYC: "🇸🇨"
-    };
-    return map[iso?.toUpperCase()] || "🌍";
-};
+import { isoToFlag } from "@/lib/flags";
 
 // Reading time estimate
 const estimateReadTime = (text?: string) => {
@@ -501,7 +488,7 @@ export default function FrictionEngine({ mode, filterCountries, onSelectCountry,
                 {filterCountries && filterCountries.length > 0 && (
                     <div className="text-[10px] font-mono px-2 py-1 bg-green-500/10 border border-green-500/30 rounded text-green-500 flex items-center gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                        FILTERED: {filterCountries.length === 1 ? filterCountries[0].toUpperCase() : `${filterCountries.length} COUNTRIES`}
+                        {filterCountries.length === 1 ? isoToFlag(filterCountries[0]) : ""} FILTERED: {filterCountries.length === 1 ? filterCountries[0].toUpperCase() : `${filterCountries.length} COUNTRIES`}
                     </div>
                 )}
                 {activeTab === "ALERTS" && (

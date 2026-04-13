@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import { Search, Globe, BarChart3, ShieldAlert, Share2, Combine, ArrowUpRight, Info, X, Command } from "lucide-react"
 import { AnimatePresence, motion } from "framer-motion"
+import { isoToFlag } from "@/lib/flags"
 
 const AFRICAN_NATIONS = [
   { c: "DZA", n: "Algeria" }, { c: "AGO", n: "Angola" }, { c: "BEN", n: "Benin" }, { c: "BWA", n: "Botswana" },
@@ -175,7 +176,7 @@ export default function SearchCommand({ isOpen, onClose, onSelectCountry, onOpen
                         selectedIndex === globalIdx ? "bg-cobalt/10 text-cobalt" : "text-foreground hover:bg-background/80"
                       }`}
                     >
-                      <Globe className="w-4 h-4 shrink-0 opacity-60" />
+                      <span className="text-lg leading-none shrink-0">{isoToFlag(country.c)}</span>
                       <div className="flex-1 min-w-0">
                         <span className="text-sm font-semibold">{country.n}</span>
                         <span className="ml-2 text-[10px] font-mono text-slate-light/50">{country.c}</span>

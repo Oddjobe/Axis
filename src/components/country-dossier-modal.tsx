@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Globe, ShieldAlert, BarChart3, ArrowRight, Activity, Cpu, Download, Star, BrainCircuit, Newspaper, TrendingUp, Share2, Copy, Check, Info } from "lucide-react";
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
+import { isoToFlag } from "@/lib/flags";
 import html2canvas from "html2canvas-pro";
 import { jsPDF } from "jspdf";
 import { useWatchlist } from "@/lib/use-watchlist";
@@ -311,8 +312,9 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
                     {/* Header */}
                     <div className="flex flex-col p-4 sm:p-6 border-b border-border bg-gradient-to-b from-black/5 to-transparent dark:from-white/5 gap-3 relative">
                         <div className="flex items-center gap-3 sm:gap-4 pr-10 sm:pr-0">
-                            <div className="w-14 h-14 bg-cobalt/20 border-2 border-cobalt/50 rounded-full flex items-center justify-center font-bold text-xl text-cobalt shadow-[0_0_20px_rgba(37,99,235,0.4)] shrink-0">
-                                {countryData.country}
+                            <div className="w-14 h-14 bg-cobalt/20 border-2 border-cobalt/50 rounded-full flex flex-col items-center justify-center text-cobalt shadow-[0_0_20px_rgba(37,99,235,0.4)] shrink-0">
+                                <span className="text-2xl leading-none">{isoToFlag(countryData.country)}</span>
+                                <span className="text-[8px] font-bold tracking-wider">{countryData.country}</span>
                             </div>
                             <div>
                                 <div className="flex items-center gap-3 mb-1 mt-0.5">

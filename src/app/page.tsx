@@ -49,6 +49,7 @@ import SearchCommand from "@/components/search-command";
 import CommodityTicker from "@/components/commodity-ticker";
 import { ALL_SOVEREIGN_DATA } from "@/lib/mock-data";
 import { Language, useTranslation } from "@/lib/i18n";
+import { isoToFlag } from "@/lib/flags";
 import type { CountryData } from "@/components/country-dossier-modal";
 import kpiData from "@/lib/kpi-data.json";
 import { AnimatePresence, motion } from "framer-motion";
@@ -202,7 +203,7 @@ export default function Home() {
         <div className="flex items-center gap-2 lg:gap-4">
           {/* Group 1: Population */}
           <div className="flex items-center gap-1.5 lg:gap-2 px-2 lg:px-3 py-1 lg:py-1.5 bg-background border border-border rounded-lg text-[10px] lg:text-xs font-mono shadow-sm">
-            <Users className="w-3 h-3 lg:w-3.5 lg:h-3.5 text-zinc-400" />
+            {selectedCountries.length === 1 ? <span className="text-base leading-none">{isoToFlag(selectedCountries[0].country)}</span> : <Users className="w-3 h-3 lg:w-3.5 lg:h-3.5 text-zinc-400" />}
             <span className="text-slate-light hidden sm:inline">
               {selectedCountries.length === 1 ? selectedCountries[0].name.toUpperCase() : selectedCountries.length > 1 ? t("selected_population") : t("population")}
             </span>
@@ -450,7 +451,7 @@ export default function Home() {
             {selectedCountries.length > 0 && (
               <div className="absolute top-2 left-2 sm:top-4 sm:left-4 px-2 sm:px-3 py-1.5 sm:py-2 bg-green-500/20 border border-green-500/60 rounded-lg text-[10px] font-mono backdrop-blur-md shadow-lg text-green-400 flex items-center gap-1.5 sm:gap-2 max-w-[calc(100%-1rem)]">
                 <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-green-500 animate-pulse shrink-0" />
-                <span className="truncate">FILTERING: <strong>{selectedCountries.length === 1 ? selectedCountries[0].name.toUpperCase() : `${selectedCountries.length} COUNTRIES`}</strong></span>
+                <span className="truncate">{selectedCountries.length === 1 ? isoToFlag(selectedCountries[0].country) : ""} FILTERING: <strong>{selectedCountries.length === 1 ? selectedCountries[0].name.toUpperCase() : `${selectedCountries.length} COUNTRIES`}</strong></span>
                 <button
                   onClick={() => setSelectedCodes([])}
                   className="ml-1 px-1.5 py-0.5 rounded bg-green-500/20 text-green-500 hover:bg-green-500 hover:text-white transition-colors text-[9px] font-bold shrink-0"
