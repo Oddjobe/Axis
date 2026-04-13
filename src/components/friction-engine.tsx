@@ -119,7 +119,120 @@ const EmptyState = ({ icon: Icon, message, sub }: { icon: React.ComponentType<{ 
     </div>
 );
 
-export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVEREIGNTY" | "OUTSIDE INFLUENCE"; filterCountries: string[] | null }) {
+// Contextual smart suggestions based on mode + selected countries
+interface Suggestion {
+    text: string;
+    action: "select" | "mode";
+    iso?: string;
+    targetMode?: "SOVEREIGNTY" | "OUTSIDE INFLUENCE";
+}
+
+const COUNTRY_SUGGESTIONS: Record<string, Suggestion[]> = {
+    NGA: [
+        { text: "Track Dangote Refinery output vs OPEC quotas", action: "select", iso: "NGA" },
+        { text: "Analyze Nigeria's naira float impact on sovereignty", action: "select", iso: "NGA" },
+        { text: "Compare Nigeria vs South Africa FDI competition", action: "select", iso: "ZAF" },
+    ],
+    COD: [
+        { text: "DRC cobalt export ban impact on global EV supply", action: "select", iso: "COD" },
+        { text: "Map Chinese mining concessions in Katanga province", action: "mode", targetMode: "OUTSIDE INFLUENCE" },
+        { text: "Compare DRC minerals policy to Indonesia's nickel ban", action: "select", iso: "COD" },
+    ],
+    ETH: [
+        { text: "Ethiopia's Grand Renaissance Dam power export potential", action: "select", iso: "ETH" },
+        { text: "Assess Tigray reconstruction impact on FDI recovery", action: "select", iso: "ETH" },
+        { text: "Compare Ethiopia & Kenya as East African tech hubs", action: "select", iso: "KEN" },
+    ],
+    ZAF: [
+        { text: "Eskom load-shedding effect on sovereignty score", action: "select", iso: "ZAF" },
+        { text: "Track BRICS expansion influence on South Africa", action: "mode", targetMode: "OUTSIDE INFLUENCE" },
+        { text: "Analyze Rand volatility vs commodity exports", action: "select", iso: "ZAF" },
+    ],
+    EGY: [
+        { text: "Ras El Hekma mega-deal FDI sustainability analysis", action: "select", iso: "EGY" },
+        { text: "Suez Canal revenue vs sovereign debt obligations", action: "select", iso: "EGY" },
+        { text: "UAE influence in Egyptian infrastructure projects", action: "mode", targetMode: "OUTSIDE INFLUENCE" },
+    ],
+    GHA: [
+        { text: "Ghana's gold-for-oil policy impact on reserves", action: "select", iso: "GHA" },
+        { text: "Cocoa price surge effect on fiscal sovereignty", action: "select", iso: "GHA" },
+    ],
+    KEN: [
+        { text: "Kenya's tech ecosystem vs Nigeria's fintech dominance", action: "select", iso: "NGA" },
+        { text: "Belt & Road debt exposure along SGR corridor", action: "mode", targetMode: "OUTSIDE INFLUENCE" },
+    ],
+    MAR: [
+        { text: "Morocco's phosphate monopoly & food security leverage", action: "select", iso: "MAR" },
+        { text: "OCP Group expansion into Sub-Saharan fertilizer markets", action: "select", iso: "MAR" },
+    ],
+    GIN: [
+        { text: "Guinea bauxite export quotas & price impact", action: "select", iso: "GIN" },
+        { text: "Military junta resource nationalism trajectory", action: "select", iso: "GIN" },
+    ],
+    NER: [
+        { text: "Niger's uranium policy shift post-coup", action: "select", iso: "NER" },
+        { text: "French military withdrawal impact on Sahel security", action: "mode", targetMode: "OUTSIDE INFLUENCE" },
+    ],
+};
+
+const SOVEREIGNTY_GENERAL: Suggestion[] = [
+    { text: "Explore Nigeria — Africa's largest economy", action: "select", iso: "NGA" },
+    { text: "Explore DRC — critical mineral powerhouse", action: "select", iso: "COD" },
+    { text: "Explore Ethiopia — fastest growing East African economy", action: "select", iso: "ETH" },
+    { text: "Explore South Africa — BRICS anchor state", action: "select", iso: "ZAF" },
+    { text: "Switch to Outside Influence view", action: "mode", targetMode: "OUTSIDE INFLUENCE" },
+    { text: "Explore Egypt — Suez Canal & mega FDI recipient", action: "select", iso: "EGY" },
+    { text: "Explore Ghana — gold-for-oil pioneer", action: "select", iso: "GHA" },
+    { text: "Explore Guinea — global bauxite leader", action: "select", iso: "GIN" },
+    { text: "Monitor AfCFTA tariff reduction progress by member state", action: "select", iso: "NGA" },
+];
+
+const INFLUENCE_GENERAL: Suggestion[] = [
+    { text: "Map Belt & Road debt exposure across East Africa", action: "select", iso: "KEN" },
+    { text: "Track French military withdrawal from the Sahel", action: "select", iso: "NER" },
+    { text: "Analyze UAE investment influence in Egypt", action: "select", iso: "EGY" },
+    { text: "Chinese mining concessions in the DRC", action: "select", iso: "COD" },
+    { text: "Switch to Sovereignty view", action: "mode", targetMode: "SOVEREIGNTY" },
+    { text: "Russian Wagner Group presence in West Africa", action: "select", iso: "MLI" },
+    { text: "US AGOA trade preferences impact on South Africa", action: "select", iso: "ZAF" },
+    { text: "Gulf state port acquisitions along Red Sea corridor", action: "select", iso: "DJI" },
+];
+
+function getSmartSuggestions(mode: "SOVEREIGNTY" | "OUTSIDE INFLUENCE", filterCountries: string[] | null): Suggestion[] {
+    // Country-specific suggestions when a country is selected
+    if (filterCountries && filterCountries.length === 1) {
+        const iso = filterCountries[0].toUpperCase();
+        const countrySuggestions = COUNTRY_SUGGESTIONS[iso] || [];
+        // Pad with general suggestions if not enough country-specific ones
+        const general = mode === "SOVEREIGNTY" ? SOVEREIGNTY_GENERAL : INFLUENCE_GENERAL;
+        const extra = general.filter(s => s.iso !== iso).slice(0, 5 - countrySuggestions.length);
+        return [...countrySuggestions, ...extra].slice(0, 5);
+    }
+
+    // Multi-country: show relevant suggestions for selected countries
+    if (filterCountries && filterCountries.length > 1) {
+        const pool: Suggestion[] = [];
+        for (const iso of filterCountries) {
+            const cs = COUNTRY_SUGGESTIONS[iso.toUpperCase()];
+            if (cs) pool.push(cs[0]);
+        }
+        const general = mode === "SOVEREIGNTY" ? SOVEREIGNTY_GENERAL : INFLUENCE_GENERAL;
+        return [...pool, ...general].slice(0, 5);
+    }
+
+    // No country selected: show general exploration suggestions (shuffled by day to feel fresh)
+    const general = mode === "SOVEREIGNTY" ? SOVEREIGNTY_GENERAL : INFLUENCE_GENERAL;
+    const dayOffset = new Date().getDate() % general.length;
+    const rotated = [...general.slice(dayOffset), ...general.slice(0, dayOffset)];
+    return rotated.slice(0, 5);
+}
+
+export default function FrictionEngine({ mode, filterCountries, onSelectCountry, onSwitchMode }: {
+    mode: "SOVEREIGNTY" | "OUTSIDE INFLUENCE";
+    filterCountries: string[] | null;
+    onSelectCountry?: (iso: string) => void;
+    onSwitchMode?: (mode: "SOVEREIGNTY" | "OUTSIDE INFLUENCE") => void;
+}) {
     const [alerts, setAlerts] = useState<Article[]>([])
     const [blogs, setBlogs] = useState<BlogPost[]>([])
     const [loading, setLoading] = useState(true)
@@ -703,24 +816,25 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
 
                 <div className="mt-6 border-t border-border pt-4">
                     <div className="text-[10px] font-mono text-cobalt flex items-center gap-2 mb-3">
-                        <Lightbulb className="w-3 h-3" /> PLATFORM SUGGESTIONS
+                        <Lightbulb className="w-3 h-3" /> {filterCountries && filterCountries.length > 0 ? "INTEL SUGGESTIONS" : "EXPLORE"}
                     </div>
                     <div className="space-y-2">
-                        {[
-                            "Track Dangote Refinery output vs OPEC quotas for Nigeria",
-                            "Monitor PAPSS transaction volume growth quarter-over-quarter",
-                            "Compare DRC cobalt policy to Indonesia's nickel export ban model",
-                            "Map Belt & Road debt exposure across East African corridor",
-                            "Analyze AfCFTA tariff reduction timelines by member state"
-                        ].map((suggestion, idx) => (
-                            <div key={idx} className="flex items-center gap-3 p-3 bg-background/40 dark:bg-[#1d1d1d] hover:bg-background/60 dark:hover:bg-[#252525] border border-border/40 dark:border-white/5 rounded-[15px] transition-all duration-300 group cursor-default">
+                        {getSmartSuggestions(mode, filterCountries).map((s, idx) => (
+                            <button
+                                key={idx}
+                                onClick={() => {
+                                    if (s.action === "select" && s.iso && onSelectCountry) onSelectCountry(s.iso);
+                                    if (s.action === "mode" && s.targetMode && onSwitchMode) onSwitchMode(s.targetMode);
+                                }}
+                                className="flex items-center gap-3 p-3 w-full text-left bg-background/40 dark:bg-[#1d1d1d] hover:bg-cobalt/10 dark:hover:bg-cobalt/10 border border-border/40 dark:border-white/5 hover:border-cobalt/30 rounded-[15px] transition-all duration-300 group cursor-pointer"
+                            >
                                 <div className="w-6 h-6 shrink-0 rounded-full bg-cobalt/10 border border-cobalt/20 flex items-center justify-center group-hover:bg-cobalt/20 transition-colors">
-                                    <span className="text-cobalt text-[10px] font-bold">→</span>
+                                    {s.iso ? <span className="text-[10px]">{isoToFlag(s.iso)}</span> : <span className="text-cobalt text-[10px] font-bold">→</span>}
                                 </div>
                                 <span className="text-[10px] font-mono text-slate-light leading-snug group-hover:text-foreground dark:group-hover:text-white transition-colors">
-                                    {suggestion}
+                                    {s.text}
                                 </span>
-                            </div>
+                            </button>
                         ))}
                     </div>
                 </div>
