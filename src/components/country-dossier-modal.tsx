@@ -308,7 +308,7 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
                     id="dossier-modal-content"
                 >
                     {/* Header */}
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 sm:p-6 border-b border-border bg-gradient-to-b from-black/5 to-transparent dark:from-white/5 gap-4 sm:gap-0 relative">
+                    <div className="flex flex-col p-4 sm:p-6 border-b border-border bg-gradient-to-b from-black/5 to-transparent dark:from-white/5 gap-3 relative">
                         <div className="flex items-center gap-3 sm:gap-4 pr-10 sm:pr-0">
                             <div className="w-14 h-14 bg-cobalt/20 border-2 border-cobalt/50 rounded-full flex items-center justify-center font-bold text-xl text-cobalt shadow-[0_0_20px_rgba(37,99,235,0.4)] shrink-0">
                                 {countryData.country}
@@ -328,54 +328,57 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
                                 </div>
                             </div>
                         </div>
-                        <div className="flex items-center gap-3 w-full sm:w-auto overflow-x-auto hide-scrollbar pb-2 sm:pb-0">
+                        <button onClick={onClose} className="absolute top-4 right-4 p-2 hover:bg-black/10 dark:hover:bg-white/10 rounded-full transition-colors text-slate-light hover:text-foreground shrink-0 z-10">
+                            <X className="w-6 h-6" />
+                        </button>
+                        {/* Action toolbar — full width row below header info */}
+                        <div className="flex flex-wrap items-center gap-2 w-full mt-1">
                             <button
                                 onClick={() => countryData && togglePin(countryData.country)}
-                                className={`flex items-center justify-center p-2 rounded border transition-colors shrink-0 ${isPinned
+                                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border text-[10px] font-bold tracking-wider transition-all ${isPinned
                                     ? "bg-amber-500/20 border-amber-500/50 text-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.2)]"
-                                    : "bg-black/10 dark:bg-white/5 border-transparent text-slate-light hover:text-amber-500/80 hover:bg-amber-500/10"
+                                    : "bg-black/10 dark:bg-white/5 border-border/50 text-slate-light hover:text-amber-500 hover:bg-amber-500/10 hover:border-amber-500/30"
                                     }`}
                                 title={isPinned ? "Remove from Watchlist" : "Pin to Watchlist"}
                             >
-                                <Star className={`w-4 h-4 ${isPinned ? "fill-amber-500" : ""}`} />
+                                <Star className={`w-3.5 h-3.5 ${isPinned ? "fill-amber-500" : ""}`} />
+                                <span>{isPinned ? "PINNED" : "PIN"}</span>
                             </button>
                             <button
                                 onClick={handleExportPDF}
                                 disabled={isExporting}
-                                className={`flex items-center gap-2 px-3 py-1.5 rounded bg-cobalt/10 border border-cobalt/30 text-[10px] font-bold tracking-widest transition-colors shrink-0 ${isExporting ? "opacity-50 cursor-not-allowed text-cobalt/50" : "text-cobalt hover:bg-cobalt/20 hover:border-cobalt/50"}`}
+                                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border text-[10px] font-bold tracking-wider transition-all ${isExporting ? "opacity-50 cursor-not-allowed bg-cobalt/5 border-cobalt/20 text-cobalt/50" : "bg-cobalt/10 border-cobalt/30 text-cobalt hover:bg-cobalt/20 hover:border-cobalt/50 hover:shadow-[0_0_12px_rgba(37,99,235,0.15)]"}`}
                             >
-                                <Download className="w-3.5 h-3.5" /> <span className="whitespace-nowrap">{isExporting ? "ENCRYPTING PDF..." : "EXPORT DOSSIER"}</span>
+                                <Download className="w-3.5 h-3.5" />
+                                <span>{isExporting ? "EXPORTING..." : "EXPORT DOSSIER"}</span>
                             </button>
                             <button
                                 onClick={handleAIBrief}
                                 disabled={isGeneratingBrief}
-                                className={`flex items-center gap-2 px-3 py-1.5 rounded bg-purple-500/10 border border-purple-500/30 text-[10px] font-bold tracking-widest transition-colors shrink-0 ${
-                                    isGeneratingBrief ? "opacity-50 cursor-not-allowed text-purple-500/50" : "text-purple-500 hover:bg-purple-500/20 hover:border-purple-500/50"
+                                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border text-[10px] font-bold tracking-wider transition-all ${
+                                    isGeneratingBrief ? "opacity-50 cursor-not-allowed bg-purple-500/5 border-purple-500/20 text-purple-500/50" : "bg-purple-500/10 border-purple-500/30 text-purple-500 hover:bg-purple-500/20 hover:border-purple-500/50 hover:shadow-[0_0_12px_rgba(168,85,247,0.15)]"
                                 }`}
                             >
                                 <BrainCircuit className="w-3.5 h-3.5" />
-                                <span className="whitespace-nowrap hidden sm:inline">{isGeneratingBrief ? "GENERATING..." : "AI BRIEF"}</span>
+                                <span>{isGeneratingBrief ? "GENERATING..." : "AI BRIEF"}</span>
                             </button>
                             <button
                                 onClick={handleShare}
-                                className="flex items-center gap-2 px-3 py-1.5 rounded bg-cobalt/10 border border-cobalt/30 text-[10px] font-bold tracking-widest text-cobalt hover:bg-cobalt/20 hover:border-cobalt/50 transition-colors shrink-0"
+                                className="flex items-center gap-1.5 px-3 py-2 rounded-lg border bg-emerald-500/10 border-emerald-500/30 text-[10px] font-bold tracking-wider text-emerald-500 hover:bg-emerald-500/20 hover:border-emerald-500/50 hover:shadow-[0_0_12px_rgba(16,185,129,0.15)] transition-all"
                                 title="Share this country dossier"
                             >
-                                {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Share2 className="w-3.5 h-3.5" />}
-                                <span className="whitespace-nowrap hidden sm:inline">{copied ? "COPIED!" : "SHARE"}</span>
+                                {copied ? <Check className="w-3.5 h-3.5" /> : <Share2 className="w-3.5 h-3.5" />}
+                                <span>{copied ? "COPIED!" : "SHARE"}</span>
                             </button>
                             <button
                                 onClick={() => setShowEmbed(!showEmbed)}
-                                className="flex items-center gap-2 px-3 py-1.5 rounded bg-cobalt/10 border border-cobalt/30 text-[10px] font-bold tracking-widest text-cobalt hover:bg-cobalt/20 hover:border-cobalt/50 transition-colors shrink-0"
+                                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border text-[10px] font-bold tracking-wider transition-all ${showEmbed ? "bg-cyan-500/20 border-cyan-500/50 text-cyan-500" : "bg-cyan-500/10 border-cyan-500/30 text-cyan-500 hover:bg-cyan-500/20 hover:border-cyan-500/50 hover:shadow-[0_0_12px_rgba(6,182,212,0.15)]"}`}
                                 title="Embed this country card"
                             >
                                 <Cpu className="w-3.5 h-3.5" />
-                                <span className="whitespace-nowrap hidden sm:inline">EMBED</span>
+                                <span>EMBED</span>
                             </button>
                         </div>
-                        <button onClick={onClose} className="absolute top-4 right-4 sm:static p-2 hover:bg-black/10 dark:hover:bg-white/10 rounded-full transition-colors text-slate-light hover:text-foreground shrink-0">
-                            <X className="w-6 h-6" />
-                        </button>
                     </div>
                     {showEmbed && (
                         <div className="mx-4 sm:mx-6 mt-2 p-3 bg-black/20 border border-cobalt/20 rounded-lg">
