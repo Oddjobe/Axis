@@ -443,16 +443,11 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
                                             <SafeImage src={alert.imageUrl} fallbackIcon={ShieldAlert} className="w-full h-full grayscale group-hover:grayscale-0 transition-opacity duration-500 scale-105 group-hover:scale-100" width={65} height={65} />
                                         </div>
                                         <div className="flex-1 ml-2.5 sm:ml-3 min-w-0 pr-1 sm:pr-2">
-                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-0.5 sm:mb-1 gap-0.5">
-                                                <h3 className="text-[13px] sm:text-sm font-semibold text-foreground dark:text-white line-clamp-2 sm:line-clamp-1 leading-snug">{alert.title}</h3>
-                                                <span className="text-[8px] sm:text-[9px] text-orange-500/80 font-mono whitespace-nowrap sm:ml-2">
-                                                    {getLiveTimeAgo(alert.timestamp)}
-                                                </span>
-                                            </div>
+                                            <h3 className="text-[13px] sm:text-sm font-semibold text-foreground dark:text-white line-clamp-2 leading-snug mb-1">{alert.title}</h3>
                                             <p className="text-[10px] sm:text-[11px] text-slate-light font-light line-clamp-2 leading-tight">
                                                 {alert.summary}
                                             </p>
-                                            <div className="mt-1 flex items-center gap-1.5 sm:gap-2">
+                                            <div className="mt-1 flex items-center gap-1.5 sm:gap-2 flex-wrap">
                                                 <span className={`text-[7px] sm:text-[8px] font-bold px-1.5 py-0.5 rounded-sm sm:rounded uppercase ${alert.severity === "HIGH" ? "bg-red-500/20 text-red-500" :
                                                     alert.severity === "MEDIUM" ? "bg-orange-500/20 text-orange-500" :
                                                         "bg-emerald-500/20 text-emerald-500"
@@ -461,6 +456,9 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
                                                 </span>
                                                 <span className="text-[9px]">{isoToFlag(alert.isoCode)}</span>
                                                 <span className="text-[7px] sm:text-[8px] text-slate-light/40 uppercase tracking-widest">{alert.isoCode}</span>
+                                                <span className="text-[8px] sm:text-[9px] text-orange-500/60 font-mono ml-auto">
+                                                    {getLiveTimeAgo(alert.timestamp)}
+                                                </span>
                                             </div>
                                         </div>
                                         <div className="hidden sm:block opacity-0 group-hover:opacity-100 transition-opacity pr-2">
@@ -542,10 +540,7 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
                                     <SafeImage src={news.imageUrl} fallbackIcon={Newspaper} className="w-full h-full grayscale group-hover:grayscale-0 transition-opacity duration-500 scale-105 group-hover:scale-100" width={55} height={55} />
                                 </div>
                                 <div className="flex-1 ml-2.5 sm:ml-3 min-w-0 pr-1 sm:pr-2">
-                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-0.5 sm:mb-1 gap-0.5">
-                                        <h3 className="text-[13px] sm:text-sm font-semibold text-foreground dark:text-white line-clamp-2 sm:line-clamp-1 leading-snug">{news.title}</h3>
-                                        <span className="text-[8px] sm:text-[9px] text-cobalt/80 font-mono whitespace-nowrap sm:ml-2">{getLiveTimeAgo(news.timestamp)}</span>
-                                    </div>
+                                    <h3 className="text-[13px] sm:text-sm font-semibold text-foreground dark:text-white line-clamp-2 leading-snug mb-1">{news.title}</h3>
                                     <p className="text-[10px] sm:text-[11px] text-slate-light font-light line-clamp-2 leading-tight">
                                         {news.summary}
                                     </p>
@@ -555,6 +550,7 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
                                             <span className="text-[7px] px-1.5 py-0.5 rounded bg-cobalt/10 text-cobalt/80 font-mono font-bold uppercase tracking-wider">{news.category}</span>
                                         )}
                                         <span className="text-[7px] text-slate-light/30 font-mono">{estimateReadTime(news.summary)} READ</span>
+                                        <span className="text-[8px] sm:text-[9px] text-cobalt/60 font-mono ml-auto">{getLiveTimeAgo(news.timestamp)}</span>
                                     </div>
                                 </div>
                                 <div className="hidden sm:block opacity-0 group-hover:opacity-100 transition-opacity pr-2">
@@ -626,18 +622,16 @@ export default function FrictionEngine({ mode, filterCountries }: { mode: "SOVER
                                             <SafeImage src={post.imageUrl} fallbackIcon={BookOpen} className="w-full h-full grayscale group-hover:grayscale-0 transition-opacity duration-500 scale-105 group-hover:scale-100" width={65} height={65} />
                                         </div>
                                         <div className="flex-1 ml-2.5 sm:ml-3 min-w-0 pr-1 sm:pr-2">
-                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-0.5 sm:mb-1 gap-0.5">
-                                                <h3 className="text-[13px] sm:text-sm font-semibold text-foreground dark:text-white line-clamp-2 sm:line-clamp-1 leading-snug">{post.title}</h3>
-                                                {post.readingTime && <span className="text-[8px] sm:text-[9px] text-green-500/70 font-mono whitespace-nowrap sm:ml-2">{post.readingTime}</span>}
-                                            </div>
+                                            <h3 className="text-[13px] sm:text-sm font-semibold text-foreground dark:text-white line-clamp-2 leading-snug mb-1">{post.title}</h3>
                                             <p className="text-[10px] sm:text-[11px] text-slate-light font-light line-clamp-2 leading-tight">
                                                 {post.summary}
                                             </p>
-                                            <div className="mt-1 flex items-center gap-2">
+                                            <div className="mt-1 flex items-center gap-2 flex-wrap">
                                                 <span className="flex items-center gap-1 font-mono text-[7px] sm:text-[8px] text-green-500/60 font-bold uppercase tracking-wider">
                                                     <Users className="w-2.5 h-2.5" /> {post.author}
                                                 </span>
                                                 {post.tag && <span className="text-[7px] px-1.5 py-0.5 rounded bg-green-500/10 text-green-500/70 font-mono font-bold uppercase">{post.tag}</span>}
+                                                {post.readingTime && <span className="text-[8px] text-green-500/50 font-mono ml-auto">{post.readingTime}</span>}
                                             </div>
                                         </div>
                                         <div className="hidden sm:block opacity-0 group-hover:opacity-100 transition-opacity pr-2">
