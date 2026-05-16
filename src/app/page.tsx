@@ -191,15 +191,15 @@ export default function Home() {
     : `${(TOTAL_POPULATION / 1000).toFixed(2)} B`;
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden">
+    <div className="flex flex-col min-h-dvh overflow-x-hidden">
       <ErrorBoundary>
         <CommodityTicker />
       </ErrorBoundary>
       {/* Top Navigation / Dashboard Header */}
-      <header className="h-14 lg:h-16 flex items-center justify-between px-3 lg:px-6 border-b border-border bg-panel backdrop-blur-md z-10 shrink-0">
-        <div className="flex items-center gap-2 lg:gap-4">
+      <header className="min-h-14 lg:min-h-16 h-auto py-1 flex items-center justify-between px-3 lg:px-6 border-b border-border bg-panel backdrop-blur-md z-10 shrink-0">
+        <div className="flex items-center gap-2 lg:gap-4 min-w-0">
           <Globe className="w-5 h-5 lg:w-6 lg:h-6 text-cobalt" />
-          <h1 className="text-base lg:text-xl font-bold tracking-widest uppercase">
+          <h1 className="text-base lg:text-xl font-bold tracking-widest uppercase truncate">
             {t("dashboard_title")}
           </h1>
           <div className="h-5 w-px bg-border mx-1 hidden sm:block" />
@@ -208,7 +208,7 @@ export default function Home() {
           </span>
         </div>
 
-        <div className="flex items-center gap-2 lg:gap-4">
+        <div className="flex items-center justify-end gap-2 lg:gap-4 flex-wrap">
           {/* Group 1: Population */}
           <div className="flex items-center gap-1.5 lg:gap-2 px-2 lg:px-3 py-1 lg:py-1.5 bg-background border border-border rounded-lg text-[10px] lg:text-xs font-mono shadow-sm">
             {selectedCountries.length === 1 ? <span className="text-base leading-none">{isoToFlag(selectedCountries[0].country)}</span> : <Users className="w-3 h-3 lg:w-3.5 lg:h-3.5 text-zinc-400" />}
@@ -387,7 +387,7 @@ export default function Home() {
             {t("live")}
           </div>
           <div
-            className={`hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-full border text-[9px] font-mono font-bold tracking-wider ${dataSourceMode === "LIVE"
+            className={`hidden xl:flex items-center gap-1.5 px-2 py-1 rounded-full border text-[9px] font-mono font-bold tracking-wider ${dataSourceMode === "LIVE"
               ? "text-emerald-500 border-emerald-500/30 bg-emerald-500/10"
               : dataSourceMode === "CACHED"
                 ? "text-amber-500 border-amber-500/30 bg-amber-500/10"
@@ -402,7 +402,7 @@ export default function Home() {
       </header>
 
       {/* Main Grid Interface */}
-      <main className="flex-1 flex overflow-hidden pb-16 lg:pb-0">
+      <main className="flex-1 min-h-0 flex overflow-hidden pb-16 lg:pb-0">
         {/* Left Panel: 54-Nation Matrix — hidden on mobile unless selected */}
         <div className={`${mobilePanel === "index" ? "flex" : "hidden"} lg:flex`}>
           <AfcftaMatrix selectedCodes={selectedCodes} />
@@ -717,19 +717,19 @@ export default function Home() {
                   <p className="text-[10px] font-mono text-slate-light mb-2 tracking-wider">TOOLS</p>
                   <div className="grid grid-cols-2 gap-2">
                     {[
-                      { label: "SEARCH", icon: Search, color: "cobalt", action: () => { setMobileSettingsOpen(false); setTimeout(() => setSearchOpen(true), 200); } },
-                      { label: "BRIEFING", icon: ShieldAlert, color: "amber-500", action: () => { setMobileSettingsOpen(false); setBriefingOpen(true); } },
-                      { label: "ANALYTICS", icon: BarChart3, color: "emerald-500", action: () => { setMobileSettingsOpen(false); setAnalyticsOpen(true); } },
-                      { label: "AI NEXUS", icon: Share2, color: "cobalt", action: () => { setMobileSettingsOpen(false); setAiNexusOpen(true); } },
-                      { label: "COMPARE", icon: Combine, color: "emerald-500", action: () => { setMobileSettingsOpen(false); setComparativeOpen(true); } },
-                      { label: "TRADE", icon: ArrowUpRight, color: "cyan-500", action: () => { setMobileSettingsOpen(false); setTradeIntelOpen(true); } },
-                      { label: "ABOUT", icon: Info, color: "slate-light", action: () => { setMobileSettingsOpen(false); setMissionOpen(true); } },
-                      { label: "AI BRIEF", icon: BrainCircuit, color: "purple-500", action: () => { setMobileSettingsOpen(false); setBriefingOpen(true); } },
+                      { label: "SEARCH", icon: Search, hoverClass: "hover:border-cobalt/40 hover:text-cobalt", action: () => { setMobileSettingsOpen(false); setTimeout(() => setSearchOpen(true), 200); } },
+                      { label: "BRIEFING", icon: ShieldAlert, hoverClass: "hover:border-amber-500/40 hover:text-amber-500", action: () => { setMobileSettingsOpen(false); setBriefingOpen(true); } },
+                      { label: "ANALYTICS", icon: BarChart3, hoverClass: "hover:border-emerald-500/40 hover:text-emerald-500", action: () => { setMobileSettingsOpen(false); setAnalyticsOpen(true); } },
+                      { label: "AI NEXUS", icon: Share2, hoverClass: "hover:border-cobalt/40 hover:text-cobalt", action: () => { setMobileSettingsOpen(false); setAiNexusOpen(true); } },
+                      { label: "COMPARE", icon: Combine, hoverClass: "hover:border-emerald-500/40 hover:text-emerald-500", action: () => { setMobileSettingsOpen(false); setComparativeOpen(true); } },
+                      { label: "TRADE", icon: ArrowUpRight, hoverClass: "hover:border-cyan-500/40 hover:text-cyan-500", action: () => { setMobileSettingsOpen(false); setTradeIntelOpen(true); } },
+                      { label: "ABOUT", icon: Info, hoverClass: "hover:border-slate-300/40 hover:text-slate-300", action: () => { setMobileSettingsOpen(false); setMissionOpen(true); } },
+                      { label: "AI BRIEF", icon: BrainCircuit, hoverClass: "hover:border-purple-500/40 hover:text-purple-500", action: () => { setMobileSettingsOpen(false); setBriefingOpen(true); } },
                     ].map(tool => (
                       <button
                         key={tool.label}
                         onClick={tool.action}
-                        className={`flex items-center gap-2 px-3 py-2.5 rounded-xl font-bold text-xs transition-all border bg-background border-border text-slate-light hover:border-${tool.color}/40 hover:text-${tool.color}`}
+                        className={`flex items-center gap-2 px-3 py-2.5 rounded-xl font-bold text-xs transition-all border bg-background border-border text-slate-light ${tool.hoverClass}`}
                       >
                         <tool.icon className="w-4 h-4" />
                         {tool.label}
