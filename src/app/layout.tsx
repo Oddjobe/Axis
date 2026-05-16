@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
+import { AXIS_TAGLINE } from "@/lib/brand";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -38,6 +39,7 @@ export const metadata: Metadata = {
   authors: [{ name: "AXIS AFRICA", url: "https://axis-mocha.vercel.app" }],
   creator: "AXIS AFRICA Intelligence",
   publisher: "AXIS AFRICA",
+  applicationName: AXIS_TAGLINE,
   formatDetection: {
     email: false,
     address: false,
@@ -109,7 +111,7 @@ export default function RootLayout({
               "@context": "https://schema.org",
               "@type": "WebApplication",
               "name": "AXIS AFRICA",
-              "alternateName": "African X-Ray Intelligence System",
+               "alternateName": AXIS_TAGLINE,
               "url": "https://axis-mocha.vercel.app",
               "description": "Real-time strategic intelligence platform tracking sovereignty, resource wealth, and outside influence across all 54 African nations.",
               "applicationCategory": "BusinessApplication",

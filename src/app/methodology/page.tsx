@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { AXIS_TAGLINE } from "@/lib/brand";
 
 export const metadata: Metadata = {
     title: "Methodology",
@@ -91,6 +92,9 @@ export default function MethodologyPage() {
                     <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">
                         How the <span className="text-cobalt">AXIS Score</span> Works
                     </h1>
+                    <p className="text-[10px] font-mono tracking-[0.3em] text-cobalt uppercase">
+                        {AXIS_TAGLINE}
+                    </p>
                     <p className="text-sm sm:text-base font-mono text-slate-light leading-relaxed">
                         The AXIS Score is a composite sovereignty index ranging from{" "}
                         <strong className="text-foreground">0</strong> (fully

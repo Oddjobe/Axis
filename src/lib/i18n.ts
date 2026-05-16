@@ -1,9 +1,11 @@
+import { AXIS_TAGLINE } from "./brand";
+
 export type Language = "en" | "fr" | "sw" | "pt";
 
 export const translations: Record<Language, Record<string, string>> = {
     en: {
         dashboard_title: "Axis Africa",
-        subtitle: "AFRICAN X-RAY INTELLIGENCE SYSTEM · V1.0",
+        subtitle: AXIS_TAGLINE,
         population: "POPULATION",
         selected_population: "SELECTED POPULATION",
         about: "ABOUT",
@@ -13,6 +15,7 @@ export const translations: Record<Language, Record<string, string>> = {
         index: "INDEX",
         map: "MAP",
         intel: "INTEL",
+        controls: "CONTROLS",
         filtering: "FILTERING:"
     },
     fr: {
@@ -27,6 +30,7 @@ export const translations: Record<Language, Record<string, string>> = {
         index: "INDICE",
         map: "CARTE",
         intel: "RENSEIGN.",
+        controls: "CONTRÔLES",
         filtering: "FILTRAGE:"
     },
     sw: {
@@ -41,6 +45,7 @@ export const translations: Record<Language, Record<string, string>> = {
         index: "FAHIRISI",
         map: "RAMANI",
         intel: "INTEL",
+        controls: "VIDHIBITI",
         filtering: "KUCHUJA:"
     },
     pt: {
@@ -55,6 +60,7 @@ export const translations: Record<Language, Record<string, string>> = {
         index: "ÍNDICE",
         map: "MAPA",
         intel: "INTEL",
+        controls: "CONTROLES",
         filtering: "FILTRANDO:"
     }
 };

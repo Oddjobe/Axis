@@ -2,14 +2,9 @@
 
 import { useState, useEffect, useCallback } from "react";
 import {
-  Globe,
   Search,
   TrendingUp,
   TrendingDown,
-  LayoutDashboard,
-  AlertCircle,
-  Clock,
-  ChevronRight,
   ArrowUpRight,
   ShieldAlert,
   Activity,
@@ -31,6 +26,7 @@ import {
 import { useTheme } from "next-themes";
 import dynamic from "next/dynamic";
 import AfcftaMatrix from "@/components/afcfta-matrix";
+import AxisLogo from "@/components/axis-logo";
 import ErrorBoundary from "@/components/error-boundary";
 
 const AfricaMap = dynamic(() => import("@/components/africa-map"), {
@@ -54,6 +50,7 @@ import type { CountryData } from "@/components/country-dossier-modal";
 import kpiData from "@/lib/kpi-data.json";
 import { AnimatePresence, motion } from "framer-motion";
 import { useRealtimeAlerts } from "@/lib/use-realtime-alerts";
+import { AXIS_TAGLINE } from "@/lib/brand";
 const TOTAL_POPULATION = 1_444; // ~1.44 billion
 
 export default function Home() {
@@ -189,6 +186,9 @@ export default function Home() {
   const displayPop = selectedCountries.length > 0
     ? totalPopMillions >= 1000 ? `${(totalPopMillions / 1000).toFixed(2)} B` : `${totalPopMillions.toFixed(1)} M`
     : `${(TOTAL_POPULATION / 1000).toFixed(2)} B`;
+  const axisIndex = countryDataMaster.length > 0
+    ? Math.round(countryDataMaster.reduce((sum, c) => sum + (c.axisScore || 0), 0) / countryDataMaster.length)
+    : 0;
 
   return (
     <div className="flex flex-col h-dvh min-h-screen overflow-hidden">
@@ -196,207 +196,225 @@ export default function Home() {
         <CommodityTicker />
       </ErrorBoundary>
       {/* Top Navigation / Dashboard Header */}
-      <header className="h-14 lg:h-16 flex items-center justify-between px-3 lg:px-6 border-b border-border bg-panel backdrop-blur-md z-10 shrink-0">
-        <div className="flex items-center gap-2 lg:gap-4">
-          <Globe className="w-5 h-5 lg:w-6 lg:h-6 text-cobalt" />
-          <h1 className="text-base lg:text-xl font-bold tracking-widest uppercase">
-            {t("dashboard_title")}
-          </h1>
-          <div className="h-5 w-px bg-border mx-1 hidden sm:block" />
-          <span className="text-[9px] lg:text-xs font-mono text-slate-light dark:text-zinc-400 tracking-wider hidden sm:inline">
-            {t("subtitle")}
-          </span>
-        </div>
+      <header className="border-b border-border bg-panel/95 backdrop-blur-md z-10 shrink-0">
+        <div className="flex w-full flex-col gap-2 px-3 py-2 lg:px-6 lg:py-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center">
+              <AxisLogo />
+            </div>
 
-        <div className="flex items-center gap-2 lg:gap-4">
-          {/* Group 1: Population */}
-          <div className="flex items-center gap-1.5 lg:gap-2 px-2 lg:px-3 py-1 lg:py-1.5 bg-background border border-border rounded-lg text-[10px] lg:text-xs font-mono shadow-sm">
-            {selectedCountries.length === 1 ? <span className="text-base leading-none">{isoToFlag(selectedCountries[0].country)}</span> : <Users className="w-3 h-3 lg:w-3.5 lg:h-3.5 text-zinc-400" />}
-            <span className="text-slate-light hidden sm:inline">
-              {selectedCountries.length === 1 ? selectedCountries[0].name.toUpperCase() : selectedCountries.length > 1 ? t("selected_population") : t("population")}
-            </span>
-            <span className="font-bold text-zinc-400 dark:text-zinc-200 ml-0.5 lg:ml-1">{displayPop}</span>
-          </div>
+            <div className="hidden min-w-0 flex-1 grid-cols-4 gap-2 px-3 2xl:grid">
+              <div className="group relative flex h-20 min-w-0 flex-col justify-between overflow-hidden rounded-2xl border border-cobalt/20 bg-cobalt/10 px-3 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+                <p className="text-[8px] font-mono font-bold uppercase leading-tight tracking-[0.11em] text-cobalt/70">
+                  Population
+                </p>
+                <p className="relative z-10 whitespace-nowrap pr-7 text-xl font-black leading-none tracking-tight text-foreground tabular-nums">{displayPop}</p>
+                <Users className="absolute bottom-2.5 right-2.5 h-8 w-8 text-cobalt/20 transition-transform group-hover:scale-110" />
+              </div>
+              <div className="group relative flex h-20 min-w-0 flex-col justify-between overflow-hidden rounded-2xl border border-amber-500/25 bg-amber-500/10 px-3 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+                <p className="text-[8px] font-mono font-bold uppercase leading-tight tracking-[0.11em] text-amber-500/70">
+                  Axis Index
+                </p>
+                <p className="relative z-10 whitespace-nowrap pr-7 text-xl font-black leading-none tracking-tight text-amber-400 tabular-nums">{axisIndex || "--"}/100</p>
+                <Activity className="absolute bottom-2.5 right-2.5 h-8 w-8 text-amber-500/20 transition-transform group-hover:scale-110" />
+              </div>
+              <div className="group relative flex h-20 min-w-0 flex-col justify-between overflow-hidden rounded-2xl border border-emerald-500/25 bg-emerald-500/10 px-3 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+                <p className="text-[8px] font-mono font-bold uppercase leading-tight tracking-[0.11em] text-emerald-500/70">
+                  Inbound FDI
+                </p>
+                <p className="relative z-10 whitespace-nowrap pr-7 text-xl font-black leading-none tracking-tight text-emerald-400 tabular-nums">{kpiData.fdi}</p>
+                <TrendingUp className="absolute bottom-2.5 right-2.5 h-8 w-8 text-emerald-500/20 transition-transform group-hover:scale-110" />
+              </div>
+              <div className="group relative flex h-20 min-w-0 flex-col justify-between overflow-hidden rounded-2xl border border-red-500/25 bg-red-500/10 px-3 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+                <p className="text-[8px] font-mono font-bold uppercase leading-tight tracking-[0.11em] text-red-500/70">
+                  Capital Flight
+                </p>
+                <p className="relative z-10 whitespace-nowrap pr-7 text-xl font-black leading-none tracking-tight text-red-400 tabular-nums">{kpiData.capitalFlight}</p>
+                <TrendingDown className="absolute bottom-2.5 right-2.5 h-8 w-8 text-red-500/20 transition-transform group-hover:scale-110" />
+              </div>
+            </div>
 
-          {/* Sovereignty Alert Index */}
-          {countryDataMaster.length > 0 && (() => {
-            const axisIndex = Math.round(countryDataMaster.reduce((sum, c) => sum + (c.axisScore || 0), 0) / countryDataMaster.length);
-            const indexColor = axisIndex >= 70 ? 'text-emerald-500 border-emerald-500/20 bg-emerald-500/5' 
-              : axisIndex >= 50 ? 'text-amber-500 border-amber-500/20 bg-amber-500/5' 
-              : 'text-red-500 border-red-500/20 bg-red-500/5';
-            return (
-              <div className={`hidden sm:flex items-center gap-1.5 px-2 lg:px-3 py-1 lg:py-1.5 border rounded-lg text-[10px] lg:text-xs font-mono shadow-sm ${indexColor}`}>
-                <Activity className="w-3 h-3 lg:w-3.5 lg:h-3.5" />
-                <div className="flex flex-col leading-none">
-                  <span className="text-[7px] lg:text-[8px] font-bold opacity-60 uppercase tracking-tighter">AXIS INDEX</span>
-                  <span className="font-bold leading-tight">{axisIndex}/100</span>
+            <div className="flex min-w-0 items-stretch justify-end gap-2">
+              <div className="hidden min-w-[22rem] rounded-2xl border border-cobalt/20 bg-cobalt/5 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] lg:block">
+                <div className="mb-1 flex items-center justify-between px-1">
+                  <span className="text-[8px] font-mono font-bold uppercase tracking-[0.22em] text-cobalt/70">Analysis Mode</span>
+                  <ShieldAlert className="h-3.5 w-3.5 text-cobalt/60" />
+                </div>
+                <div className="flex items-center gap-1 rounded-full border border-border bg-background/70 p-1 shadow-inner">
+                  <button
+                    onClick={() => setMode("SOVEREIGNTY")}
+                    className={`min-w-[8.5rem] rounded-full px-3 py-1.5 text-center text-[10px] font-bold leading-tight transition-all ${mode === "SOVEREIGNTY" ? "bg-cobalt text-white shadow-[0_0_10px_rgba(37,99,235,0.4)]" : "text-slate-light hover:text-foreground"}`}
+                  >
+                    {t("sovereignty")}
+                  </button>
+                  <button
+                    onClick={() => setMode("OUTSIDE INFLUENCE")}
+                    className={`min-w-[10.6rem] rounded-full px-3 py-1.5 text-center text-[10px] font-bold leading-tight transition-all ${mode === "OUTSIDE INFLUENCE" ? "bg-orange-500 text-white shadow-[0_0_10px_rgba(249,115,22,0.4)]" : "text-slate-light hover:text-foreground"}`}
+                  >
+                    {t("outside_influence")}
+                  </button>
                 </div>
               </div>
-            );
-          })()}
 
-          <div className="hidden lg:flex h-6 w-px bg-border/50" />
+              <div className="hidden rounded-2xl border border-border bg-background/60 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] lg:flex items-center gap-2">
+                <div>
+                  <span className="mb-1 block px-1 text-[8px] font-mono font-bold uppercase tracking-[0.22em] text-slate-light/70">Locale</span>
+                  <div className="flex overflow-hidden rounded-lg border border-border bg-background text-[10px] font-bold shadow-sm">
+                    {(["en", "fr", "sw", "pt"] as Language[]).map(lang => (
+                      <button
+                        key={lang}
+                        onClick={() => setLanguage(lang)}
+                        className={`min-w-[2.8rem] px-2.5 py-1.5 uppercase leading-none transition-colors ${language === lang ? "bg-cobalt/20 text-cobalt" : "text-slate-light hover:bg-white/5"}`}
+                      >
+                        {lang}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <button
+                  onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                  className="mt-4 rounded-lg border border-border bg-background p-2 text-slate-light shadow-sm transition-colors hover:bg-panel hover:text-foreground"
+                  title="Toggle Theme"
+                >
+                  {mounted && theme === "dark" ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
+                </button>
+              </div>
 
-          {/* Group 2: Capital Flow KPIs */}
-          <div className="hidden lg:flex items-center gap-3">
-            <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-emerald-500/5 border border-emerald-500/20 rounded-lg text-[10px] font-mono shadow-sm group hover:bg-emerald-500/10 transition-colors">
-              <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
-              <div className="flex flex-col">
-                <span className="text-[8px] text-emerald-500/60 font-bold leading-none uppercase tracking-tighter">Inbound (FDI)</span>
-                <span className="font-bold text-emerald-500 leading-tight">{kpiData.fdi}</span>
+              <div
+                className={`hidden min-w-[10rem] flex-col justify-center gap-1 rounded-2xl border px-3 py-2 font-mono text-[9px] font-bold tracking-wider lg:flex ${dataSourceMode === "LIVE"
+                  ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-500"
+                  : dataSourceMode === "CACHED"
+                    ? "border-amber-500/30 bg-amber-500/10 text-amber-500"
+                    : "border-red-500/30 bg-red-500/10 text-red-500"
+                }`}
+                title="Current country data source"
+              >
+                <span className="uppercase tracking-[0.22em] opacity-70">Data Source</span>
+                <span className="flex items-center gap-2 text-xs">
+                  <span className="h-1.5 w-1.5 rounded-full bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.8)] animate-[pulse_2s_ease-in-out_infinite]" />
+                  <span className={`h-1.5 w-1.5 rounded-full ${dataSourceMode === "LIVE" ? "bg-emerald-500" : dataSourceMode === "CACHED" ? "bg-amber-500" : "bg-red-500"}`} />
+                  {dataSourceMode}
+                </span>
               </div>
-            </div>
-            <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-red-500/5 border border-red-500/20 rounded-lg text-[10px] font-mono shadow-sm group hover:bg-red-500/10 transition-colors">
-              <TrendingDown className="w-3.5 h-3.5 text-red-500" />
-              <div className="flex flex-col">
-                <span className="text-[8px] text-red-500/60 font-bold leading-none uppercase tracking-tighter">Capital Flight</span>
-                <span className="font-bold text-red-500 leading-tight">{kpiData.capitalFlight}</span>
-              </div>
+
+              <button
+                onClick={() => setSearchOpen(true)}
+                className="flex h-9 w-9 items-center justify-center rounded-lg border border-cobalt/20 bg-cobalt/10 text-cobalt lg:hidden"
+                title="Search"
+              >
+                <Search className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => setMobileSettingsOpen(true)}
+                className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-background text-slate-light transition-colors hover:bg-panel hover:text-foreground md:hidden"
+                aria-label="Settings"
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+              </button>
             </div>
           </div>
 
-          {/* Group 2: Tools/Modals - Consolidate on mobile */}
-          <div className="flex items-center gap-1.5 lg:gap-2">
-            {/* Search button — always visible */}
-            <button
-              onClick={() => setSearchOpen(true)}
-              className="flex items-center gap-1.5 px-2 lg:px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-light hover:text-cobalt hover:bg-cobalt/10 transition-all border border-transparent hover:border-cobalt/20"
-              title="Search (⌘K)"
-            >
-              <Search className="w-4 h-4" />
-              <kbd className="hidden xl:flex items-center gap-0.5 px-1.5 py-0.5 rounded border border-border bg-background text-[9px] font-mono text-slate-light/50">⌘K</kbd>
-            </button>
-            {/* Desktop-only individual tool buttons */}
-            <div className="hidden lg:flex items-center gap-2">
+          <div className="flex items-center justify-between gap-3 overflow-x-auto pb-0.5 no-scrollbar 2xl:justify-end">
+            <div className="flex shrink-0 items-center gap-2 lg:gap-3 2xl:hidden">
+              <div className="flex items-center gap-1.5 rounded-lg border border-border bg-background px-2 py-1 font-mono text-[10px] shadow-sm lg:gap-2 lg:px-3 lg:py-1.5 lg:text-xs">
+                {selectedCountries.length === 1 ? <span className="text-base leading-none">{isoToFlag(selectedCountries[0].country)}</span> : <Users className="h-3 w-3 text-zinc-400 lg:h-3.5 lg:w-3.5" />}
+                <span className="hidden text-slate-light sm:inline">
+                  {selectedCountries.length === 1 ? selectedCountries[0].name.toUpperCase() : selectedCountries.length > 1 ? t("selected_population") : t("population")}
+                </span>
+                <span className="ml-0.5 font-bold text-zinc-400 dark:text-zinc-200 lg:ml-1">{displayPop}</span>
+              </div>
+
+              {countryDataMaster.length > 0 && (() => {
+                const indexColor = axisIndex >= 70 ? "text-emerald-500 border-emerald-500/20 bg-emerald-500/5"
+                  : axisIndex >= 50 ? "text-amber-500 border-amber-500/20 bg-amber-500/5"
+                    : "text-red-500 border-red-500/20 bg-red-500/5";
+                return (
+                  <div className={`hidden items-center gap-1.5 rounded-lg border px-2 py-1 font-mono text-[10px] shadow-sm sm:flex lg:px-3 lg:py-1.5 lg:text-xs ${indexColor}`}>
+                    <Activity className="h-3 w-3 lg:h-3.5 lg:w-3.5" />
+                    <div className="flex flex-col leading-none">
+                      <span className="text-[7px] font-bold uppercase tracking-tighter opacity-60 lg:text-[8px]">AXIS INDEX</span>
+                      <span className="font-bold leading-tight">{axisIndex}/100</span>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              <div className="hidden items-center gap-2 lg:flex">
+                <div className="flex items-center gap-1.5 rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-2.5 py-1.5 font-mono text-[10px] shadow-sm transition-colors hover:bg-emerald-500/10">
+                  <TrendingUp className="h-3.5 w-3.5 text-emerald-500" />
+                  <div className="flex flex-col">
+                    <span className="text-[8px] font-bold uppercase leading-none tracking-tighter text-emerald-500/60">Inbound (FDI)</span>
+                    <span className="font-bold leading-tight text-emerald-500">{kpiData.fdi}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5 rounded-lg border border-red-500/20 bg-red-500/5 px-2.5 py-1.5 font-mono text-[10px] shadow-sm transition-colors hover:bg-red-500/10">
+                  <TrendingDown className="h-3.5 w-3.5 text-red-500" />
+                  <div className="flex flex-col">
+                    <span className="text-[8px] font-bold uppercase leading-none tracking-tighter text-red-500/60">Capital Flight</span>
+                    <span className="font-bold leading-tight text-red-500">{kpiData.capitalFlight}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="hidden shrink-0 items-center gap-2 lg:flex">
+              <button
+                onClick={() => setSearchOpen(true)}
+                className="flex min-w-[5.4rem] items-center justify-center gap-1.5 rounded-xl border border-transparent bg-background/40 px-3 py-2 text-xs font-bold text-slate-light transition-all hover:border-cobalt/20 hover:bg-cobalt/10 hover:text-cobalt"
+                title="Search (⌘K)"
+              >
+                <Search className="h-4 w-4" />
+                <kbd className="hidden items-center gap-0.5 rounded border border-border bg-background px-1.5 py-0.5 font-mono text-[9px] text-slate-light/50 xl:flex">⌘K</kbd>
+              </button>
               <button
                 onClick={() => setMissionOpen(true)}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-light hover:text-cobalt hover:bg-cobalt/10 transition-all border border-transparent hover:border-cobalt/20"
+                className="flex min-w-[6.5rem] items-center justify-center gap-1.5 rounded-xl border border-transparent bg-background/40 px-3 py-2 text-xs font-bold text-slate-light transition-all hover:border-cobalt/20 hover:bg-cobalt/10 hover:text-cobalt"
                 title={t("about")}
               >
-                <Info className="w-4 h-4" />
+                <Info className="h-4 w-4" />
                 <span className="hidden xl:inline">{t("about")}</span>
               </button>
               <button
                 onClick={() => setAnalyticsOpen(true)}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-light hover:text-green-500 hover:bg-green-500/10 transition-all border border-transparent hover:border-green-500/20"
+                className="flex min-w-[7.6rem] items-center justify-center gap-1.5 rounded-xl border border-transparent bg-background/40 px-3 py-2 text-xs font-bold text-slate-light transition-all hover:border-green-500/20 hover:bg-green-500/10 hover:text-green-500"
                 title="Analytics"
               >
-                <BarChart3 className="w-4 h-4" />
+                <BarChart3 className="h-4 w-4" />
                 <span className="hidden xl:inline">ANALYTICS</span>
               </button>
               <button
                 onClick={() => setAiNexusOpen(true)}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-cobalt/10 text-cobalt hover:bg-cobalt/20 transition-all border border-cobalt/20 shadow-[0_0_15px_rgba(37,99,235,0.1)]"
+                className="flex min-w-[7.8rem] items-center justify-center gap-1.5 rounded-xl border border-cobalt/20 bg-cobalt/10 px-3 py-2 text-xs font-bold text-cobalt shadow-[0_0_15px_rgba(37,99,235,0.1)] transition-all hover:bg-cobalt/20"
                 title="AI Supply Chain Nexus"
               >
-                <Share2 className="w-4 h-4 animate-pulse" />
+                <Share2 className="h-4 w-4 animate-pulse" />
                 <span className="hidden xl:inline">AI NEXUS</span>
               </button>
               <button
                 onClick={() => setBriefingOpen(true)}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 transition-all border border-amber-500/20 shadow-[0_0_15px_rgba(245,158,11,0.1)]"
+                className="flex min-w-[8rem] items-center justify-center gap-1.5 rounded-xl border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-xs font-bold text-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.1)] transition-all hover:bg-amber-500/20"
                 title="Executive SITREP"
               >
-                <ShieldAlert className="w-4 h-4" />
+                <ShieldAlert className="h-4 w-4" />
                 <span className="hidden xl:inline">BRIEFING</span>
               </button>
               <button
                 onClick={() => setComparativeOpen(true)}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 transition-all border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]"
+                className="flex min-w-[8rem] items-center justify-center gap-1.5 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-xs font-bold text-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.1)] transition-all hover:bg-emerald-500/20"
                 title="Comparative Strategic Analytics"
               >
-                <Combine className="w-4 h-4" />
+                <Combine className="h-4 w-4" />
                 <span className="hidden xl:inline">COMPARE</span>
               </button>
               <button
                 onClick={() => setTradeIntelOpen(true)}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-cyan-500/10 text-cyan-500 hover:bg-cyan-500/20 transition-all border border-cyan-500/20 shadow-[0_0_15px_rgba(6,182,212,0.1)]"
+                className="flex min-w-[7rem] items-center justify-center gap-1.5 rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-3 py-2 text-xs font-bold text-cyan-500 shadow-[0_0_15px_rgba(6,182,212,0.1)] transition-all hover:bg-cyan-500/20"
                 title="Trade Intelligence"
               >
-                <ArrowUpRight className="w-4 h-4" />
+                <ArrowUpRight className="h-4 w-4" />
                 <span className="hidden xl:inline">TRADE</span>
               </button>
             </div>
-
-            {/* Mobile-only search button */}
-            <button
-              onClick={() => setSearchOpen(true)}
-              className="flex lg:hidden items-center justify-center w-9 h-9 rounded-lg bg-cobalt/10 text-cobalt border border-cobalt/20"
-              title="Search"
-            >
-              <Search className="w-4 h-4" />
-            </button>
-          </div>
-
-          <div className="hidden xl:block h-6 w-px bg-border/50" />
-
-          {/* Group 3: Dashboard Mode Toggle (desktop only) */}
-          <div className="hidden lg:flex items-center gap-1 bg-background border border-border rounded-full p-1 shadow-inner">
-            <button
-              onClick={() => setMode("SOVEREIGNTY")}
-              className={`px-3 py-1 text-[10px] font-bold rounded-full transition-all whitespace-nowrap ${mode === "SOVEREIGNTY" ? "bg-cobalt text-white shadow-[0_0_10px_rgba(37,99,235,0.4)]" : "text-slate-light hover:text-foreground"}`}
-            >
-              {t("sovereignty")}
-            </button>
-            <button
-              onClick={() => setMode("OUTSIDE INFLUENCE")}
-              className={`px-3 py-1 text-[10px] font-bold rounded-full transition-all whitespace-nowrap ${mode === "OUTSIDE INFLUENCE" ? "bg-orange-500 text-white shadow-[0_0_10px_rgba(249,115,22,0.4)]" : "text-slate-light hover:text-foreground"}`}
-            >
-              <span className="hidden xl:inline">{t("outside_influence")}</span>
-              <span className="xl:hidden">INFLUENCE</span>
-            </button>
-          </div>
-
-          <div className="hidden xl:block h-6 w-px bg-border/50" />
-
-          {/* Group 4: Settings & Locales (desktop only) */}
-          <div className="hidden lg:flex items-center gap-2">
-            <div className="flex bg-background border border-border rounded-lg overflow-hidden text-[10px] font-bold shadow-sm">
-              {(["en", "fr", "sw", "pt"] as Language[]).map(lang => (
-                <button
-                  key={lang}
-                  onClick={() => setLanguage(lang)}
-                  className={`px-2 py-1.5 transition-colors uppercase ${language === lang ? "bg-cobalt/20 text-cobalt" : "text-slate-light hover:bg-white/5"}`}
-                >
-                  {lang}
-                </button>
-              ))}
-            </div>
-            <button
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="p-1.5 lg:p-2 rounded-lg border border-border bg-background hover:bg-panel transition-colors text-slate-light hover:text-foreground shadow-sm"
-              title="Toggle Theme"
-            >
-              {mounted && theme === "dark" ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
-            </button>
-          </div>
-
-          {/* Mobile Settings Button */}
-          <button
-            onClick={() => setMobileSettingsOpen(true)}
-            className="flex md:hidden items-center justify-center p-1.5 rounded-lg border border-border bg-background text-slate-light hover:text-foreground hover:bg-panel transition-colors"
-            aria-label="Settings"
-          >
-            <SlidersHorizontal className="w-4 h-4" />
-          </button>
-
-          <div className="hidden xl:block h-6 w-px bg-border/50" />
-
-          {/* Group 5: Data/Live Status */}
-          <div
-            className={`hidden lg:flex items-center gap-2 px-2.5 py-1 rounded-full border text-[9px] font-mono font-bold tracking-wider whitespace-nowrap ${dataSourceMode === "LIVE"
-              ? "text-emerald-500 border-emerald-500/30 bg-emerald-500/10"
-              : dataSourceMode === "CACHED"
-                ? "text-amber-500 border-amber-500/30 bg-amber-500/10"
-                : "text-red-500 border-red-500/30 bg-red-500/10"
-              }`}
-            title="Current country data source"
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-[pulse_2s_ease-in-out_infinite] shadow-[0_0_5px_rgba(34,197,94,0.8)]" />
-            <span>{t("live")}</span>
-            <span className="opacity-40">|</span>
-            <span className={`w-1.5 h-1.5 rounded-full ${dataSourceMode === "LIVE" ? "bg-emerald-500" : dataSourceMode === "CACHED" ? "bg-amber-500" : "bg-red-500"}`} />
-            <span>DATA {dataSourceMode}</span>
           </div>
         </div>
       </header>
@@ -640,6 +658,9 @@ export default function Home() {
                     <X className="w-5 h-5" />
                   </button>
                 </div>
+                <p className="text-[10px] font-mono text-slate-light/70 tracking-widest uppercase">
+                  {AXIS_TAGLINE}
+                </p>
 
                 {/* Mode Toggle */}
                 <div>
@@ -764,13 +785,15 @@ export default function Home() {
       </AnimatePresence>
 
       {/* Site Navigation Footer */}
-      <footer className="h-8 flex items-center justify-center gap-4 sm:gap-6 px-4 border-t border-border bg-panel/50 text-[9px] font-mono tracking-wider shrink-0 overflow-x-auto">
+       <footer className="h-8 flex items-center justify-center gap-4 sm:gap-6 px-4 border-t border-border bg-panel/50 text-[9px] font-mono tracking-wider shrink-0 overflow-x-auto">
         <a href="/methodology" className="text-slate-light hover:text-cobalt transition-colors whitespace-nowrap">METHODOLOGY</a>
         <span className="text-border">|</span>
         <a href="/docs" className="text-slate-light hover:text-cobalt transition-colors whitespace-nowrap">API DOCS</a>
         <span className="text-border">|</span>
         <a href="/feed.xml" target="_blank" rel="noopener" className="text-slate-light hover:text-cobalt transition-colors whitespace-nowrap">RSS FEED</a>
         <span className="text-border hidden sm:inline">|</span>
+        <span className="text-cobalt hidden md:inline whitespace-nowrap">{AXIS_TAGLINE}</span>
+        <span className="text-border hidden md:inline">|</span>
         <a href="https://github.com/Oddjobe/Axis" target="_blank" rel="noopener" className="text-slate-light hover:text-cobalt transition-colors whitespace-nowrap hidden sm:inline">GITHUB</a>
         <span className="text-border hidden sm:inline">|</span>
         <span className="text-zinc-600 hidden sm:inline">© {new Date().getFullYear()} AXIS AFRICA</span>
