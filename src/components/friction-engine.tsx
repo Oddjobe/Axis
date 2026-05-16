@@ -45,6 +45,8 @@ const YouTubeIcon = () => (
 
 const SafeImage = ({ src, fallbackIcon: Icon, className, width, height, fill }: { src?: string; fallbackIcon: React.ComponentType<{ className?: string }>; className?: string; width?: number; height?: number; fill?: boolean }) => {
     const [error, setError] = useState(false);
+    useEffect(() => setError(false), [src]);
+
     if (error || !src) return (
         <div className={`flex items-center justify-center bg-gradient-to-br from-white/5 to-white/10 ${className}`}>
             <Icon className="w-8 h-8 opacity-20" />
@@ -52,10 +54,12 @@ const SafeImage = ({ src, fallbackIcon: Icon, className, width, height, fill }: 
     );
     return (
         <Image
+            key={src}
             src={src}
             alt=""
             className={`object-cover ${className}`}
             onError={() => setError(true)}
+            referrerPolicy="no-referrer"
             width={width}
             height={height}
             fill={fill}
@@ -79,6 +83,43 @@ const BLOG_IMAGE_FALLBACKS = [
     "https://images.unsplash.com/photo-1493946740624-75b8429e3e9f?q=80&w=400&auto=format&fit=crop",
     "https://images.unsplash.com/photo-1544256223-746768a41981?q=80&w=400&auto=format&fit=crop"
 ];
+
+const waitForSpeechVoices = () => new Promise<SpeechSynthesisVoice[]>((resolve) => {
+    const synth = window.speechSynthesis;
+    const voices = synth.getVoices();
+    if (voices.length > 0) {
+        resolve(voices);
+        return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+        synth.removeEventListener("voiceschanged", handleVoicesChanged);
+        resolve(synth.getVoices());
+    }, 500);
+
+    const handleVoicesChanged = () => {
+        window.clearTimeout(timeoutId);
+        resolve(synth.getVoices());
+    };
+
+    synth.addEventListener("voiceschanged", handleVoicesChanged, { once: true });
+});
+
+const getPreferredSpeechVoice = (voices: SpeechSynthesisVoice[]) => {
+    const scoreVoice = (voice: SpeechSynthesisVoice) => {
+        const name = voice.name.toLowerCase();
+        const langScore = voice.lang.toLowerCase().startsWith("en") ? 100 : 0;
+        const qualityScore =
+            (name.includes("natural") || name.includes("neural") || name.includes("online") ? 80 : 0) +
+            (name.includes("microsoft") || name.includes("google") ? 35 : 0) +
+            (name.includes("aria") || name.includes("jenny") || name.includes("guy") || name.includes("samantha") ? 25 : 0) -
+            (name.includes("compact") ? 40 : 0);
+
+        return langScore + qualityScore;
+    };
+
+    return [...voices].sort((a, b) => scoreVoice(b) - scoreVoice(a))[0];
+};
 
 import { isoToFlag } from "@/lib/flags";
 
@@ -405,8 +446,11 @@ export default function FrictionEngine({ mode, filterCountries, onSelectCountry,
         window.speechSynthesis.cancel();
 
         const utterance = new SpeechSynthesisUtterance(briefing);
-        utterance.rate = 0.95;
-        utterance.pitch = 0.95;
+        const voice = getPreferredSpeechVoice(await waitForSpeechVoices());
+        if (voice) utterance.voice = voice;
+        utterance.lang = voice?.lang || "en-US";
+        utterance.rate = 0.88;
+        utterance.pitch = 1;
         utterance.onend = () => {
             speechUtteranceRef.current = null;
             setIsPlayingAudio(false);
@@ -665,6 +709,15 @@ export default function FrictionEngine({ mode, filterCountries, onSelectCountry,
                                     className="block group relative rounded-2xl overflow-hidden border border-green-500/20 hover:border-green-500/40 bg-gradient-to-br from-green-500/5 to-transparent transition-all duration-500 hover:scale-[1.01]"
                                 >
                                     <div className="h-1 bg-gradient-to-r from-green-500 via-emerald-400 to-green-600" />
+                                    <div className="relative h-28 overflow-hidden border-b border-green-500/10">
+                                        <SafeImage
+                                            src={blogs[0].imageUrl}
+                                            fallbackIcon={BookOpen}
+                                            className="w-full h-full grayscale group-hover:grayscale-0 transition-all duration-700 opacity-60 group-hover:opacity-80 scale-105 group-hover:scale-100"
+                                            fill
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-background dark:from-onyx via-background/45 dark:via-onyx/45 to-transparent" />
+                                    </div>
                                     <div className="p-4 space-y-2.5">
                                         <div className="flex items-center gap-2">
                                             <span className="text-[8px] font-bold px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 uppercase tracking-widest">FEATURED</span>
