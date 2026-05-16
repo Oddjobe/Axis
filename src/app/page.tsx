@@ -331,25 +331,26 @@ export default function Home() {
           <div className="hidden xl:block h-6 w-px bg-border/50" />
 
           {/* Group 3: Dashboard Mode Toggle (desktop only) */}
-          <div className="hidden md:flex items-center gap-1 bg-background border border-border rounded-full p-1 shadow-inner">
+          <div className="hidden lg:flex items-center gap-1 bg-background border border-border rounded-full p-1 shadow-inner">
             <button
               onClick={() => setMode("SOVEREIGNTY")}
-              className={`px-3 py-1 text-[10px] font-bold rounded-full transition-all ${mode === "SOVEREIGNTY" ? "bg-cobalt text-white shadow-[0_0_10px_rgba(37,99,235,0.4)]" : "text-slate-light hover:text-foreground"}`}
+              className={`px-3 py-1 text-[10px] font-bold rounded-full transition-all whitespace-nowrap ${mode === "SOVEREIGNTY" ? "bg-cobalt text-white shadow-[0_0_10px_rgba(37,99,235,0.4)]" : "text-slate-light hover:text-foreground"}`}
             >
               {t("sovereignty")}
             </button>
             <button
               onClick={() => setMode("OUTSIDE INFLUENCE")}
-              className={`px-3 py-1 text-[10px] font-bold rounded-full transition-all ${mode === "OUTSIDE INFLUENCE" ? "bg-orange-500 text-white shadow-[0_0_10px_rgba(249,115,22,0.4)]" : "text-slate-light hover:text-foreground"}`}
+              className={`px-3 py-1 text-[10px] font-bold rounded-full transition-all whitespace-nowrap ${mode === "OUTSIDE INFLUENCE" ? "bg-orange-500 text-white shadow-[0_0_10px_rgba(249,115,22,0.4)]" : "text-slate-light hover:text-foreground"}`}
             >
-              {t("outside_influence")}
+              <span className="hidden xl:inline">{t("outside_influence")}</span>
+              <span className="xl:hidden">INFLUENCE</span>
             </button>
           </div>
 
           <div className="hidden xl:block h-6 w-px bg-border/50" />
 
           {/* Group 4: Settings & Locales (desktop only) */}
-          <div className="hidden md:flex items-center gap-2">
+          <div className="hidden lg:flex items-center gap-2">
             <div className="flex bg-background border border-border rounded-lg overflow-hidden text-[10px] font-bold shadow-sm">
               {(["en", "fr", "sw", "pt"] as Language[]).map(lang => (
                 <button
@@ -379,15 +380,11 @@ export default function Home() {
             <SlidersHorizontal className="w-4 h-4" />
           </button>
 
-          <div className="hidden lg:block h-6 w-px bg-border/50" />
+          <div className="hidden xl:block h-6 w-px bg-border/50" />
 
-          {/* Group 5: Live Status */}
-          <div className="hidden sm:flex items-center gap-2 text-[10px] font-mono font-bold text-slate-light px-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-[pulse_2s_ease-in-out_infinite] shadow-[0_0_5px_rgba(34,197,94,0.8)]" />
-            {t("live")}
-          </div>
+          {/* Group 5: Data/Live Status */}
           <div
-            className={`hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-full border text-[9px] font-mono font-bold tracking-wider ${dataSourceMode === "LIVE"
+            className={`hidden lg:flex items-center gap-2 px-2.5 py-1 rounded-full border text-[9px] font-mono font-bold tracking-wider whitespace-nowrap ${dataSourceMode === "LIVE"
               ? "text-emerald-500 border-emerald-500/30 bg-emerald-500/10"
               : dataSourceMode === "CACHED"
                 ? "text-amber-500 border-amber-500/30 bg-amber-500/10"
@@ -395,8 +392,11 @@ export default function Home() {
               }`}
             title="Current country data source"
           >
+            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-[pulse_2s_ease-in-out_infinite] shadow-[0_0_5px_rgba(34,197,94,0.8)]" />
+            <span>{t("live")}</span>
+            <span className="opacity-40">|</span>
             <span className={`w-1.5 h-1.5 rounded-full ${dataSourceMode === "LIVE" ? "bg-emerald-500" : dataSourceMode === "CACHED" ? "bg-amber-500" : "bg-red-500"}`} />
-            DATA {dataSourceMode}
+            <span>DATA {dataSourceMode}</span>
           </div>
         </div>
       </header>
