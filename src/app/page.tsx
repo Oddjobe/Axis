@@ -72,6 +72,7 @@ export default function Home() {
   const [timeValue, setTimeValue] = useState(currentYear);
   const [language, setLanguage] = useState<Language>("en");
   const [countryDataMaster, setCountryDataMaster] = useState<CountryData[]>([]);
+  const [dataSourceMode, setDataSourceMode] = useState<"LIVE" | "CACHED" | "FALLBACK">("FALLBACK");
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const { newAlertCount, clearNewAlerts } = useRealtimeAlerts();
@@ -114,6 +115,7 @@ export default function Home() {
             return { ...staticData, ...dbCountry, country: dbCountry.id };
           });
           setCountryDataMaster(merged as CountryData[]);
+          setDataSourceMode("LIVE");
           // Cache for offline use
           import("@/lib/use-offline-cache").then(({ cacheData }) => {
             cacheData('countryDataMaster', merged);
@@ -128,14 +130,20 @@ export default function Home() {
           const cached = await getCachedData<CountryData[]>('countryDataMaster');
           if (cached) {
             setCountryDataMaster(cached);
+            setDataSourceMode("CACHED");
           } else {
             setCountryDataMaster(ALL_SOVEREIGN_DATA as CountryData[]);
+            setDataSourceMode("FALLBACK");
           }
         } catch {
           setCountryDataMaster(ALL_SOVEREIGN_DATA as CountryData[]);
+          setDataSourceMode("FALLBACK");
         }
       }
-    }).catch(() => setCountryDataMaster(ALL_SOVEREIGN_DATA as CountryData[]));
+    }).catch(() => {
+      setCountryDataMaster(ALL_SOVEREIGN_DATA as CountryData[]);
+      setDataSourceMode("FALLBACK");
+    });
   }, []);
 
   // Global keyboard shortcuts
@@ -377,6 +385,18 @@ export default function Home() {
           <div className="hidden sm:flex items-center gap-2 text-[10px] font-mono font-bold text-slate-light px-2">
             <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-[pulse_2s_ease-in-out_infinite] shadow-[0_0_5px_rgba(34,197,94,0.8)]" />
             {t("live")}
+          </div>
+          <div
+            className={`hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-full border text-[9px] font-mono font-bold tracking-wider ${dataSourceMode === "LIVE"
+              ? "text-emerald-500 border-emerald-500/30 bg-emerald-500/10"
+              : dataSourceMode === "CACHED"
+                ? "text-amber-500 border-amber-500/30 bg-amber-500/10"
+                : "text-red-500 border-red-500/30 bg-red-500/10"
+              }`}
+            title="Current country data source"
+          >
+            <span className={`w-1.5 h-1.5 rounded-full ${dataSourceMode === "LIVE" ? "bg-emerald-500" : dataSourceMode === "CACHED" ? "bg-amber-500" : "bg-red-500"}`} />
+            DATA {dataSourceMode}
           </div>
         </div>
       </header>

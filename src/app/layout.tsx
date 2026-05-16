@@ -15,6 +15,16 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://axis-mocha.vercel.app"),
+  alternates: {
+    canonical: "/",
+    languages: {
+      en: "/?lang=en",
+      fr: "/?lang=fr",
+      sw: "/?lang=sw",
+      pt: "/?lang=pt",
+      "x-default": "/",
+    },
+  },
   title: {
     default: "AXIS AFRICA | Open Source Intelligence & Sovereignty Tracker",
     template: "%s | AXIS AFRICA"
