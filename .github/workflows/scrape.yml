@@ -38,7 +38,6 @@ jobs:
         run: npx tsx scripts/automate-daily-metadata.ts
 
       - name: Run Advanced Firecrawl Scrapers
-        continue-on-error: true
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
