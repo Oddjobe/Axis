@@ -48,6 +48,7 @@ const FALLBACK_BLOGS = [
 ];
 
 export async function GET() {
+    const updatedAt = new Date().toISOString();
     try {
         const { data, error } = await supabase
             .from('blog_posts')
@@ -58,12 +59,30 @@ export async function GET() {
         if (error) throw error;
 
         if (data && data.length > 0) {
-            return NextResponse.json(data);
+            return NextResponse.json({
+                success: true,
+                source: "supabase",
+                fallbackUsed: false,
+                updatedAt,
+                data
+            });
         }
 
-        return NextResponse.json(FALLBACK_BLOGS);
+        return NextResponse.json({
+            success: true,
+            source: "fallback",
+            fallbackUsed: true,
+            updatedAt,
+            data: FALLBACK_BLOGS
+        });
     } catch (error) {
         console.error("Supabase Blog Fetch Error:", error);
-        return NextResponse.json(FALLBACK_BLOGS);
+        return NextResponse.json({
+            success: true,
+            source: "fallback-error",
+            fallbackUsed: true,
+            updatedAt,
+            data: FALLBACK_BLOGS
+        });
     }
 }

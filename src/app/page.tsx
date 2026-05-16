@@ -37,14 +37,14 @@ const AfricaMap = dynamic(() => import("@/components/africa-map"), {
   ssr: false,
   loading: () => <div className="w-full h-full flex flex-col gap-3 items-center justify-center text-cobalt font-mono text-[10px]"><div className="w-6 h-6 border-border-cobalt/30 border-t-cobalt rounded-full animate-spin" />INITIALIZING GEO ENGINE...</div>
 });
+const AnalyticsModal = dynamic(() => import("@/components/analytics-modal"), { loading: () => null });
+const AiNexusModal = dynamic(() => import("@/components/ai-nexus-modal"), { loading: () => null });
+const ComparativeAnalyticsModal = dynamic(() => import("@/components/comparative-analytics-modal"), { loading: () => null });
+const TradeIntelligenceModal = dynamic(() => import("@/components/trade-intelligence-modal"), { loading: () => null });
 import FrictionEngine from "@/components/friction-engine";
 import ContinentalGoalsTicker from "@/components/continental-goals-ticker";
 import MissionModal from "@/components/mission-modal";
-import AnalyticsModal from "@/components/analytics-modal";
-import AiNexusModal from "@/components/ai-nexus-modal";
 import AiBriefingModal from "@/components/ai-briefing-modal";
-import ComparativeAnalyticsModal from "@/components/comparative-analytics-modal";
-import TradeIntelligenceModal from "@/components/trade-intelligence-modal";
 import SearchCommand from "@/components/search-command";
 import CommodityTicker from "@/components/commodity-ticker";
 import { ALL_SOVEREIGN_DATA } from "@/lib/mock-data";

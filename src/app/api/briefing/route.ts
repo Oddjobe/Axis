@@ -3,14 +3,16 @@ import { supabase } from '@/lib/supabase';
 
 export async function GET() {
     try {
+        const updatedAt = new Date().toISOString();
         // 1. Fetch latest intelligence alerts
         const { data: alerts, error: alertError } = await supabase
             .from('intelligence_alerts')
             .select('*')
             .order('created_at', { ascending: false })
             .limit(10);
-
-        if (alertError) throw alertError;
+        if (alertError) {
+            console.error("Supabase briefing alerts fetch error:", alertError);
+        }
 
         // 2. Fetch latest strategic blog posts
         const { data: blogs, error: blogError } = await supabase
@@ -18,8 +20,9 @@ export async function GET() {
             .select('*')
             .order('created_at', { ascending: false })
             .limit(5);
-
-        if (blogError) throw blogError;
+        if (blogError) {
+            console.error("Supabase briefing blogs fetch error:", blogError);
+        }
 
         // 3. Define Fallback Intelligence focusing on Pan-African Agency
         const effectiveAlerts = alerts && alerts.length > 0 ? alerts : [
@@ -32,6 +35,8 @@ export async function GET() {
             { title: 'Securing the African Critical Mineral Corridor' },
             { title: 'The Future of Pan-African Resource Sovereignty' }
         ];
+        const fallbackUsed = !alerts?.length || !blogs?.length;
+        const source = fallbackUsed ? "fallback" : "supabase";
 
         const highSeverityCount = effectiveAlerts.filter(a => a.severity === 'HIGH').length;
         const outsideInfluenceCount = effectiveAlerts.filter(a => a.category === 'OUTSIDE INFLUENCE').length;
@@ -117,13 +122,24 @@ export async function GET() {
 
         return NextResponse.json({
             success: true,
+            source,
+            fallbackUsed,
+            updatedAt,
+            data: briefing,
             briefing,
             disclaimer: "Continental situatonal analysis derived from vetted Pan-African datasets."
         });
 
     } catch (error: any) {
+        const updatedAt = new Date().toISOString();
         return NextResponse.json(
-            { success: false, error: error.message },
+            {
+                success: false,
+                source: "error",
+                fallbackUsed: true,
+                updatedAt,
+                error: error.message
+            },
             { status: 500 }
         );
     }
@@ -180,18 +196,38 @@ Use a professional, analytical tone. Focus on African agency, sovereignty, and i
             const result = await model.generateContent(prompt);
             const briefing = result.response.text();
 
-            return NextResponse.json({ success: true, briefing });
+            return NextResponse.json({
+                success: true,
+                source: 'gemini',
+                fallbackUsed: false,
+                updatedAt: new Date().toISOString(),
+                data: briefing,
+                briefing
+            });
         }
 
         // Fallback: generate a structured brief without AI
         const briefing = generateFallbackBrief({ country, isoCode, axisScore, status, keyResources, infrastructureControl, policyIndependence, currencyStability, resourceWealth });
-        return NextResponse.json({ success: true, briefing, fallback: true });
+        return NextResponse.json({
+            success: true,
+            source: 'local-fallback',
+            fallbackUsed: true,
+            updatedAt: new Date().toISOString(),
+            data: briefing,
+            briefing
+        });
 
     } catch (error: any) {
         console.error('AI Brief POST error:', error);
         const isQuota = error?.message?.includes('quota') || error?.message?.includes('429') || error?.status === 429;
         return NextResponse.json(
-            { success: false, error: isQuota ? 'AI quota exceeded. Please try again later.' : (error.message || 'Brief generation failed') },
+            {
+                success: false,
+                source: 'error',
+                fallbackUsed: true,
+                updatedAt: new Date().toISOString(),
+                error: isQuota ? 'AI quota exceeded. Please try again later.' : (error.message || 'Brief generation failed')
+            },
             { status: isQuota ? 429 : 500 }
         );
     }

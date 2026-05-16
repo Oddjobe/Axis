@@ -82,6 +82,8 @@ export async function GET() {
     try {
         // Try Supabase for fresh data
         let data = FALLBACK_DATA;
+        let source: "supabase" | "fallback" = "fallback";
+        let fallbackUsed = true;
 
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
         const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -109,21 +111,34 @@ export async function GET() {
                         }
                         return fallback;
                     });
+                    source = "supabase";
+                    fallbackUsed = false;
                 }
             } catch {
                 // Supabase fetch failed, use fallback silently
             }
         }
 
+        const updatedAt = new Date().toISOString();
         return NextResponse.json({
             success: true,
+            source,
+            fallbackUsed,
+            updatedAt,
             data,
-            timestamp: new Date().toISOString(),
+            timestamp: updatedAt,
             disclaimer: "Benchmark data sourced from World Bank Pink Sheet, LME, and AfDB. Update frequency varies by commodity."
         });
     } catch (error) {
+        const updatedAt = new Date().toISOString();
         return NextResponse.json(
-            { success: false, error: "Failed to fetch commodity benchmarks" },
+            {
+                success: false,
+                source: "error",
+                fallbackUsed: true,
+                updatedAt,
+                error: "Failed to fetch commodity benchmarks"
+            },
             { status: 500 }
         );
     }

@@ -252,8 +252,9 @@ export default function FrictionEngine({ mode, filterCountries, onSelectCountry,
     const fetchIntelligence = useCallback(async (isMounted: boolean) => {
         try {
             const res = await fetch("/api/intelligence");
-            const data = await res.json();
-            if (!data) return;
+            const payload = await res.json();
+            const data = Array.isArray(payload) ? payload : payload?.data;
+            if (!Array.isArray(data) || data.length === 0) return;
 
             const enhancedData = data.map((alert: IntelligenceAlert) => {
                 const exactDate = alert.created_at ? new Date(alert.created_at) : new Date();
@@ -285,8 +286,9 @@ export default function FrictionEngine({ mode, filterCountries, onSelectCountry,
     const fetchBlogs = useCallback(async (isMounted: boolean) => {
         try {
             const res = await fetch("/api/blogs");
-            const data = await res.json();
-            if (isMounted) setBlogs(data);
+            const payload = await res.json();
+            const data = Array.isArray(payload) ? payload : payload?.data;
+            if (isMounted) setBlogs(Array.isArray(data) ? data : []);
         } catch (e) {
             console.error("Blog load failed", e);
         } finally {
