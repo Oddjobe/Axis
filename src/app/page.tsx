@@ -191,15 +191,15 @@ export default function Home() {
     : `${(TOTAL_POPULATION / 1000).toFixed(2)} B`;
 
   return (
-    <div className="flex flex-col min-h-dvh overflow-x-hidden">
+    <div className="flex flex-col h-dvh min-h-screen overflow-hidden">
       <ErrorBoundary>
         <CommodityTicker />
       </ErrorBoundary>
       {/* Top Navigation / Dashboard Header */}
-      <header className="min-h-14 lg:min-h-16 h-auto py-1 flex items-center justify-between px-3 lg:px-6 border-b border-border bg-panel backdrop-blur-md z-10 shrink-0">
-        <div className="flex items-center gap-2 lg:gap-4 min-w-0">
+      <header className="h-14 lg:h-16 flex items-center justify-between px-3 lg:px-6 border-b border-border bg-panel backdrop-blur-md z-10 shrink-0">
+        <div className="flex items-center gap-2 lg:gap-4">
           <Globe className="w-5 h-5 lg:w-6 lg:h-6 text-cobalt" />
-          <h1 className="text-base lg:text-xl font-bold tracking-widest uppercase truncate">
+          <h1 className="text-base lg:text-xl font-bold tracking-widest uppercase">
             {t("dashboard_title")}
           </h1>
           <div className="h-5 w-px bg-border mx-1 hidden sm:block" />
@@ -208,7 +208,7 @@ export default function Home() {
           </span>
         </div>
 
-        <div className="flex items-center justify-end gap-2 lg:gap-4 flex-wrap">
+        <div className="flex items-center gap-2 lg:gap-4">
           {/* Group 1: Population */}
           <div className="flex items-center gap-1.5 lg:gap-2 px-2 lg:px-3 py-1 lg:py-1.5 bg-background border border-border rounded-lg text-[10px] lg:text-xs font-mono shadow-sm">
             {selectedCountries.length === 1 ? <span className="text-base leading-none">{isoToFlag(selectedCountries[0].country)}</span> : <Users className="w-3 h-3 lg:w-3.5 lg:h-3.5 text-zinc-400" />}
@@ -387,7 +387,7 @@ export default function Home() {
             {t("live")}
           </div>
           <div
-            className={`hidden xl:flex items-center gap-1.5 px-2 py-1 rounded-full border text-[9px] font-mono font-bold tracking-wider ${dataSourceMode === "LIVE"
+            className={`hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-full border text-[9px] font-mono font-bold tracking-wider ${dataSourceMode === "LIVE"
               ? "text-emerald-500 border-emerald-500/30 bg-emerald-500/10"
               : dataSourceMode === "CACHED"
                 ? "text-amber-500 border-amber-500/30 bg-amber-500/10"
