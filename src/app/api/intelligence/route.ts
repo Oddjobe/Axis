@@ -117,6 +117,13 @@ const FALLBACK_DATA = [
     }
 ];
 
+function withImageFallbacks<T extends { imageUrl?: string | null }>(items: T[]) {
+    return items.map((item, index) => ({
+        ...item,
+        imageUrl: item.imageUrl || FALLBACK_DATA[index % FALLBACK_DATA.length].imageUrl
+    }));
+}
+
 export async function GET() {
     const updatedAt = new Date().toISOString();
     try {
@@ -134,7 +141,7 @@ export async function GET() {
                 source: "supabase",
                 fallbackUsed: false,
                 updatedAt,
-                data
+                data: withImageFallbacks(data)
             });
         }
 

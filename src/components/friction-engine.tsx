@@ -64,6 +64,22 @@ const SafeImage = ({ src, fallbackIcon: Icon, className, width, height, fill }: 
     );
 }
 
+const ALERT_IMAGE_FALLBACKS = [
+    "https://images.unsplash.com/photo-1519999482648-25049ddd37b1?q=80&w=400&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1523456760081-306915f79927?q=80&w=400&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1493946740624-75b8429e3e9f?q=80&w=400&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?q=80&w=400&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1518173946687-a4c8892bbd9f?q=80&w=400&auto=format&fit=crop"
+];
+
+const BLOG_IMAGE_FALLBACKS = [
+    "https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?q=80&w=400&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1519999482648-25049ddd37b1?q=80&w=400&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=400&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1493946740624-75b8429e3e9f?q=80&w=400&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1544256223-746768a41981?q=80&w=400&auto=format&fit=crop"
+];
+
 import { isoToFlag } from "@/lib/flags";
 
 // Reading time estimate
@@ -227,7 +243,6 @@ export default function FrictionEngine({ mode, filterCountries, onSelectCountry,
     const [activeTab, setActiveTab] = useState<"ALERTS" | "NEWS" | "MEDIA" | "BLOGS">("ALERTS")
     const [isPlayingAudio, setIsPlayingAudio] = useState(false);
     const [audioPaused, setAudioPaused] = useState(false);
-    const [isDownloadingModel, setIsDownloadingModel] = useState(false);
     const [isMounted, setIsMounted] = useState(false);
     const { watchlist } = useWatchlist();
 
@@ -242,10 +257,7 @@ export default function FrictionEngine({ mode, filterCountries, onSelectCountry,
         return () => window.removeEventListener("watchlistUpdated", handleWatchlistChange);
     }, []);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const ttsRef = useRef<any>(null);
-    const audioCtxRef = useRef<AudioContext | null>(null);
-    const currentSourceRef = useRef<AudioBufferSourceNode | null>(null);
+    const speechUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
 
     const [now, setNow] = useState<number | null>(null);
 
@@ -256,10 +268,11 @@ export default function FrictionEngine({ mode, filterCountries, onSelectCountry,
             const data = Array.isArray(payload) ? payload : payload?.data;
             if (!Array.isArray(data) || data.length === 0) return;
 
-            const enhancedData = data.map((alert: IntelligenceAlert) => {
+            const enhancedData = data.map((alert: IntelligenceAlert, index: number) => {
                 const exactDate = alert.created_at ? new Date(alert.created_at) : new Date();
                 return {
                     ...alert,
+                    imageUrl: alert.imageUrl || ALERT_IMAGE_FALLBACKS[index % ALERT_IMAGE_FALLBACKS.length],
                     timestamp: exactDate.toISOString(),
                     timeAgo: ""
                 } as Article;
@@ -288,7 +301,12 @@ export default function FrictionEngine({ mode, filterCountries, onSelectCountry,
             const res = await fetch("/api/blogs");
             const payload = await res.json();
             const data = Array.isArray(payload) ? payload : payload?.data;
-            if (isMounted) setBlogs(Array.isArray(data) ? data : []);
+            if (isMounted) {
+                setBlogs(Array.isArray(data) ? data.map((post: BlogPost, index: number) => ({
+                    ...post,
+                    imageUrl: post.imageUrl || BLOG_IMAGE_FALLBACKS[index % BLOG_IMAGE_FALLBACKS.length]
+                })) : []);
+            }
         } catch (e) {
             console.error("Blog load failed", e);
         } finally {
@@ -345,107 +363,67 @@ export default function FrictionEngine({ mode, filterCountries, onSelectCountry,
     });
 
     const stopAudio = () => {
+        if (typeof window !== "undefined" && "speechSynthesis" in window) {
+            window.speechSynthesis.cancel();
+        }
+        speechUtteranceRef.current = null;
         setIsPlayingAudio(false);
         setAudioPaused(false);
-        if (currentSourceRef.current) {
-            try { currentSourceRef.current.stop(); } catch (e) { }
-            currentSourceRef.current.disconnect();
-            currentSourceRef.current = null;
-        }
-        if (audioCtxRef.current) {
-            try { audioCtxRef.current.close(); } catch (e) { }
-            audioCtxRef.current = null;
-        }
     };
 
     const toggleAudioBrief = useCallback(async () => {
-        if (isDownloadingModel) return;
-
         const topAlerts = (filteredAlerts || []).slice(0, 5);
         if (topAlerts.length === 0) return;
 
         if (isPlayingAudio && !audioPaused) {
-            if (audioCtxRef.current && audioCtxRef.current.state === 'running') {
-                audioCtxRef.current.suspend();
+            if (typeof window !== "undefined" && "speechSynthesis" in window) {
+                window.speechSynthesis.pause();
                 setAudioPaused(true);
             }
             return;
         }
 
         if (isPlayingAudio && audioPaused) {
-            if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
-                audioCtxRef.current.resume();
+            if (typeof window !== "undefined" && "speechSynthesis" in window) {
+                window.speechSynthesis.resume();
                 setAudioPaused(false);
             }
             return;
         }
 
+        if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+            console.warn("Speech synthesis is not available in this browser.");
+            return;
+        }
+
+        const introText = `Commencing Axis Intelligence Briefing for ${mode} events.`;
+        const briefing = [
+            introText,
+            ...topAlerts.map((alert, index) => `Alert ${index + 1}. ${alert.title}. ${alert.summary}`)
+        ].join(" ");
+
+        window.speechSynthesis.cancel();
+
+        const utterance = new SpeechSynthesisUtterance(briefing);
+        utterance.rate = 0.95;
+        utterance.pitch = 0.95;
+        utterance.onend = () => {
+            speechUtteranceRef.current = null;
+            setIsPlayingAudio(false);
+            setAudioPaused(false);
+        };
+        utterance.onerror = (event) => {
+            console.error("Speech synthesis failed", event.error);
+            speechUtteranceRef.current = null;
+            setIsPlayingAudio(false);
+            setAudioPaused(false);
+        };
+
+        speechUtteranceRef.current = utterance;
         setIsPlayingAudio(true);
         setAudioPaused(false);
-
-        try {
-            if (!ttsRef.current) {
-                setIsDownloadingModel(true);
-                const { KokoroTTS } = await import("kokoro-js");
-                ttsRef.current = await KokoroTTS.from_pretrained('onnx-community/Kokoro-82M-v1.0-ONNX', {
-                    dtype: 'q8',
-                    device: 'webgpu'
-                });
-                setIsDownloadingModel(false);
-            }
-
-            if (!audioCtxRef.current) {
-                audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
-            }
-            if (audioCtxRef.current.state === 'suspended') {
-                await audioCtxRef.current.resume();
-            }
-
-            const introText = `Commencing Axis Intelligence Briefing for ${mode} events.`;
-            const textsToSpeak = [introText];
-            topAlerts.forEach((alert, index) => {
-                textsToSpeak.push(`Alert ${index + 1}. ${alert.title}. ${alert.summary}`);
-            });
-
-            for (let i = 0; i < textsToSpeak.length; i++) {
-                if (!audioCtxRef.current) break;
-
-                const text = textsToSpeak[i];
-                const audio = await ttsRef.current.generate(text, {
-                    voice: 'af_heart',
-                });
-
-                if (!audioCtxRef.current) break;
-
-                await new Promise<void>((resolve) => {
-                    if (!audioCtxRef.current) return resolve();
-
-                    const buffer = audioCtxRef.current.createBuffer(1, audio.audio.length, audio.sampling_rate);
-                    buffer.getChannelData(0).set(audio.audio);
-
-                    const source = audioCtxRef.current.createBufferSource();
-                    source.buffer = buffer;
-                    source.connect(audioCtxRef.current.destination);
-
-                    source.onended = () => {
-                        currentSourceRef.current = null;
-                        resolve();
-                    };
-
-                    currentSourceRef.current = source;
-                    source.start();
-                });
-            }
-        } catch (error) {
-            console.error("TTS Error:", error);
-            setIsDownloadingModel(false);
-        } finally {
-            if (audioCtxRef.current) {
-                setIsPlayingAudio(false);
-                setAudioPaused(false);
-            }
-        }
-    }, [isDownloadingModel, filteredAlerts, isPlayingAudio, audioPaused, mode]);
+        window.speechSynthesis.speak(utterance);
+    }, [filteredAlerts, isPlayingAudio, audioPaused, mode]);
 
     useEffect(() => {
         return () => {
@@ -502,12 +480,11 @@ export default function FrictionEngine({ mode, filterCountries, onSelectCountry,
                                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] font-bold tracking-widest transition-all ${filteredAlerts.length === 0 ? "opacity-30 cursor-not-allowed border border-border bg-background" :
                                     isPlayingAudio && !audioPaused ? "bg-red-500/10 text-red-500 border border-red-500/30 hover:bg-red-500/20" :
                                         isPlayingAudio && audioPaused ? "bg-yellow-500/10 text-yellow-500 border border-yellow-500/30 hover:bg-yellow-500/20" :
-                                            isDownloadingModel ? "bg-cobalt/10 text-cobalt border border-cobalt/30 hover:bg-cobalt/20 opacity-80 cursor-wait" :
-                                                "bg-orange-500/10 text-orange-500 border border-orange-500/30 hover:bg-orange-500/20 shadow-sm"
+                                            "bg-orange-500/10 text-orange-500 border border-orange-500/30 hover:bg-orange-500/20 shadow-sm"
                                     }`}
                             >
-                                {isDownloadingModel ? <Globe className="w-3 h-3 animate-spin" /> : isPlayingAudio && !audioPaused ? <Square className="w-3 h-3" /> : <Play className="w-3 h-3" />}
-                                <span className="hidden xs:inline">{isDownloadingModel ? "INITIALIZING..." : isPlayingAudio && !audioPaused ? "STOP BRIEF" : isPlayingAudio && audioPaused ? "RESUME" : "AUDIO BRIEF"}</span>
+                                {isPlayingAudio && !audioPaused ? <Square className="w-3 h-3" /> : <Play className="w-3 h-3" />}
+                                <span className="hidden xs:inline">{isPlayingAudio && !audioPaused ? "STOP BRIEF" : isPlayingAudio && audioPaused ? "RESUME" : "AUDIO BRIEF"}</span>
                                 <span className="xs:hidden">{isPlayingAudio && !audioPaused ? "STOP" : "PLAY"}</span>
                             </button>
                         </div>
@@ -754,11 +731,11 @@ export default function FrictionEngine({ mode, filterCountries, onSelectCountry,
                             EXTERNAL OSINT MEDIA SOURCES
                         </div>
                         {[
-                            { name: "Into Africa (CSIS)", handle: "@csis", focus: "African Political, Economic & Security Issues", url: "https://www.youtube.com/@csis", badge: "RECOMMENDED" },
-                            { name: "African Geopolitics in Action", handle: "#Geopolitics", focus: "Policy & Strategic Shifts", url: "https://www.youtube.com/results?search_query=African+Geopolitics+in+Action", badge: null },
-                            { name: "Africa World Hour", handle: "@sabcnews", focus: "African Perspectives on Regional Developments", url: "https://www.youtube.com/results?search_query=Africa+World+Hour", badge: null },
-                            { name: "Geopolitical Monitor", handle: "Geopolitics", focus: "Security, Resources & Strategic Developments", url: "https://www.youtube.com/results?search_query=Geopolitical+Monitor+Africa", badge: "RECOMMENDED" },
-                            { name: "Peter Zeihan", handle: "@ZeihanOnGeopolitics", focus: "Data-Driven Analysis on African Infrastructure & Resources", url: "https://www.youtube.com/@ZeihanOnGeopolitics", badge: "RECOMMENDED" }
+                            { name: "Into Africa (CSIS)", handle: "@csis", focus: "African Political, Economic & Security Issues", url: "https://www.youtube.com/@csis", badge: "RECOMMENDED", imageUrl: "https://images.unsplash.com/photo-1523456760081-306915f79927?q=80&w=400&auto=format&fit=crop" },
+                            { name: "African Geopolitics in Action", handle: "#Geopolitics", focus: "Policy & Strategic Shifts", url: "https://www.youtube.com/results?search_query=African+Geopolitics+in+Action", badge: null, imageUrl: "https://images.unsplash.com/photo-1518173946687-a4c8892bbd9f?q=80&w=400&auto=format&fit=crop" },
+                            { name: "Africa World Hour", handle: "@sabcnews", focus: "African Perspectives on Regional Developments", url: "https://www.youtube.com/results?search_query=Africa+World+Hour", badge: null, imageUrl: "https://images.unsplash.com/photo-1493946740624-75b8429e3e9f?q=80&w=400&auto=format&fit=crop" },
+                            { name: "Geopolitical Monitor", handle: "Geopolitics", focus: "Security, Resources & Strategic Developments", url: "https://www.youtube.com/results?search_query=Geopolitical+Monitor+Africa", badge: "RECOMMENDED", imageUrl: "https://images.unsplash.com/photo-1536924940846-227afb31e2a5?q=80&w=400&auto=format&fit=crop" },
+                            { name: "Peter Zeihan", handle: "@ZeihanOnGeopolitics", focus: "Data-Driven Analysis on African Infrastructure & Resources", url: "https://www.youtube.com/@ZeihanOnGeopolitics", badge: "RECOMMENDED", imageUrl: "https://images.unsplash.com/photo-1526256262350-7da7584cf5eb?q=80&w=400&auto=format&fit=crop" }
                         ].map((channel, idx) => (
                             <motion.a
                                 key={idx}
@@ -771,8 +748,9 @@ export default function FrictionEngine({ mode, filterCountries, onSelectCountry,
                                 className="relative flex items-start gap-4 p-4 bg-background/60 dark:bg-[#252525] hover:bg-background/80 dark:hover:bg-[#353535] border border-border/40 dark:border-white/5 rounded-[20px] backdrop-blur-[10px] transition-all duration-500 ease-in-out hover:scale-[1.02] group cursor-pointer overflow-hidden"
                             >
                                 <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-red-500/40 via-red-400/20 to-transparent" />
-                                <div className="relative w-14 h-14 shrink-0 rounded-[14px] bg-red-500/10 border border-red-500/20 flex items-center justify-center transition-all duration-500 group-hover:bg-red-500/20 group-hover:shadow-[0_0_20px_rgba(239,68,68,0.15)]">
-                                    <div className="text-red-500"><YouTubeIcon /></div>
+                                <div className="relative w-14 h-14 shrink-0 rounded-[14px] bg-red-500/10 border border-red-500/20 overflow-hidden transition-all duration-500 group-hover:border-red-500/40 group-hover:shadow-[0_0_20px_rgba(239,68,68,0.15)]">
+                                    <SafeImage src={channel.imageUrl} fallbackIcon={Video} className="w-full h-full grayscale group-hover:grayscale-0 transition-all duration-500 opacity-70 group-hover:opacity-90 scale-105 group-hover:scale-100" width={56} height={56} />
+                                    <div className="absolute top-1 right-1 text-red-500 bg-onyx/70 rounded-md p-1"><YouTubeIcon /></div>
                                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                         <div className="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center shadow-lg">
                                             <Play className="w-3 h-3 text-white ml-0.5" fill="white" />
