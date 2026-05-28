@@ -2,9 +2,10 @@
 
 import { useState, useMemo } from 'react';
 import { useTheme } from 'next-themes';
+import { TRADE_CATEGORIES, type TradeCategory } from '@/lib/trade-categories';
 
 type Trend = 'up' | 'down' | 'stable';
-type Category = 'Minerals' | 'Energy' | 'Manufactured' | 'Chemicals' | 'Agriculture' | 'Services';
+type Category = TradeCategory;
 
 interface TradeRoute {
     from: { code: string; name: string; x: number; y: number };
@@ -70,19 +71,19 @@ const TRADE_ROUTES: TradeRoute[] = [
     r('GHA', 'NGA', 'Gold & Bauxite', 'Minerals', '$700M', 700, 'up'),
 ];
 
-const CATEGORIES: Category[] = ['Minerals', 'Energy', 'Manufactured', 'Chemicals', 'Agriculture', 'Services'];
+const CATEGORIES: Category[] = [...TRADE_CATEGORIES];
 const TREND_COLOR: Record<Trend, string> = { up: '#22c55e', down: '#ef4444', stable: '#f59e0b' };
 
 const fmtVolume = (m: number) => (m >= 1000 ? `$${(m / 1000).toFixed(1)}B` : `$${m}M`);
 
-export default function TradeFlowMap() {
+export default function TradeFlowMap({ initialCategory }: { initialCategory?: TradeCategory | null }) {
     const { theme } = useTheme();
     const isDark = theme === 'dark' || theme === 'system' || !theme;
 
     const [hoveredRoute, setHoveredRoute] = useState<number | null>(null);
     const [selectedRoute, setSelectedRoute] = useState<number | null>(null);
     const [tooltip, setTooltip] = useState<{ x: number; y: number; route: TradeRoute } | null>(null);
-    const [categoryFilter, setCategoryFilter] = useState<Category | 'all'>('all');
+    const [categoryFilter, setCategoryFilter] = useState<Category | 'all'>(initialCategory ?? 'all');
     const [trendFilter, setTrendFilter] = useState<Set<Trend>>(new Set());
 
     // A route passes the filter if it matches the category and (no trend filter or matching trend)

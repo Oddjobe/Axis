@@ -4,16 +4,24 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
     X, Zap, TrainFront, Pickaxe, HeartPulse, Wheat, Factory,
     Building2, Ship, ArrowLeft, AlertTriangle, TrendingUp, Users, LayoutGrid,
+    Share2, ArrowUpRight, ChevronRight,
 } from "lucide-react";
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import { useTheme } from "next-themes";
+import {
+    BarChart, Bar, XAxis, YAxis, Cell, ResponsiveContainer, Tooltip as RTooltip,
+} from "recharts";
 import { ALL_SOVEREIGN_DATA } from "@/lib/mock-data";
 import { isoToFlag } from "@/lib/flags";
+import { type TradeCategory } from "@/lib/trade-categories";
 
 interface Props {
     isOpen: boolean;
     onClose: () => void;
+    onSelectCountry?: (iso: string) => void;
+    onOpenNexus?: (resource: string) => void;
+    onOpenTrade?: (category: TradeCategory) => void;
 }
 
 type RiskLevel = "HIGH" | "MEDIUM" | "LOW";
@@ -27,6 +35,9 @@ interface Sector {
     accentBg: string;
     accentBorder: string;
     solidBg: string;
+    accentHex: string;
+    nexusResource?: string;
+    tradeCategory?: TradeCategory;
     thesis: string;
     investment: string;
     growth: string;
@@ -45,6 +56,9 @@ const SECTORS: Sector[] = [
         accentBg: "bg-amber-500/10",
         accentBorder: "border-amber-500/40",
         solidBg: "bg-amber-500",
+        accentHex: "#f59e0b",
+        nexusResource: "GasOil",
+        tradeCategory: "Energy",
         thesis: "Powering industrialization while breaking petro-dependency.",
         investment: "$48B/yr",
         growth: "+9.2%",
@@ -69,6 +83,9 @@ const SECTORS: Sector[] = [
             { name: "Dangote Petroleum Refinery", iso: "NGA", status: "ACTIVE" },
             { name: "West African Gas Pipeline", iso: "NGA", status: "ACTIVE" },
             { name: "Ethiopia-Kenya Electricity Highway", iso: "ETH", status: "ACTIVE" },
+            { name: "Noor Ouarzazate Solar Complex", iso: "MAR", status: "ACTIVE" },
+            { name: "Lake Turkana Wind Power", iso: "KEN", status: "ACTIVE" },
+            { name: "Mozambique LNG (Area 1)", iso: "MOZ", status: "CONSTRUCTION" },
         ],
         dynamics: [
             "GERD reaches full generation, reshaping Nile-basin power exports.",
@@ -84,6 +101,7 @@ const SECTORS: Sector[] = [
         accentBg: "bg-sky-500/10",
         accentBorder: "border-sky-500/40",
         solidBg: "bg-sky-500",
+        accentHex: "#0ea5e9",
         thesis: "Rail and road corridors unlocking landlocked trade.",
         investment: "$35B/yr",
         growth: "+7.1%",
@@ -108,6 +126,9 @@ const SECTORS: Sector[] = [
             { name: "Egypt High-Speed Rail", iso: "EGY", status: "CONSTRUCTION" },
             { name: "Nairobi Expressway", iso: "KEN", status: "ACTIVE" },
             { name: "Algeria East-West Motorway", iso: "DZA", status: "COMPLETED" },
+            { name: "Al Boraq High-Speed Line", iso: "MAR", status: "COMPLETED" },
+            { name: "Addis Ababa-Djibouti Railway", iso: "ETH", status: "ACTIVE" },
+            { name: "Trans-African Highway Network", iso: "KEN", status: "PLANNED" },
         ],
         dynamics: [
             "AfCFTA pushes corridor interoperability up the agenda.",
@@ -123,6 +144,9 @@ const SECTORS: Sector[] = [
         accentBg: "bg-orange-500/10",
         accentBorder: "border-orange-500/40",
         solidBg: "bg-orange-500",
+        accentHex: "#f97316",
+        nexusResource: "Cobalt",
+        tradeCategory: "Minerals",
         thesis: "From extraction to value-added processing sovereignty.",
         investment: "$52B/yr",
         growth: "+11.4%",
@@ -147,6 +171,9 @@ const SECTORS: Sector[] = [
             { name: "Manono Lithium Refinery", iso: "COD", status: "CONSTRUCTION" },
             { name: "Kamoa-Kakula Copper Complex", iso: "COD", status: "ACTIVE" },
             { name: "Kalahari Manganese Field", iso: "ZAF", status: "ACTIVE" },
+            { name: "Jwaneng Diamond Mine", iso: "BWA", status: "ACTIVE" },
+            { name: "Lumwana Copper Expansion", iso: "ZMB", status: "CONSTRUCTION" },
+            { name: "Sangaredi Bauxite Complex", iso: "GIN", status: "ACTIVE" },
         ],
         dynamics: [
             "DRC mineral-sovereignty law pushes domestic refining mandates.",
@@ -162,6 +189,8 @@ const SECTORS: Sector[] = [
         accentBg: "bg-rose-500/10",
         accentBorder: "border-rose-500/40",
         solidBg: "bg-rose-500",
+        accentHex: "#f43f5e",
+        tradeCategory: "Chemicals",
         thesis: "Building pharmaceutical sovereignty after the vaccine gap.",
         investment: "$18B/yr",
         growth: "+6.3%",
@@ -186,6 +215,9 @@ const SECTORS: Sector[] = [
             { name: "Aspen Sterile Manufacturing", iso: "ZAF", status: "ACTIVE" },
             { name: "Institut Pasteur Vaccine Hub", iso: "SEN", status: "ACTIVE" },
             { name: "Egypt Vaccine City (Gypto Pharma)", iso: "EGY", status: "PLANNED" },
+            { name: "Afrigen mRNA Tech-Transfer Hub", iso: "ZAF", status: "ACTIVE" },
+            { name: "Sensyo Pharmatech Fill-Finish", iso: "MAR", status: "CONSTRUCTION" },
+            { name: "Madiba Vaccine Manufacturing", iso: "SEN", status: "CONSTRUCTION" },
         ],
         dynamics: [
             "Afreximbank backs the African Pharmaceutical Manufacturing push.",
@@ -201,6 +233,9 @@ const SECTORS: Sector[] = [
         accentBg: "bg-lime-500/10",
         accentBorder: "border-lime-500/40",
         solidBg: "bg-lime-500",
+        accentHex: "#84cc16",
+        nexusResource: "Phosphates",
+        tradeCategory: "Agriculture",
         thesis: "Feeding 2.5bn by 2050 and ending food-import dependency.",
         investment: "$40B/yr",
         growth: "+5.8%",
@@ -225,6 +260,9 @@ const SECTORS: Sector[] = [
             { name: "Cote d'Ivoire Cocoa Processing", iso: "CIV", status: "CONSTRUCTION" },
             { name: "Egypt New Delta Mega-Farm", iso: "EGY", status: "CONSTRUCTION" },
             { name: "Galana-Kulalu Food Scheme", iso: "KEN", status: "PLANNED" },
+            { name: "OCP Phosphate Fertilizer Hub", iso: "MAR", status: "ACTIVE" },
+            { name: "Ethiopia Integrated Agro-Industrial Parks", iso: "ETH", status: "ACTIVE" },
+            { name: "Indorama Fertilizer Complex", iso: "NGA", status: "ACTIVE" },
         ],
         dynamics: [
             "Domestic fertilizer output cuts the continent's largest import line.",
@@ -240,6 +278,9 @@ const SECTORS: Sector[] = [
         accentBg: "bg-emerald-500/10",
         accentBorder: "border-emerald-500/40",
         solidBg: "bg-emerald-500",
+        accentHex: "#10b981",
+        nexusResource: "Copper",
+        tradeCategory: "Manufactured",
         thesis: "Industrializing beyond raw exports under AfCFTA.",
         investment: "$44B/yr",
         growth: "+8.0%",
@@ -264,6 +305,9 @@ const SECTORS: Sector[] = [
             { name: "Tanger Automotive Cluster", iso: "MAR", status: "ACTIVE" },
             { name: "Suez Canal Economic Zone", iso: "EGY", status: "ACTIVE" },
             { name: "Lobito Industrial Park", iso: "AGO", status: "PLANNED" },
+            { name: "Kenitra Stellantis Plant", iso: "MAR", status: "ACTIVE" },
+            { name: "Coega Industrial Development Zone", iso: "ZAF", status: "ACTIVE" },
+            { name: "Bizerte Electrical Components Hub", iso: "TUN", status: "ACTIVE" },
         ],
         dynamics: [
             "AfCFTA Rules of Origin unlock intra-African component trade.",
@@ -279,6 +323,8 @@ const SECTORS: Sector[] = [
         accentBg: "bg-cobalt/10",
         accentBorder: "border-cobalt/40",
         solidBg: "bg-cobalt",
+        accentHex: "#2563eb",
+        nexusResource: "IronOre",
         thesis: "The hard backbone of sovereignty: ports, power and cities.",
         investment: "$68B/yr",
         growth: "+6.6%",
@@ -303,6 +349,9 @@ const SECTORS: Sector[] = [
             { name: "Suez Canal Expansion", iso: "EGY", status: "ACTIVE" },
             { name: "Lobito Corridor Railway", iso: "AGO", status: "ACTIVE" },
             { name: "Lekki Deep Sea Port", iso: "NGA", status: "ACTIVE" },
+            { name: "Kazungula Bridge", iso: "BWA", status: "COMPLETED" },
+            { name: "Tanger Med Port Complex", iso: "MAR", status: "ACTIVE" },
+            { name: "Google Equiano Subsea Cable", iso: "ZAF", status: "ACTIVE" },
         ],
         dynamics: [
             "Corridor strategy links mineral belts directly to deep-water ports.",
@@ -318,6 +367,8 @@ const SECTORS: Sector[] = [
         accentBg: "bg-cyan-500/10",
         accentBorder: "border-cyan-500/40",
         solidBg: "bg-cyan-500",
+        accentHex: "#06b6d4",
+        tradeCategory: "Services",
         thesis: "Controlling chokepoints, ports and the AfCFTA trade spine.",
         investment: "$30B/yr",
         growth: "+9.9%",
@@ -342,6 +393,9 @@ const SECTORS: Sector[] = [
             { name: "Lekki Deep Sea Port", iso: "NGA", status: "ACTIVE" },
             { name: "Dakhla Atlantic Port", iso: "MAR", status: "PLANNED" },
             { name: "Lobito Corridor Railway", iso: "AGO", status: "ACTIVE" },
+            { name: "Tanger Med Logistics Free Zone", iso: "MAR", status: "ACTIVE" },
+            { name: "Doraleh Multipurpose Port", iso: "DJI", status: "ACTIVE" },
+            { name: "Durban Port Expansion", iso: "ZAF", status: "CONSTRUCTION" },
         ],
         dynamics: [
             "Tanger Med cements Africa's largest container throughput.",
@@ -376,7 +430,7 @@ function statusColor(status: ProjectStatus): string {
     }
 }
 
-export default function SectorIntelligenceModal({ isOpen, onClose }: Props) {
+export default function SectorIntelligenceModal({ isOpen, onClose, onSelectCountry, onOpenNexus, onOpenTrade }: Props) {
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const { theme } = useTheme();
     const isDark = theme === "dark" || theme === "system" || !theme;
@@ -384,6 +438,7 @@ export default function SectorIntelligenceModal({ isOpen, onClose }: Props) {
     if (typeof window === "undefined") return null;
 
     const subText = isDark ? "text-slate-light" : "text-slate-600";
+    const axisTick = isDark ? "#94a3b8" : "#475569";
     const selected = SECTORS.find((s) => s.id === selectedId) || null;
 
     return createPortal(
@@ -501,7 +556,33 @@ export default function SectorIntelligenceModal({ isOpen, onClose }: Props) {
                                         <selected.icon className={`w-6 h-6 ${selected.accentText}`} />
                                         <h3 className="text-xl font-black tracking-wider">{selected.label}</h3>
                                     </div>
-                                    <p className={`text-sm mb-5 ${subText}`}>{selected.thesis}</p>
+                                    <p className={`text-sm mb-4 ${subText}`}>{selected.thesis}</p>
+
+                                    {/* Cross-link launch buttons */}
+                                    {(selected.nexusResource || selected.tradeCategory) && (
+                                        <div className="flex flex-wrap gap-2 mb-5">
+                                            {selected.nexusResource && onOpenNexus && (
+                                                <button
+                                                    onClick={() => onOpenNexus(selected.nexusResource!)}
+                                                    className={`group inline-flex items-center gap-1.5 rounded-lg border ${selected.accentBorder} ${selected.accentBg} px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider ${selected.accentText} transition-all hover:scale-[1.03]`}
+                                                >
+                                                    <Share2 className="w-3.5 h-3.5" />
+                                                    View in AI Nexus
+                                                    <ChevronRight className="w-3 h-3 opacity-60 transition-transform group-hover:translate-x-0.5" />
+                                                </button>
+                                            )}
+                                            {selected.tradeCategory && onOpenTrade && (
+                                                <button
+                                                    onClick={() => onOpenTrade(selected.tradeCategory!)}
+                                                    className={`group inline-flex items-center gap-1.5 rounded-lg border ${selected.accentBorder} ${selected.accentBg} px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider ${selected.accentText} transition-all hover:scale-[1.03]`}
+                                                >
+                                                    <ArrowUpRight className="w-3.5 h-3.5" />
+                                                    View in Trade Flows
+                                                    <ChevronRight className="w-3 h-3 opacity-60 transition-transform group-hover:translate-x-0.5" />
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
 
                                     {/* KPI row */}
                                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
@@ -536,6 +617,54 @@ export default function SectorIntelligenceModal({ isOpen, onClose }: Props) {
                                         </ul>
                                     </div>
 
+                                    {/* Leaders composite-score chart */}
+                                    {(() => {
+                                        const chartData = selected.leaders
+                                            .map((l) => {
+                                                const c = getCountryByIso(l.iso);
+                                                return c ? { iso: l.iso, name: c.name, score: c.axisScore } : null;
+                                            })
+                                            .filter((d): d is { iso: string; name: string; score: number } => d !== null)
+                                            .sort((a, b) => b.score - a.score);
+                                        if (chartData.length === 0) return null;
+                                        return (
+                                            <div className="mb-6">
+                                                <p className={`text-[10px] font-mono uppercase tracking-wider mb-2 ${subText}`}>Leaders &mdash; Composite Score</p>
+                                                <div className="rounded-xl border border-border bg-background/40 p-3" style={{ height: chartData.length * 34 + 28 }}>
+                                                    <ResponsiveContainer width="100%" height="100%">
+                                                        <BarChart data={chartData} layout="vertical" margin={{ top: 0, right: 28, bottom: 0, left: 4 }}>
+                                                            <XAxis type="number" domain={[0, 100]} hide />
+                                                            <YAxis
+                                                                type="category"
+                                                                dataKey="name"
+                                                                width={92}
+                                                                tick={{ fontSize: 10, fill: axisTick }}
+                                                                tickLine={false}
+                                                                axisLine={false}
+                                                            />
+                                                            <RTooltip
+                                                                cursor={{ fill: "transparent" }}
+                                                                contentStyle={{
+                                                                    background: isDark ? "#0c0c0c" : "#ffffff",
+                                                                    border: `1px solid ${selected.accentHex}`,
+                                                                    borderRadius: 8,
+                                                                    fontSize: 11,
+                                                                }}
+                                                                labelStyle={{ color: isDark ? "#e2e8f0" : "#0f172a", fontWeight: 700 }}
+                                                                formatter={(v) => [`${v}/100`, "AXIS Score"]}
+                                                            />
+                                                            <Bar dataKey="score" radius={[0, 4, 4, 0]} barSize={14}>
+                                                                {chartData.map((d) => (
+                                                                    <Cell key={d.iso} fill={selected.accentHex} />
+                                                                ))}
+                                                            </Bar>
+                                                        </BarChart>
+                                                    </ResponsiveContainer>
+                                                </div>
+                                            </div>
+                                        );
+                                    })()}
+
                                     {/* Two columns: leaders + projects */}
                                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                                         {/* Leaders */}
@@ -545,26 +674,32 @@ export default function SectorIntelligenceModal({ isOpen, onClose }: Props) {
                                                 {selected.leaders.map((l) => {
                                                     const country = getCountryByIso(l.iso);
                                                     const score = country?.axisScore ?? 0;
+                                                    const clickable = !!country && !!onSelectCountry;
+                                                    const Wrapper: React.ElementType = clickable ? "button" : "div";
                                                     return (
-                                                        <div key={l.iso} className="rounded-lg border border-border bg-background/40 p-2.5">
-                                                            <div className="flex items-center justify-between mb-1">
+                                                        <Wrapper
+                                                            key={l.iso}
+                                                            {...(clickable ? { onClick: () => onSelectCountry!(l.iso), type: "button" } : {})}
+                                                            className={`block w-full text-left rounded-lg border border-border bg-background/40 p-2.5 transition-all ${
+                                                                clickable ? "cursor-pointer hover:bg-white/5 hover:scale-[1.01]" : ""
+                                                            }`}
+                                                        >
+                                                            <div className="flex items-center justify-between mb-0.5">
                                                                 <span className="flex items-center gap-1.5 text-xs font-bold">
                                                                     <span>{isoToFlag(l.iso)}</span>
                                                                     {country?.name || l.iso}
                                                                 </span>
-                                                                {country ? (
-                                                                    <span className={`text-[10px] font-mono font-bold ${selected.accentText}`}>{score}/100</span>
-                                                                ) : (
-                                                                    <span className={`text-[9px] font-mono ${subText}`}>no score</span>
-                                                                )}
+                                                                <span className="flex items-center gap-1.5">
+                                                                    {country ? (
+                                                                        <span className={`text-[10px] font-mono font-bold ${selected.accentText}`}>{score}/100</span>
+                                                                    ) : (
+                                                                        <span className={`text-[9px] font-mono ${subText}`}>no score</span>
+                                                                    )}
+                                                                    {clickable && <ChevronRight className={`w-3.5 h-3.5 ${subText}`} />}
+                                                                </span>
                                                             </div>
-                                                            {country && (
-                                                                <div className="h-1 rounded-full bg-border overflow-hidden mb-1.5">
-                                                                    <div className={`h-full rounded-full ${selected.solidBg}`} style={{ width: `${score}%` }} />
-                                                                </div>
-                                                            )}
                                                             <p className={`text-[11px] leading-snug ${subText}`}>{l.note}</p>
-                                                        </div>
+                                                        </Wrapper>
                                                     );
                                                 })}
                                             </div>

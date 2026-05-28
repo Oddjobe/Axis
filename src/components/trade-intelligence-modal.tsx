@@ -5,6 +5,7 @@ import { X } from 'lucide-react';
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import dynamic from 'next/dynamic';
+import { type TradeCategory } from '@/lib/trade-categories';
 
 const TradeFlowMap = dynamic(() => import('./trade-flow-map'), { ssr: false });
 const SupplyChainGraph = dynamic(() => import('./supply-chain-graph'), { ssr: false });
@@ -12,9 +13,10 @@ const SupplyChainGraph = dynamic(() => import('./supply-chain-graph'), { ssr: fa
 interface Props {
     isOpen: boolean;
     onClose: () => void;
+    initialCategory?: TradeCategory | null;
 }
 
-export default function TradeIntelligenceModal({ isOpen, onClose }: Props) {
+export default function TradeIntelligenceModal({ isOpen, onClose, initialCategory }: Props) {
     const [tab, setTab] = useState<'flows' | 'supply'>('flows');
 
     if (typeof window === 'undefined') return null;
@@ -63,7 +65,7 @@ export default function TradeIntelligenceModal({ isOpen, onClose }: Props) {
                             </button>
                         </div>
                         <div className="flex-1 overflow-hidden">
-                            {tab === 'flows' ? <TradeFlowMap /> : <SupplyChainGraph />}
+                            {tab === 'flows' ? <TradeFlowMap initialCategory={initialCategory} /> : <SupplyChainGraph />}
                         </div>
                     </motion.div>
                 </motion.div>

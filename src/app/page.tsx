@@ -39,6 +39,7 @@ const AiNexusModal = dynamic(() => import("@/components/ai-nexus-modal"), { load
 const ComparativeAnalyticsModal = dynamic(() => import("@/components/comparative-analytics-modal"), { loading: () => null });
 const TradeIntelligenceModal = dynamic(() => import("@/components/trade-intelligence-modal"), { loading: () => null });
 const SectorIntelligenceModal = dynamic(() => import("@/components/sector-intelligence-modal"), { loading: () => null });
+const CountryDossierModal = dynamic(() => import("@/components/country-dossier-modal"), { loading: () => null });
 import FrictionEngine from "@/components/friction-engine";
 import ContinentalGoalsTicker from "@/components/continental-goals-ticker";
 import MissionModal from "@/components/mission-modal";
@@ -49,6 +50,7 @@ import { ALL_SOVEREIGN_DATA } from "@/lib/mock-data";
 import { Language, useTranslation } from "@/lib/i18n";
 import { isoToFlag } from "@/lib/flags";
 import type { CountryData } from "@/components/country-dossier-modal";
+import type { TradeCategory } from "@/lib/trade-categories";
 import kpiData from "@/lib/kpi-data.json";
 import { AnimatePresence, motion } from "framer-motion";
 import { useRealtimeAlerts } from "@/lib/use-realtime-alerts";
@@ -65,6 +67,9 @@ export default function Home() {
   const [comparativeOpen, setComparativeOpen] = useState(false);
   const [tradeIntelOpen, setTradeIntelOpen] = useState(false);
   const [sectorOpen, setSectorOpen] = useState(false);
+  const [dossierCountry, setDossierCountry] = useState<CountryData | null>(null);
+  const [nexusOverride, setNexusOverride] = useState<string | null>(null);
+  const [tradeCategory, setTradeCategory] = useState<TradeCategory | null>(null);
   const [mobilePanel, setMobilePanel] = useState<"map" | "index" | "intel">("map");
   const [mobileSettingsOpen, setMobileSettingsOpen] = useState(false);
   const [selectedResource, setSelectedResource] = useState<string | null>(null);
@@ -82,10 +87,10 @@ export default function Home() {
     switch (action) {
       case "mission": setMissionOpen(true); break;
       case "analytics": setAnalyticsOpen(true); break;
-      case "nexus": setAiNexusOpen(true); break;
+      case "nexus": setNexusOverride(null); setAiNexusOpen(true); break;
       case "briefing": setBriefingOpen(true); break;
       case "compare": setComparativeOpen(true); break;
-      case "trade": setTradeIntelOpen(true); break;
+      case "trade": setTradeCategory(null); setTradeIntelOpen(true); break;
       case "sectors": setSectorOpen(true); break;
     }
   }, []);
@@ -828,8 +833,8 @@ export default function Home() {
       />
       <AiNexusModal
         isOpen={aiNexusOpen}
-        onClose={() => setAiNexusOpen(false)}
-        selectedResource={selectedResource}
+        onClose={() => { setAiNexusOpen(false); setNexusOverride(null); }}
+        selectedResource={nexusOverride ?? selectedResource}
       />
       <AiBriefingModal
         isOpen={briefingOpen}
@@ -841,8 +846,34 @@ export default function Home() {
         allData={ALL_SOVEREIGN_DATA}
         initialSelectedCodes={selectedCodes}
       />
-      <TradeIntelligenceModal isOpen={tradeIntelOpen} onClose={() => setTradeIntelOpen(false)} />
-      <SectorIntelligenceModal isOpen={sectorOpen} onClose={() => setSectorOpen(false)} />
+      <TradeIntelligenceModal
+        isOpen={tradeIntelOpen}
+        onClose={() => { setTradeIntelOpen(false); setTradeCategory(null); }}
+        initialCategory={tradeCategory}
+      />
+      <SectorIntelligenceModal
+        isOpen={sectorOpen}
+        onClose={() => setSectorOpen(false)}
+        onSelectCountry={(iso) => {
+          const row = ALL_SOVEREIGN_DATA.find((c) => c.country === iso);
+          if (row) setDossierCountry(row);
+        }}
+        onOpenNexus={(resource) => {
+          setNexusOverride(resource);
+          setSectorOpen(false);
+          setAiNexusOpen(true);
+        }}
+        onOpenTrade={(category) => {
+          setTradeCategory(category);
+          setSectorOpen(false);
+          setTradeIntelOpen(true);
+        }}
+      />
+      <CountryDossierModal
+        isOpen={dossierCountry !== null}
+        onClose={() => setDossierCountry(null)}
+        countryData={dossierCountry}
+      />
     </div>
   );
 }
