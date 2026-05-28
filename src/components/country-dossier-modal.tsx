@@ -310,7 +310,7 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
                     id="dossier-modal-content"
                 >
                     {/* Header */}
-                    <div className="flex flex-col p-4 sm:p-6 border-b border-border bg-gradient-to-b from-black/5 to-transparent dark:from-white/5 gap-3 relative">
+                    <div className="flex flex-col p-4 sm:p-6 border-b border-border bg-gradient-to-b from-black/5 to-transparent dark:from-white/5 gap-3 relative shrink-0">
                         <div className="flex items-center gap-3 sm:gap-4 pr-10 sm:pr-0">
                             <div className="w-14 h-14 bg-cobalt/20 border-2 border-cobalt/50 rounded-full flex flex-col items-center justify-center text-cobalt shadow-[0_0_20px_rgba(37,99,235,0.4)] shrink-0">
                                 <span className="text-2xl leading-none">{isoToFlag(countryData.country)}</span>
@@ -393,7 +393,7 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
                     )}
 
                     {/* Tabs */}
-                    <div className="flex border-b border-border px-4 sm:px-6 mt-4 gap-6 text-sm font-mono tracking-wider overflow-x-auto hide-scrollbar whitespace-nowrap">
+                    <div className="flex border-b border-border px-4 sm:px-6 mt-4 gap-6 text-sm font-mono tracking-wider overflow-x-auto hide-scrollbar whitespace-nowrap shrink-0">
                         <button
                             onClick={() => setActiveTab("STRATEGY")}
                             className={`pb-3 border-b-2 transition-colors flex items-center gap-2 shrink-0 ${activeTab === "STRATEGY" ? "border-cobalt text-cobalt font-bold" : "border-transparent text-slate-light hover:text-foreground"}`}
