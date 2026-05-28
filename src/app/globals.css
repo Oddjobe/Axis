@@ -16,7 +16,7 @@
   --color-cobalt-glow: rgba(37, 99, 235, 0.5);
   --color-cobalt-light: #60a5fa;
 
-  --color-marble: #eef1f5;
+  --color-marble: #cdd5e1;
   --color-slate-deep: #1e293b;
   --color-slate-light: #64748b;
 
@@ -28,8 +28,8 @@
   /* Default to Light Mode: "Soft Slate" — muted cool gray, not glaring white */
   --background: var(--color-marble);
   --foreground: var(--color-slate-deep);
-  --panel-bg: rgba(248, 250, 252, 0.7);
-  --border-color: #d4dbe5;
+  --panel-bg: rgba(237, 241, 246, 0.85);
+  --border-color: #b4bccb;
 }
 
 .dark {
