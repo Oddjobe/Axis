@@ -208,7 +208,7 @@ export default function AnalyticsModal({ isOpen, onClose, data, selectedResource
                                                         <span className="text-orange-500">▶</span> INFLUENCE MAPPING
                                                     </h3>
                                                     <p className="text-xs text-slate-light leading-relaxed mb-4">
-                                                        Visualizing extractive structural influence from external actors into Africa's most vulnerable states.
+                                                        Visualizing extractive structural influence from external actors into Africa's most vulnerable states. Use the actor chips or click any node to isolate a single flow.
                                                     </p>
 
                                                     <div className="space-y-3">
