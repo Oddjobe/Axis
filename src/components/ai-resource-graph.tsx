@@ -513,7 +513,7 @@ export default function AiResourceGraph({ selectedResource = null }: { selectedR
 
                 {/* Floating Detail Card */}
                 {hoverNode && (
-                    <div className={`absolute bottom-4 right-4 w-72 ${isDark ? 'bg-zinc-900/95 border-zinc-700/80' : 'bg-white/95 border-zinc-200'} border p-3.5 rounded-xl shadow-2xl backdrop-blur-xl pointer-events-none z-20`}>
+                    <div className={`absolute bottom-4 right-4 w-72 ${isDark ? 'bg-zinc-900/95 border-zinc-700/80' : 'bg-slate-100/95 border-zinc-300'} border p-3.5 rounded-xl shadow-2xl backdrop-blur-xl pointer-events-none z-20`}>
                         <div className="flex items-center gap-3 mb-2 pb-2 border-b" style={{ borderColor: isDark ? '#27272a' : '#e4e4e7' }}>
                             <div className="p-1.5 rounded-lg" style={{ backgroundColor: `${hoverNode.color}18`, color: hoverNode.color }}>
                                 {hoverNode.group === 'country' ? <Globe className="w-4 h-4" /> :

@@ -434,7 +434,7 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
                         {activeTab === "STRATEGY" && (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                                 <div className="space-y-6">
-                                    <div className="bg-white/40 dark:bg-white/5 border border-black/10 dark:border-white/10 p-6 rounded-2xl relative shadow-sm hover:shadow-md transition-shadow">
+                                    <div className="bg-slate-100/50 dark:bg-white/5 border border-black/10 dark:border-white/10 p-6 rounded-2xl relative shadow-sm hover:shadow-md transition-shadow">
                                         <div className="absolute top-4 right-4">
                                             <span className="text-[10px] font-bold px-2 py-1 bg-cobalt/10 text-cobalt rounded-full border border-cobalt/20">Live Sync</span>
                                         </div>
@@ -477,7 +477,7 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
                                         )}
                                     </div>
 
-                                    <div className="bg-white/40 dark:bg-white/5 border border-black/10 dark:border-white/10 p-6 rounded-2xl relative shadow-sm hover:shadow-md transition-shadow">
+                                    <div className="bg-slate-100/50 dark:bg-white/5 border border-black/10 dark:border-white/10 p-6 rounded-2xl relative shadow-sm hover:shadow-md transition-shadow">
                                         <div className="absolute top-4 right-4">
                                             <span className="text-[10px] font-bold px-2 py-1 bg-green-500/10 text-green-600 dark:text-green-400 rounded-full border border-green-500/20">Verified</span>
                                         </div>
@@ -486,7 +486,7 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
                                         </h3>
                                         <div className="space-y-4">
                                             {(countryData.keyInitiatives || []).map((init, i: number) => (
-                                                <div key={i} className="flex flex-col border-l-2 border-cobalt/50 pl-3 py-1 bg-white/30 dark:bg-transparent rounded-r pr-2">
+                                                <div key={i} className="flex flex-col border-l-2 border-cobalt/50 pl-3 py-1 bg-slate-100/40 dark:bg-transparent rounded-r pr-2">
                                                     <span className="text-sm font-bold text-foreground">{init.title.toUpperCase()}</span>
                                                     <span className="text-xs text-slate-light font-mono mt-1 leading-relaxed">{init.details}</span>
                                                 </div>
@@ -804,7 +804,7 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
                                     intelAlerts.map((alert, i) => (
                                         <div key={i} className={`p-4 border rounded-xl transition-shadow hover:shadow-md ${alert.category === 'OUTSIDE INFLUENCE'
                                             ? 'bg-orange-500/5 border-orange-500/20 dark:border-orange-500/30'
-                                            : 'bg-white/40 dark:bg-white/5 border-black/10 dark:border-white/10'
+                                            : 'bg-slate-100/50 dark:bg-white/5 border-black/10 dark:border-white/10'
                                             }`}>
                                             <div className="flex items-start justify-between gap-4 mb-2">
                                                 <h4 className="font-bold text-sm leading-tight flex-1">{alert.title}</h4>

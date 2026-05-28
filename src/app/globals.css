@@ -16,7 +16,7 @@
   --color-cobalt-glow: rgba(37, 99, 235, 0.5);
   --color-cobalt-light: #60a5fa;
 
-  --color-marble: #f8f9fa;
+  --color-marble: #eef1f5;
   --color-slate-deep: #1e293b;
   --color-slate-light: #64748b;
 
@@ -25,11 +25,11 @@
 }
 
 :root {
-  /* Default to Light Mode: "Marble & Slate" */
+  /* Default to Light Mode: "Soft Slate" — muted cool gray, not glaring white */
   --background: var(--color-marble);
   --foreground: var(--color-slate-deep);
-  --panel-bg: rgba(255, 255, 255, 0.75);
-  --border-color: #e2e8f0;
+  --panel-bg: rgba(248, 250, 252, 0.7);
+  --border-color: #d4dbe5;
 }
 
 .dark {
