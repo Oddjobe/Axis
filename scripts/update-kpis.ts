@@ -103,7 +103,7 @@ function saveKpis(data: KpiData) {
 }
 
 function isUsableKpiValue(value: unknown): value is string {
-    return typeof value === "string" && /\$\s?\d/.test(value);
+    return typeof value === "string" && /^\$\s?\d+(\.\d+)?[BMK]?$/i.test(value);
 }
 
 main().catch(console.error);

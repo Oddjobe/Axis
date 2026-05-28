@@ -55,9 +55,11 @@ import { AXIS_TAGLINE } from "@/lib/brand";
 const parsePopulationMillions = (pop: unknown) => {
   if (typeof pop === 'number') return pop;
   if (!pop || typeof pop !== 'string') return 0;
-  if (pop.endsWith('B')) return parseFloat(pop) * 1000;
-  if (pop.endsWith('M')) return parseFloat(pop);
-  return parseFloat(pop) || 0;
+  const match = pop.trim().match(/^([\d,.]+)\s*([BM])?$/i);
+  if (!match) return 0;
+  const value = parseFloat(match[1].replace(/,/g, ''));
+  if (!Number.isFinite(value)) return 0;
+  return match[2]?.toUpperCase() === 'B' ? value * 1000 : value;
 };
 
 const FALLBACK_TOTAL_POPULATION = ALL_SOVEREIGN_DATA.reduce((sum, c) => sum + parsePopulationMillions(c.population), 0);
