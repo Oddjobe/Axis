@@ -66,6 +66,8 @@ const RESOURCE_BASE: { id: string; name: string; val: number; desc: string }[] =
     { id: "Titanium", name: "Titanium", val: 16, desc: "Lightweight high-strength alloys for server chassis and aerospace-grade casings." },
     { id: "Coal", name: "Coal", val: 18, desc: "Legacy baseload power still feeding gigawatt-scale data center demand." },
     { id: "Chromium", name: "Chromium", val: 16, desc: "Alloyed into stainless steel for racks and corrosion-resistant plating." },
+    { id: "Diamonds", name: "Diamonds", val: 16, desc: "Industrial diamond for chip heat spreaders and precision wafer-cutting tooling." },
+    { id: "Zinc", name: "Zinc", val: 15, desc: "Galvanizes structural steel and anchors emerging zinc-based grid storage." },
 ];
 
 const RESOURCE_IDS = new Set(RESOURCE_BASE.map(r => r.id));
@@ -236,6 +238,8 @@ export default function AiResourceGraph({ selectedResource = null }: { selectedR
             if (res.some(r => r.includes('titanium') || r.includes('ilmenite') || r.includes('rutile'))) { dynamicCountryLinks.push({ source: c.country, target: "Titanium", value: 6 }); hasLink = true; }
             if (res.some(r => r.includes('coal'))) { dynamicCountryLinks.push({ source: c.country, target: "Coal", value: 6 }); hasLink = true; }
             if (res.some(r => r.includes('chrome') || r.includes('chromium'))) { dynamicCountryLinks.push({ source: c.country, target: "Chromium", value: 6 }); hasLink = true; }
+            if (res.some(r => r.includes('diamond'))) { dynamicCountryLinks.push({ source: c.country, target: "Diamonds", value: 6 }); hasLink = true; }
+            if (res.some(r => r.includes('zinc'))) { dynamicCountryLinks.push({ source: c.country, target: "Zinc", value: 6 }); hasLink = true; }
 
             // Special handling for DRC Cobalt dominance
             if (c.country === "COD" && res.some(r => r.includes('cobalt'))) {
@@ -279,6 +283,10 @@ export default function AiResourceGraph({ selectedResource = null }: { selectedR
             { source: "Coal", target: "Grid", value: 7 },
             { source: "Chromium", target: "Thermal", value: 5 },
             { source: "Chromium", target: "Semiconductors", value: 3 },
+            { source: "Diamonds", target: "Thermal", value: 4 },
+            { source: "Diamonds", target: "Semiconductors", value: 3 },
+            { source: "Zinc", target: "Grid", value: 4 },
+            { source: "Zinc", target: "Batteries", value: 3 },
 
             // Components -> AI
             { source: "Batteries", target: "DataCenters", value: 6, label: "UPS" },
