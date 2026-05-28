@@ -814,28 +814,36 @@ export default function Home() {
         onOpenTool={(action) => { openTool(action); setSearchOpen(false); }}
       />
       <MissionModal isOpen={missionOpen} onClose={() => setMissionOpen(false)} />
-      <AnalyticsModal
-        isOpen={analyticsOpen}
-        onClose={() => setAnalyticsOpen(false)}
-        data={countryDataMaster}
-        selectedResource={selectedResource}
-      />
-      <AiNexusModal
-        isOpen={aiNexusOpen}
-        onClose={() => setAiNexusOpen(false)}
-        selectedResource={selectedResource}
-      />
-      <AiBriefingModal
-        isOpen={briefingOpen}
-        onClose={() => setBriefingOpen(false)}
-      />
-      <ComparativeAnalyticsModal
-        isOpen={comparativeOpen}
-        onClose={() => setComparativeOpen(false)}
-        allData={ALL_SOVEREIGN_DATA}
-        initialSelectedCodes={selectedCodes}
-      />
-      <TradeIntelligenceModal isOpen={tradeIntelOpen} onClose={() => setTradeIntelOpen(false)} />
+      {analyticsOpen && (
+        <AnalyticsModal
+          isOpen={analyticsOpen}
+          onClose={() => setAnalyticsOpen(false)}
+          data={countryDataMaster}
+          selectedResource={selectedResource}
+        />
+      )}
+      {aiNexusOpen && (
+        <AiNexusModal
+          isOpen={aiNexusOpen}
+          onClose={() => setAiNexusOpen(false)}
+          selectedResource={selectedResource}
+        />
+      )}
+      {briefingOpen && (
+        <AiBriefingModal
+          isOpen={briefingOpen}
+          onClose={() => setBriefingOpen(false)}
+        />
+      )}
+      {comparativeOpen && (
+        <ComparativeAnalyticsModal
+          isOpen={comparativeOpen}
+          onClose={() => setComparativeOpen(false)}
+          allData={ALL_SOVEREIGN_DATA}
+          initialSelectedCodes={selectedCodes}
+        />
+      )}
+      {tradeIntelOpen && <TradeIntelligenceModal isOpen={tradeIntelOpen} onClose={() => setTradeIntelOpen(false)} />}
     </div>
   );
 }
