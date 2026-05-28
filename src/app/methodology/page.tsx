@@ -212,13 +212,13 @@ export default function MethodologyPage() {
                     </p>
                     <div className="mt-6 space-y-2">
                         <h3 className="text-[10px] font-mono tracking-widest text-slate-light/80 uppercase">
-                            Verified Data Sources — Last Audit: April 12, 2026
+                            Verified Data Sources — Last Audit: May 28, 2026
                         </h3>
                         <ul className="text-[11px] font-mono text-slate-light/70 space-y-1 list-disc list-inside max-w-3xl">
                             <li><strong>Commodity prices</strong> — Kitco (gold), LME (cobalt/copper), SunSirs &amp; Benchmark Mineral Intelligence (lithium), S&amp;P Global Platts (bauxite)</li>
                             <li><strong>Population figures</strong> — Worldometer 2026 estimates, cross-checked with World Population Review &amp; UN DESA</li>
-                            <li><strong>FDI flows</strong> — UNCTAD World Investment Report 2025 ($59B Africa inflows)</li>
-                            <li><strong>Capital flight / IFFs</strong> — African Development Bank &amp; Coalition for Dialogue on Africa ($88B/yr illicit financial flows)</li>
+                            <li><strong>FDI flows</strong> — UNCTAD World Investment Report 2025 ($97B Africa inflows in 2024)</li>
+                            <li><strong>Capital flight / IFFs</strong> — UNCTAD Economic Development in Africa Report 2020 ($88.6B/yr illicit financial flows)</li>
                             <li><strong>Resource endowments</strong> — USGS Mineral Commodity Summaries, national mining ministries</li>
                             <li><strong>Trade corridors</strong> — AfCFTA Secretariat reports, UNCTAD bilateral trade data</li>
                         </ul>

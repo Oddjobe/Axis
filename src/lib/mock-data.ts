@@ -31,7 +31,7 @@ const POP_MAP: Record<string, number> = {
     "MDG": 31.4, "CIV": 30.1, "CMR": 29.6, "NER": 28.4, "BFA": 24.0, "MLI": 24.0, "MWI": 21.6,
     "ZMB": 21.3, "TCD": 19.1, "SOM": 18.9, "SEN": 18.4, "ZWE": 17.0, "GIN": 14.8, "RWA": 14.3,
     "BEN": 14.1, "BDI": 13.6, "TUN": 12.6, "SSD": 11.5, "TGO": 9.4, "SLE": 9.1, "LBY": 7.1,
-    "COG": 6.3, "CAF": 5.9, "LBR": 5.6, "MRT": 4.9, "ERI": 3.8, "GMB": 2.8, "BWA": 2.7,
+    "COG": 6.3, "CAF": 5.9, "LBR": 5.6, "MRT": 4.9, "ERI": 3.8, "GMB": 2.8, "BWA": 2.7, "GAB": 2.6,
     "NAM": 2.7, "GNB": 2.2, "LSO": 2.4, "GNQ": 1.8, "MUS": 1.3, "SWZ": 1.2, "DJI": 1.2,
     "COM": 0.9, "CPV": 0.6, "STP": 0.2, "SYC": 0.1
 };

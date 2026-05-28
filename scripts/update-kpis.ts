@@ -17,10 +17,10 @@ interface KpiData {
 }
 
 const DEFAULT_KPI: KpiData = {
-    fdi: "$67.0B",
-    capitalFlight: "$631.4B",
+    fdi: "$97B",
+    capitalFlight: "$88.6B",
     lastUpdated: new Date().toISOString(),
-    source: "Static Fallback"
+    source: "UNCTAD World Investment Report 2025; UNCTAD Economic Development in Africa Report 2020"
 };
 
 async function main() {
@@ -73,8 +73,8 @@ async function main() {
         }
 
         const newKpi: KpiData = {
-            fdi: extractRes.extract.fdi || currentKpi.fdi,
-            capitalFlight: extractRes.extract.capitalFlight || currentKpi.capitalFlight,
+            fdi: isUsableKpiValue(extractRes.extract.fdi) ? extractRes.extract.fdi : currentKpi.fdi,
+            capitalFlight: isUsableKpiValue(extractRes.extract.capitalFlight) ? extractRes.extract.capitalFlight : currentKpi.capitalFlight,
             lastUpdated: new Date().toISOString(),
             source: topUrl
         };
@@ -100,6 +100,10 @@ function saveKpis(data: KpiData) {
     fs.writeFileSync(KPI_FILE, JSON.stringify(data, null, 2), "utf-8");
     console.log("Saved KPI data to src/lib/kpi-data.json");
     console.log(data);
+}
+
+function isUsableKpiValue(value: unknown): value is string {
+    return typeof value === "string" && /\$\s?\d/.test(value);
 }
 
 main().catch(console.error);

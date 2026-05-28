@@ -51,7 +51,16 @@ import kpiData from "@/lib/kpi-data.json";
 import { AnimatePresence, motion } from "framer-motion";
 import { useRealtimeAlerts } from "@/lib/use-realtime-alerts";
 import { AXIS_TAGLINE } from "@/lib/brand";
-const TOTAL_POPULATION = 1_444; // ~1.44 billion
+
+const parsePopulationMillions = (pop: unknown) => {
+  if (typeof pop === 'number') return pop;
+  if (!pop || typeof pop !== 'string') return 0;
+  if (pop.endsWith('B')) return parseFloat(pop) * 1000;
+  if (pop.endsWith('M')) return parseFloat(pop);
+  return parseFloat(pop) || 0;
+};
+
+const FALLBACK_TOTAL_POPULATION = ALL_SOVEREIGN_DATA.reduce((sum, c) => sum + parsePopulationMillions(c.population), 0);
 
 export default function Home() {
   const [mode, setMode] = useState<"SOVEREIGNTY" | "OUTSIDE INFLUENCE">("SOVEREIGNTY");
@@ -172,20 +181,14 @@ export default function Home() {
     .map(code => countryDataMaster.find(c => c.country === code))
     .filter(Boolean) as CountryData[];
 
-  // Function to parse strings like "35.6M" or "1.2B" to numbers
-  const parsePop = (popStr: any) => {
-    if (typeof popStr === 'number') return popStr;
-    if (!popStr || typeof popStr !== 'string') return 0;
-    if (popStr.endsWith('B')) return parseFloat(popStr) * 1000;
-    if (popStr.endsWith('M')) return parseFloat(popStr);
-    return parseFloat(popStr) || 0;
-  };
-
-  const totalPopMillions = selectedCountries.reduce((sum, c) => sum + parsePop(c.population), 0);
+  const selectedPopMillions = selectedCountries.reduce((sum, c) => sum + parsePopulationMillions(c.population), 0);
+  const totalPopMillions = countryDataMaster.length > 0
+    ? countryDataMaster.reduce((sum, c) => sum + parsePopulationMillions(c.population), 0)
+    : FALLBACK_TOTAL_POPULATION;
 
   const displayPop = selectedCountries.length > 0
-    ? totalPopMillions >= 1000 ? `${(totalPopMillions / 1000).toFixed(2)} B` : `${totalPopMillions.toFixed(1)} M`
-    : `${(TOTAL_POPULATION / 1000).toFixed(2)} B`;
+    ? selectedPopMillions >= 1000 ? `${(selectedPopMillions / 1000).toFixed(2)} B` : `${selectedPopMillions.toFixed(1)} M`
+    : `${(totalPopMillions / 1000).toFixed(2)} B`;
   const axisIndex = countryDataMaster.length > 0
     ? Math.round(countryDataMaster.reduce((sum, c) => sum + (c.axisScore || 0), 0) / countryDataMaster.length)
     : 0;
