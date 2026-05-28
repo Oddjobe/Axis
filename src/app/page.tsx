@@ -21,7 +21,8 @@ import {
   Map as LucideMap,
   Check,
   Settings2,
-  BrainCircuit
+  BrainCircuit,
+  LayoutGrid
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import dynamic from "next/dynamic";
@@ -37,6 +38,7 @@ const AnalyticsModal = dynamic(() => import("@/components/analytics-modal"), { l
 const AiNexusModal = dynamic(() => import("@/components/ai-nexus-modal"), { loading: () => null });
 const ComparativeAnalyticsModal = dynamic(() => import("@/components/comparative-analytics-modal"), { loading: () => null });
 const TradeIntelligenceModal = dynamic(() => import("@/components/trade-intelligence-modal"), { loading: () => null });
+const SectorIntelligenceModal = dynamic(() => import("@/components/sector-intelligence-modal"), { loading: () => null });
 import FrictionEngine from "@/components/friction-engine";
 import ContinentalGoalsTicker from "@/components/continental-goals-ticker";
 import MissionModal from "@/components/mission-modal";
@@ -62,6 +64,7 @@ export default function Home() {
   const [briefingOpen, setBriefingOpen] = useState(false);
   const [comparativeOpen, setComparativeOpen] = useState(false);
   const [tradeIntelOpen, setTradeIntelOpen] = useState(false);
+  const [sectorOpen, setSectorOpen] = useState(false);
   const [mobilePanel, setMobilePanel] = useState<"map" | "index" | "intel">("map");
   const [mobileSettingsOpen, setMobileSettingsOpen] = useState(false);
   const [selectedResource, setSelectedResource] = useState<string | null>(null);
@@ -83,6 +86,7 @@ export default function Home() {
       case "briefing": setBriefingOpen(true); break;
       case "compare": setComparativeOpen(true); break;
       case "trade": setTradeIntelOpen(true); break;
+      case "sectors": setSectorOpen(true); break;
     }
   }, []);
 
@@ -414,6 +418,14 @@ export default function Home() {
                 <ArrowUpRight className="h-4 w-4" />
                 <span className="hidden xl:inline">TRADE</span>
               </button>
+              <button
+                onClick={() => setSectorOpen(true)}
+                className="flex min-w-[7rem] items-center justify-center gap-1.5 rounded-xl border border-violet-500/20 bg-violet-500/10 px-3 py-2 text-xs font-bold text-violet-500 shadow-[0_0_15px_rgba(139,92,246,0.1)] transition-all hover:bg-violet-500/20"
+                title="Sector Intelligence"
+              >
+                <LayoutGrid className="h-4 w-4" />
+                <span className="hidden xl:inline">SECTORS</span>
+              </button>
             </div>
           </div>
         </div>
@@ -744,6 +756,7 @@ export default function Home() {
                       { label: "AI NEXUS", icon: Share2, hoverClass: "hover:border-cobalt/40 hover:text-cobalt", action: () => { setMobileSettingsOpen(false); setAiNexusOpen(true); } },
                       { label: "COMPARE", icon: Combine, hoverClass: "hover:border-emerald-500/40 hover:text-emerald-500", action: () => { setMobileSettingsOpen(false); setComparativeOpen(true); } },
                       { label: "TRADE", icon: ArrowUpRight, hoverClass: "hover:border-cyan-500/40 hover:text-cyan-500", action: () => { setMobileSettingsOpen(false); setTradeIntelOpen(true); } },
+                      { label: "SECTORS", icon: LayoutGrid, hoverClass: "hover:border-violet-500/40 hover:text-violet-500", action: () => { setMobileSettingsOpen(false); setSectorOpen(true); } },
                       { label: "ABOUT", icon: Info, hoverClass: "hover:border-slate-300/40 hover:text-slate-300", action: () => { setMobileSettingsOpen(false); setMissionOpen(true); } },
                       { label: "AI BRIEF", icon: BrainCircuit, hoverClass: "hover:border-purple-500/40 hover:text-purple-500", action: () => { setMobileSettingsOpen(false); setBriefingOpen(true); } },
                     ].map(tool => (
@@ -829,6 +842,7 @@ export default function Home() {
         initialSelectedCodes={selectedCodes}
       />
       <TradeIntelligenceModal isOpen={tradeIntelOpen} onClose={() => setTradeIntelOpen(false)} />
+      <SectorIntelligenceModal isOpen={sectorOpen} onClose={() => setSectorOpen(false)} />
     </div>
   );
 }
