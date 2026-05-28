@@ -23,6 +23,15 @@ const DEFAULT_KPI: KpiData = {
     source: "Static Fallback"
 };
 
+// A valid monetary KPI looks like "$12.3B" / "$97B" / "$1.2T". Anything else
+// (empty, "N/A", prose, etc.) must NOT overwrite the last known good value.
+function validKpi(value: unknown, fallback: string): string {
+    if (typeof value === "string" && /^\$\d[\d.,]*\s*[BMT]?$/i.test(value.trim())) {
+        return value.trim();
+    }
+    return fallback;
+}
+
 async function main() {
     console.log("Attempting to update KPIs using Firecrawl...");
 
@@ -34,6 +43,11 @@ async function main() {
             console.error("Failed to read existing KPI file, using default.");
         }
     }
+
+    // Self-heal: if the cached file holds an invalid value (e.g. a prior "N/A"),
+    // recover to the static default rather than propagating bad data.
+    currentKpi.fdi = validKpi(currentKpi.fdi, DEFAULT_KPI.fdi);
+    currentKpi.capitalFlight = validKpi(currentKpi.capitalFlight, DEFAULT_KPI.capitalFlight);
 
     if (!FIRECRAWL_API_KEY) {
         console.warn("No FIRECRAWL_API_KEY found. Falling back to cached KPIs.");
@@ -73,8 +87,8 @@ async function main() {
         }
 
         const newKpi: KpiData = {
-            fdi: extractRes.extract.fdi || currentKpi.fdi,
-            capitalFlight: extractRes.extract.capitalFlight || currentKpi.capitalFlight,
+            fdi: validKpi(extractRes.extract.fdi, currentKpi.fdi),
+            capitalFlight: validKpi(extractRes.extract.capitalFlight, currentKpi.capitalFlight),
             lastUpdated: new Date().toISOString(),
             source: topUrl
         };
