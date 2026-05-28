@@ -52,10 +52,12 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useRealtimeAlerts } from "@/lib/use-realtime-alerts";
 import { AXIS_TAGLINE } from "@/lib/brand";
 
+const POPULATION_PATTERN = /^((?:\d+|\d{1,3}(?:,\d{3})+)(?:\.\d+)?)\s*([BM])?$/i;
+
 const parsePopulationMillions = (pop: unknown) => {
   if (typeof pop === 'number') return pop;
   if (!pop || typeof pop !== 'string') return 0;
-  const match = pop.trim().match(/^((?:\d+|\d{1,3}(?:,\d{3})+)(?:\.\d+)?)\s*([BM])?$/i);
+  const match = pop.trim().match(POPULATION_PATTERN);
   if (!match) return 0;
   const value = parseFloat(match[1].replace(/,/g, ''));
   if (!Number.isFinite(value)) return 0;

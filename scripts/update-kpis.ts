@@ -8,6 +8,7 @@ dotenv.config({ path: ".env.local" });
 const FIRECRAWL_API_KEY = process.env.FIRECRAWL_API_KEY;
 
 const KPI_FILE = path.join(__dirname, "../src/lib/kpi-data.json");
+const KPI_CURRENCY_PATTERN = /^\$\s?(?:\d+|\d{1,3}(?:,\d{3})+)(?:\.\d+)?[BMK]?$/i;
 
 interface KpiData {
     fdi: string;
@@ -103,7 +104,7 @@ function saveKpis(data: KpiData) {
 }
 
 function isUsableKpiValue(value: unknown): value is string {
-    return typeof value === "string" && /^\$\s?(?:\d+|\d{1,3}(?:,\d{3})+)(?:\.\d+)?[BMK]?$/i.test(value.trim());
+    return typeof value === "string" && KPI_CURRENCY_PATTERN.test(value.trim());
 }
 
 main().catch(console.error);
