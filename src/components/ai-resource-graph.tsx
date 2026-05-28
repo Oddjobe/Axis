@@ -43,12 +43,41 @@ const COLUMN_MAP: Record<NodeType, number> = {
     endProduct: 3,
 };
 
+// Critical minerals layer — single source of truth for both the graph nodes
+// and the interactive filter chips. `id` must match the dynamic link targets below.
+const RESOURCE_BASE: { id: string; name: string; val: number; desc: string }[] = [
+    { id: "Cobalt", name: "Cobalt", val: 20, desc: "Stabilizes high-density lithium-ion batteries. Prevents thermal runaway." },
+    { id: "Copper", name: "Copper", val: 22, desc: "The nervous system of AI — data center wiring, busbars, chip substrates." },
+    { id: "Lithium", name: "Lithium", val: 20, desc: "Core element for energy storage and backup power systems." },
+    { id: "Bauxite", name: "Bauxite", val: 16, desc: "Refined into Aluminum for server racks, heat sinks, and casings." },
+    { id: "Graphite", name: "Graphite", val: 18, desc: "Largest mineral component by weight in modern battery cells." },
+    { id: "Coltan", name: "Coltan", val: 16, desc: "Refined into Tantalum for high-performance capacitors." },
+    { id: "Gold", name: "Gold", val: 18, desc: "Unmatched conductivity and corrosion resistance for PCB plating and bond wires." },
+    { id: "Nickel", name: "Nickel", val: 18, desc: "Critical for high-nickel cathode chemistries in energy storage." },
+    { id: "Phosphates", name: "Phosphates", val: 16, desc: "Essential for LFP (Lithium Iron Phosphate) battery cathode production." },
+    { id: "GasOil", name: "Oil & Gas", val: 24, desc: "The baseload energy source for massive data center power plants." },
+    { id: "Uranium", name: "Uranium", val: 20, desc: "Nuclear fuel for zero-carbon consistent gigawatt-scale compute power." },
+    { id: "IronOre", name: "Iron Ore", val: 16, desc: "Refined into steel for structural data center frames and server racks." },
+    { id: "Manganese", name: "Manganese", val: 15, desc: "Used in steel alloys and increasingly in NMC battery cathodes." },
+    { id: "RareEarths", name: "Rare Earths", val: 18, desc: "Neodymium and Praseodymium for high-efficiency server cooling fan motors." },
+    { id: "Platinum", name: "Platinum/PGMs", val: 17, desc: "Catalytic properties used in specialized semiconductor manufacturing." },
+    { id: "Tin", name: "Tin", val: 16, desc: "Primary solder binding components to circuit boards and chip packages (part of 3TG)." },
+    { id: "Tungsten", name: "Tungsten", val: 15, desc: "Ultra-hard metal for semiconductor interconnect vias and high-heat tooling (part of 3TG)." },
+    { id: "Titanium", name: "Titanium", val: 16, desc: "Lightweight high-strength alloys for server chassis and aerospace-grade casings." },
+    { id: "Coal", name: "Coal", val: 18, desc: "Legacy baseload power still feeding gigawatt-scale data center demand." },
+    { id: "Chromium", name: "Chromium", val: 16, desc: "Alloyed into stainless steel for racks and corrosion-resistant plating." },
+];
+
+const RESOURCE_IDS = new Set(RESOURCE_BASE.map(r => r.id));
+
 export default function AiResourceGraph({ selectedResource = null }: { selectedResource?: string | null }) {
     const { theme } = useTheme();
     const containerRef = useRef<HTMLDivElement>(null);
     const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
     const [mounted, setMounted] = useState(false);
     const [hoverNode, setHoverNode] = useState<GraphNode | null>(null);
+    const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
+    const [activeMinerals, setActiveMinerals] = useState<Set<string>>(new Set());
     const [isStabilized, setIsStabilized] = useState(false);
     // Removed forcesReady gate to allow immediate rendering
 
@@ -146,13 +175,8 @@ export default function AiResourceGraph({ selectedResource = null }: { selectedR
     }), [isDark]);
 
     const graphData = useMemo(() => {
-        // Filter logic: if a resource is selected, only show countries that produce it
-        // and the path through that specific resource.
-        const filteredAllSovereign = selectedResource
-            ? ALL_SOVEREIGN_DATA.filter(c => c.keyResources.some(r => r.toLowerCase().includes(selectedResource.toLowerCase())))
-            : ALL_SOVEREIGN_DATA;
-
-        const countryNodes = filteredAllSovereign.map(c => ({
+        // Build the full graph first, then apply the active mineral filter at the end.
+        const countryNodes = ALL_SOVEREIGN_DATA.map(c => ({
             id: c.country,
             group: 'country' as NodeType,
             name: c.name,
@@ -162,27 +186,15 @@ export default function AiResourceGraph({ selectedResource = null }: { selectedR
             desc: `${c.highlights.join(' | ')}. ${c.keyResources.join(', ')} reserves.`
         }));
 
-        const allResourceNodes = [
-            { id: "Cobalt", group: "resource" as NodeType, name: "Cobalt", val: 20, column: 1, color: colors.resource, desc: "Stabilizes high-density lithium-ion batteries. Prevents thermal runaway." },
-            { id: "Copper", group: "resource" as NodeType, name: "Copper", val: 22, column: 1, color: colors.resource, desc: "The nervous system of AI — data center wiring, busbars, chip substrates." },
-            { id: "Lithium", group: "resource" as NodeType, name: "Lithium", val: 20, column: 1, color: colors.resource, desc: "Core element for energy storage and backup power systems." },
-            { id: "Bauxite", group: "resource" as NodeType, name: "Bauxite", val: 16, column: 1, color: colors.resource, desc: "Refined into Aluminum for server racks, heat sinks, and casings." },
-            { id: "Graphite", group: "resource" as NodeType, name: "Graphite", val: 18, column: 1, color: colors.resource, desc: "Largest mineral component by weight in modern battery cells." },
-            { id: "Coltan", group: "resource" as NodeType, name: "Coltan", val: 16, column: 1, color: colors.resource, desc: "Refined into Tantalum for high-performance capacitors." },
-            { id: "Gold", group: "resource" as NodeType, name: "Gold", val: 18, column: 1, color: colors.resource, desc: "Unmatched conductivity and corrosion resistance for PCB plating and bond wires." },
-            { id: "Nickel", group: "resource" as NodeType, name: "Nickel", val: 18, column: 1, color: colors.resource, desc: "Critical for high-nickel cathode chemistries in energy storage." },
-            { id: "Phosphates", group: "resource" as NodeType, name: "Phosphates", val: 16, column: 1, color: colors.resource, desc: "Essential for LFP (Lithium Iron Phosphate) battery cathode production." },
-            { id: "GasOil", group: "resource" as NodeType, name: "Oil & Gas", val: 24, column: 1, color: colors.resource, desc: "The baseload energy source for massive data center power plants." },
-            { id: "Uranium", group: "resource" as NodeType, name: "Uranium", val: 20, column: 1, color: colors.resource, desc: "Nuclear fuel for zero-carbon consistent gigawatt-scale compute power." },
-            { id: "IronOre", group: "resource" as NodeType, name: "Iron Ore", val: 16, column: 1, color: colors.resource, desc: "Refined into steel for structural data center frames and server racks." },
-            { id: "Manganese", group: "resource" as NodeType, name: "Manganese", val: 15, column: 1, color: colors.resource, desc: "Used in steel alloys and increasingly in NMC battery cathodes." },
-            { id: "RareEarths", group: "resource" as NodeType, name: "Rare Earths", val: 18, column: 1, color: colors.resource, desc: "Neodymium and Praseodymium for high-efficiency server cooling fan motors." },
-            { id: "Platinum", group: "resource" as NodeType, name: "Platinum/PGMs", val: 17, column: 1, color: colors.resource, desc: "Catalytic properties used in specialized semiconductor manufacturing." }
-        ];
-
-        const resourceNodes = selectedResource
-            ? allResourceNodes.filter(n => n.id.toLowerCase().includes(selectedResource.toLowerCase()))
-            : allResourceNodes;
+        const allResourceNodes = RESOURCE_BASE.map(r => ({
+            id: r.id,
+            group: 'resource' as NodeType,
+            name: r.name,
+            val: r.val,
+            column: 1,
+            color: colors.resource,
+            desc: r.desc,
+        }));
 
         const componentNodes = [
             { id: "Batteries", group: "component" as NodeType, name: "Energy Storage", val: 22, column: 2, color: colors.component, desc: "Grid stabilization and UPS for AI compute facilities." },
@@ -200,7 +212,7 @@ export default function AiResourceGraph({ selectedResource = null }: { selectedR
 
         // Dynamic links from countries to resources
         const dynamicCountryLinks: GraphLink[] = [];
-        filteredAllSovereign.forEach(c => {
+        ALL_SOVEREIGN_DATA.forEach(c => {
             const res = c.keyResources.map(r => r.toLowerCase());
             let hasLink = false;
 
@@ -218,7 +230,12 @@ export default function AiResourceGraph({ selectedResource = null }: { selectedR
             if (res.some(r => r.includes('iron ore'))) { dynamicCountryLinks.push({ source: c.country, target: "IronOre", value: 6 }); hasLink = true; }
             if (res.some(r => r.includes('manganese'))) { dynamicCountryLinks.push({ source: c.country, target: "Manganese", value: 6 }); hasLink = true; }
             if (res.some(r => r.includes('rare earth'))) { dynamicCountryLinks.push({ source: c.country, target: "RareEarths", value: 6 }); hasLink = true; }
-            if (res.some(r => r.includes('platinum') || r.includes('chrome'))) { dynamicCountryLinks.push({ source: c.country, target: "Platinum", value: 6 }); hasLink = true; }
+            if (res.some(r => r.includes('platinum'))) { dynamicCountryLinks.push({ source: c.country, target: "Platinum", value: 6 }); hasLink = true; }
+            if (res.some(r => /\btin\b/.test(r))) { dynamicCountryLinks.push({ source: c.country, target: "Tin", value: 6 }); hasLink = true; }
+            if (res.some(r => r.includes('tungsten'))) { dynamicCountryLinks.push({ source: c.country, target: "Tungsten", value: 6 }); hasLink = true; }
+            if (res.some(r => r.includes('titanium') || r.includes('ilmenite') || r.includes('rutile'))) { dynamicCountryLinks.push({ source: c.country, target: "Titanium", value: 6 }); hasLink = true; }
+            if (res.some(r => r.includes('coal'))) { dynamicCountryLinks.push({ source: c.country, target: "Coal", value: 6 }); hasLink = true; }
+            if (res.some(r => r.includes('chrome') || r.includes('chromium'))) { dynamicCountryLinks.push({ source: c.country, target: "Chromium", value: 6 }); hasLink = true; }
 
             // Special handling for DRC Cobalt dominance
             if (c.country === "COD" && res.some(r => r.includes('cobalt'))) {
@@ -232,11 +249,6 @@ export default function AiResourceGraph({ selectedResource = null }: { selectedR
                 dynamicCountryLinks.push({ source: c.country, target: "GasOil", value: 4, label: "ENERGY EXPORT" });
             }
         });
-
-        // Further filter dynamicCountryLinks if selectedResource is set
-        const finalCountryLinks = selectedResource
-            ? dynamicCountryLinks.filter(l => l.target.toLowerCase().includes(selectedResource.toLowerCase()))
-            : dynamicCountryLinks;
 
         const baseLinks = [
             // Resources -> Components
@@ -260,6 +272,13 @@ export default function AiResourceGraph({ selectedResource = null }: { selectedR
             { source: "Uranium", target: "Grid", value: 8 },
             { source: "IronOre", target: "Thermal", value: 4 },
             { source: "IronOre", target: "Grid", value: 3 },
+            { source: "Tin", target: "Semiconductors", value: 6 },
+            { source: "Tungsten", target: "Semiconductors", value: 5 },
+            { source: "Tungsten", target: "Thermal", value: 4 },
+            { source: "Titanium", target: "Thermal", value: 5 },
+            { source: "Coal", target: "Grid", value: 7 },
+            { source: "Chromium", target: "Thermal", value: 5 },
+            { source: "Chromium", target: "Semiconductors", value: 3 },
 
             // Components -> AI
             { source: "Batteries", target: "DataCenters", value: 6, label: "UPS" },
@@ -276,18 +295,40 @@ export default function AiResourceGraph({ selectedResource = null }: { selectedR
             { source: "GPUs", target: "LLMs", value: 8 }
         ] as GraphLink[];
 
-        // Filter baseLinks if selectedResource is set
-        const finalBaseLinks = selectedResource
-            ? baseLinks.filter(l => l.source.toLowerCase().includes(selectedResource.toLowerCase()) ||
-                // Keep all downstream links if the source is one of the resource's targets
-                baseLinks.some(prevL => prevL.source.toLowerCase().includes(selectedResource.toLowerCase()) && prevL.target === l.source))
-            : baseLinks;
+        // Resolve the active mineral filter: internal chip selection takes priority,
+        // otherwise fall back to the external `selectedResource` prop (dashboard chips).
+        const mineralIds: string[] | null = activeMinerals.size > 0
+            ? Array.from(activeMinerals)
+            : (selectedResource
+                ? allResourceNodes
+                    .filter(n => n.id.toLowerCase().includes(selectedResource.toLowerCase()) || n.name.toLowerCase().includes(selectedResource.toLowerCase()))
+                    .map(n => n.id)
+                : null);
+
+        // Split base links into resource->component and the downstream pipeline.
+        const resourceLinks = baseLinks.filter(l => RESOURCE_IDS.has(l.source));
+        const downstreamLinks = baseLinks.filter(l => !RESOURCE_IDS.has(l.source));
+
+        if (mineralIds && mineralIds.length > 0) {
+            const mineralSet = new Set(mineralIds);
+            const keptCountryLinks = dynamicCountryLinks.filter(l => mineralSet.has(l.target));
+            const keptCountryIds = new Set(keptCountryLinks.map(l => l.source));
+
+            const finalCountryNodes = countryNodes.filter(n => keptCountryIds.has(n.id));
+            const finalResourceNodes = allResourceNodes.filter(n => mineralSet.has(n.id));
+            const keptResourceLinks = resourceLinks.filter(l => mineralSet.has(l.source));
+
+            return {
+                nodes: [...finalCountryNodes, ...finalResourceNodes, ...componentNodes, ...productNodes],
+                links: [...keptCountryLinks, ...keptResourceLinks, ...downstreamLinks]
+            };
+        }
 
         return {
-            nodes: [...countryNodes, ...resourceNodes, ...componentNodes, ...productNodes],
-            links: [...finalCountryLinks, ...finalBaseLinks]
+            nodes: [...countryNodes, ...allResourceNodes, ...componentNodes, ...productNodes],
+            links: [...dynamicCountryLinks, ...baseLinks]
         };
-    }, [colors, selectedResource]);
+    }, [colors, selectedResource, activeMinerals]);
 
     // X-position target for each column (fraction of width, centered around 0)
     const getColumnX = useCallback((column: number) => {
@@ -303,18 +344,50 @@ export default function AiResourceGraph({ selectedResource = null }: { selectedR
     }, []);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handleNodeClick = useCallback((node: any) => {
+        setSelectedNode(prev => (prev && prev.id === node.id) ? null : node);
+        if (fgRef.current && Number.isFinite(node.x) && Number.isFinite(node.y)) {
+            fgRef.current.centerAt(node.x, node.y, 500);
+        }
+    }, []);
+
+    const handleBackgroundClick = useCallback(() => {
+        setSelectedNode(null);
+    }, []);
+
+    const toggleMineral = useCallback((id: string) => {
+        setSelectedNode(null);
+        setActiveMinerals(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id);
+            else next.add(id);
+            return next;
+        });
+    }, []);
+
+    const clearFilters = useCallback(() => {
+        setActiveMinerals(new Set());
+        setSelectedNode(null);
+    }, []);
+
+    // The node whose chain is currently emphasized: a pinned (clicked) node takes
+    // priority, but hovering temporarily previews a different node.
+    const focusNode = hoverNode || selectedNode;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const paintNode = useCallback((node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
         const { id, x, y, val, color, name, group } = node as GraphNode & { x: number, y: number };
 
         if (!Number.isFinite(x) || !Number.isFinite(y)) return;
 
-        const isHovered = hoverNode?.id === id;
-        const isConnected = hoverNode ? graphData.links.some(l => {
+        const isHovered = focusNode?.id === id;
+        const isConnected = focusNode ? graphData.links.some(l => {
             const src = typeof l.source === 'string' ? l.source : (l.source as any).id;
             const tgt = typeof l.target === 'string' ? l.target : (l.target as any).id;
-            return (src === hoverNode.id && tgt === id) || (tgt === hoverNode.id && src === id);
+            return (src === focusNode.id && tgt === id) || (tgt === focusNode.id && src === id);
         }) : false;
-        const isFaded = hoverNode && !isHovered && !isConnected;
+        const isFaded = focusNode && !isHovered && !isConnected;
+        const isPinned = selectedNode?.id === id;
 
         const baseRadius = Math.sqrt(val) * 1.8;
         const radius = isHovered ? baseRadius * 1.25 : baseRadius;
@@ -327,6 +400,17 @@ export default function AiResourceGraph({ selectedResource = null }: { selectedR
             ctx.arc(x, y, radius + 4, 0, 2 * Math.PI);
             ctx.fillStyle = `${color}25`;
             ctx.fill();
+        }
+
+        // Persistent selection ring for the pinned node
+        if (isPinned) {
+            ctx.beginPath();
+            ctx.arc(x, y, radius + 6, 0, 2 * Math.PI);
+            ctx.lineWidth = 1.5;
+            ctx.strokeStyle = isDark ? 'rgba(255,255,255,0.85)' : 'rgba(15,23,42,0.7)';
+            ctx.setLineDash([3, 3]);
+            ctx.stroke();
+            ctx.setLineDash([]);
         }
 
         // Main node circle
@@ -378,7 +462,7 @@ export default function AiResourceGraph({ selectedResource = null }: { selectedR
         }
 
         ctx.globalAlpha = 1;
-    }, [hoverNode, isDark, graphData.links]);
+    }, [focusNode, selectedNode, isDark, graphData.links]);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const paintLink = useCallback((link: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
@@ -386,8 +470,8 @@ export default function AiResourceGraph({ selectedResource = null }: { selectedR
         const target = link.target;
         if (!source || !target || !Number.isFinite(source.x) || !Number.isFinite(source.y) || !Number.isFinite(target.x) || !Number.isFinite(target.y)) return;
 
-        const isConnected = hoverNode && (source.id === hoverNode.id || target.id === hoverNode.id);
-        const isFaded = hoverNode && !isConnected;
+        const isConnected = focusNode && (source.id === focusNode.id || target.id === focusNode.id);
+        const isFaded = focusNode && !isConnected;
 
         ctx.globalAlpha = isFaded ? 0.04 : (isConnected ? 0.7 : 0.2);
 
@@ -431,7 +515,7 @@ export default function AiResourceGraph({ selectedResource = null }: { selectedR
         }
 
         ctx.globalAlpha = 1;
-    }, [hoverNode, colors]);
+    }, [focusNode, colors]);
 
     const handleEngineStop = useCallback(() => {
         if (!isStabilized && fgRef.current) {
@@ -465,6 +549,48 @@ export default function AiResourceGraph({ selectedResource = null }: { selectedR
                 </div>
             </div>
 
+            {/* Interactive mineral filter + selection controls */}
+            <div className="px-4 pb-2 z-10">
+                <div className="flex items-center gap-2 mb-1.5">
+                    <Pickaxe className="w-3 h-3 text-amber-500/80" />
+                    <span className="text-[9px] font-mono uppercase tracking-widest text-slate-light">
+                        Filter Minerals
+                    </span>
+                    <span className="text-[9px] font-mono text-slate-light/70">
+                        {activeMinerals.size > 0
+                            ? `· ${activeMinerals.size} selected`
+                            : '· click a node to isolate its supply chain'}
+                    </span>
+                    {(activeMinerals.size > 0 || selectedNode) && (
+                        <button
+                            onClick={clearFilters}
+                            className="ml-auto text-[9px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full border border-border text-foreground/80 hover:bg-foreground/10 transition-colors"
+                        >
+                            Clear ✕
+                        </button>
+                    )}
+                </div>
+                <div className="flex flex-wrap gap-1.5 max-h-[68px] overflow-y-auto pr-1">
+                    {RESOURCE_BASE.map(r => {
+                        const active = activeMinerals.has(r.id);
+                        return (
+                            <button
+                                key={r.id}
+                                onClick={() => toggleMineral(r.id)}
+                                title={r.desc}
+                                className={`text-[10px] font-mono px-2 py-0.5 rounded-full border transition-colors ${
+                                    active
+                                        ? 'bg-amber-500/20 border-amber-500/70 text-amber-600 dark:text-amber-300'
+                                        : 'border-border text-slate-light hover:border-amber-500/40 hover:text-foreground'
+                                }`}
+                            >
+                                {r.name}
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+
             {/* Graph Container */}
             <div className="flex-1 w-full h-full min-h-[400px] cursor-grab active:cursor-grabbing border border-border rounded-xl bg-panel/20 backdrop-blur-xl shadow-2xl overflow-hidden relative" style={{ isolation: 'isolate' }}>
                 {/* Dot grid background */}
@@ -485,11 +611,11 @@ export default function AiResourceGraph({ selectedResource = null }: { selectedR
                             linkCanvasObject={paintLink}
                             linkCanvasObjectMode={() => 'replace'}
                             linkDirectionalParticles={(link: any) => {
-                                if (hoverNode && (link.source.id === hoverNode.id || link.target.id === hoverNode.id)) return 5;
+                                if (focusNode && (link.source.id === focusNode.id || link.target.id === focusNode.id)) return 5;
                                 return 1;
                             }}
                             linkDirectionalParticleWidth={(link: any) => {
-                                if (hoverNode && (link.source.id === hoverNode.id || link.target.id === hoverNode.id)) return 3;
+                                if (focusNode && (link.source.id === focusNode.id || link.target.id === focusNode.id)) return 3;
                                 return 1.2;
                             }}
                             linkDirectionalParticleColor={(link: any) => {
@@ -501,6 +627,8 @@ export default function AiResourceGraph({ selectedResource = null }: { selectedR
                             warmupTicks={40} // Show graph much sooner (was 200)
                             cooldownTicks={50} // Settle physics faster (was 100)
                             onNodeHover={(node: any) => handleNodeHover(node)}
+                            onNodeClick={(node: any) => handleNodeClick(node)}
+                            onBackgroundClick={handleBackgroundClick}
                             onNodeDragEnd={(node: any) => {
                                 // Pin node where user drops it but allow a little elastic settling
                                 node.fx = node.x;
@@ -511,36 +639,41 @@ export default function AiResourceGraph({ selectedResource = null }: { selectedR
                     )}
                 </div>
 
-                {/* Floating Detail Card */}
-                {hoverNode && (
+                {/* Floating Detail Card (persists when a node is pinned) */}
+                {focusNode && (
                     <div className={`absolute bottom-4 right-4 w-72 ${isDark ? 'bg-zinc-900/95 border-zinc-700/80' : 'bg-slate-100/95 border-zinc-300'} border p-3.5 rounded-xl shadow-2xl backdrop-blur-xl pointer-events-none z-20`}>
                         <div className="flex items-center gap-3 mb-2 pb-2 border-b" style={{ borderColor: isDark ? '#27272a' : '#e4e4e7' }}>
-                            <div className="p-1.5 rounded-lg" style={{ backgroundColor: `${hoverNode.color}18`, color: hoverNode.color }}>
-                                {hoverNode.group === 'country' ? <Globe className="w-4 h-4" /> :
-                                    hoverNode.group === 'resource' ? <Pickaxe className="w-4 h-4" /> :
-                                        hoverNode.group === 'component' ? <Cpu className="w-4 h-4" /> :
+                            <div className="p-1.5 rounded-lg" style={{ backgroundColor: `${focusNode.color}18`, color: focusNode.color }}>
+                                {focusNode.group === 'country' ? <Globe className="w-4 h-4" /> :
+                                    focusNode.group === 'resource' ? <Pickaxe className="w-4 h-4" /> :
+                                        focusNode.group === 'component' ? <Cpu className="w-4 h-4" /> :
                                             <BrainCircuit className="w-4 h-4" />}
                             </div>
                             <div>
-                                <h3 className={`text-sm font-bold font-mono uppercase tracking-wider ${isDark ? 'text-white' : 'text-zinc-900'}`}>{hoverNode.name}</h3>
+                                <h3 className={`text-sm font-bold font-mono uppercase tracking-wider ${isDark ? 'text-white' : 'text-zinc-900'}`}>{focusNode.name}</h3>
                                 <p className={`text-[8px] font-mono uppercase tracking-widest ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>
-                                    {hoverNode.group === 'country' ? 'Sovereign Source' :
-                                        hoverNode.group === 'resource' ? 'Raw Material' :
-                                            hoverNode.group === 'component' ? 'Refined Infrastructure' : 'Terminal Entity'}
+                                    {focusNode.group === 'country' ? 'Sovereign Source' :
+                                        focusNode.group === 'resource' ? 'Raw Material' :
+                                            focusNode.group === 'component' ? 'Refined Infrastructure' : 'Terminal Entity'}
                                 </p>
                             </div>
                         </div>
-                        <p className={`text-xs leading-relaxed ${isDark ? 'text-zinc-300' : 'text-zinc-600'}`}>{hoverNode.desc}</p>
+                        <p className={`text-xs leading-relaxed ${isDark ? 'text-zinc-300' : 'text-zinc-600'}`}>{focusNode.desc}</p>
                         <div className="mt-2.5 pt-2.5 flex justify-between" style={{ borderTop: `1px solid ${isDark ? '#27272a' : '#e4e4e7'}` }}>
                             <div className="flex flex-col">
                                 <span className={`text-[7px] font-mono uppercase ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>Sovereign Score</span>
-                                <span className={`text-xs font-mono font-bold ${isDark ? 'text-white' : 'text-zinc-900'}`}>{hoverNode.val.toFixed(0)}</span>
+                                <span className={`text-xs font-mono font-bold ${isDark ? 'text-white' : 'text-zinc-900'}`}>{focusNode.val.toFixed(0)}</span>
                             </div>
                             <div className="flex flex-col text-right">
                                 <span className={`text-[7px] font-mono uppercase ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>Layer</span>
-                                <span className="text-xs font-mono font-bold" style={{ color: hoverNode.color }}>{columnLabels[hoverNode.column]}</span>
+                                <span className="text-xs font-mono font-bold" style={{ color: focusNode.color }}>{columnLabels[focusNode.column]}</span>
                             </div>
                         </div>
+                        {selectedNode && !hoverNode && (
+                            <div className="mt-2 pt-2 text-[8px] font-mono uppercase tracking-widest text-amber-500/90 flex items-center gap-1" style={{ borderTop: `1px solid ${isDark ? '#27272a' : '#e4e4e7'}` }}>
+                                ◉ Pinned — click the node again or the canvas to release
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

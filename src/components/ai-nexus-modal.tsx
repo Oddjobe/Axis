@@ -101,7 +101,7 @@ export default function AiNexusModal({ isOpen, onClose, selectedResource }: AiNe
                         {/* Content Area */}
                         <div className="flex-1 relative bg-black/20 overflow-hidden">
                             {/* Technical Overlays */}
-                            <div className="absolute top-6 left-6 z-10 pointer-events-none max-w-xs space-y-4">
+                            <div className="absolute bottom-6 left-6 z-10 pointer-events-none max-w-xs space-y-4">
                                 <div className="p-4 bg-background/60 backdrop-blur-md border border-border rounded-xl shadow-xl">
                                     <h4 className="text-[10px] font-bold font-mono text-cobalt mb-1 tracking-widest uppercase">NETWORK TOPOLOGY</h4>
                                     <p className="text-[10px] text-slate-light leading-relaxed font-mono">
@@ -128,16 +128,20 @@ export default function AiNexusModal({ isOpen, onClose, selectedResource }: AiNe
                                 <div className="p-3 bg-panel/60 backdrop-blur-md border border-border rounded-xl inline-block shadow-lg">
                                     <div className="flex items-center gap-4 text-[9px] font-mono font-bold text-slate-light">
                                         <div className="flex items-center gap-1.5 uppercase">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-cobalt" />
+                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                                             Nations
                                         </div>
                                         <div className="flex items-center gap-1.5 uppercase">
                                             <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                                            Resources
+                                            Minerals
                                         </div>
                                         <div className="flex items-center gap-1.5 uppercase">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                                            Influence
+                                            <span className="w-1.5 h-1.5 rounded-full bg-cobalt" />
+                                            Tech
+                                        </div>
+                                        <div className="flex items-center gap-1.5 uppercase">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-violet-500" />
+                                            Compute
                                         </div>
                                     </div>
                                 </div>
