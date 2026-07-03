@@ -5,16 +5,16 @@ import { TrendingUp, TrendingDown } from "lucide-react";
 
 // Base synthetic data for critical African commodities
 const INITIAL_COMMODITIES = [
-    { id: "CO", title: "COBALT (LME)", price: 59854, unit: "$/MT", trend: "+", change: 0.42 },
-    { id: "LI", title: "LITHIUM CARBONATE", price: 23734, unit: "$/MT", trend: "+", change: 1.12 },
-    { id: "AU", title: "GOLD (SPOT)", price: 5123, unit: "$/OZ", trend: "+", change: 0.45 },
+    { id: "CO", title: "COBALT (LME)", price: 60053, unit: "$/MT", trend: "+", change: 0.42 },
+    { id: "LI", title: "LITHIUM CARBONATE", price: 23815, unit: "$/MT", trend: "+", change: 1.12 },
+    { id: "AU", title: "GOLD (SPOT)", price: 5109, unit: "$/OZ", trend: "+", change: 0.45 },
     { id: "CU", title: "COPPER (COMEX)", price: 5.93, unit: "$/LB", trend: "+", change: 1.37 },
-    { id: "CC", title: "COCOA (ICE)", price: 8712, unit: "$/MT", trend: "+", change: 0.95 },
-    { id: "BR", title: "BRENT CRUDE", price: 90.98, unit: "$/BBL", trend: "+", change: 1.31 },
-    { id: "PT", title: "PLATINUM", price: 909, unit: "$/OZ", trend: "+", change: 0.71 },
-    { id: "UR", title: "URANIUM (U3O8)", price: 97.05, unit: "$/LB", trend: "+", change: 1.69 },
-    { id: "PD", title: "PALLADIUM", price: 1041, unit: "$/OZ", trend: "+", change: 1.25 },
-    { id: "NG", title: "NATURAL GAS", price: 2.50, unit: "$/MMBtu", trend: "+", change: 2.9 }
+    { id: "CC", title: "COCOA (ICE)", price: 8681, unit: "$/MT", trend: "+", change: 0.95 },
+    { id: "BR", title: "BRENT CRUDE", price: 91.38, unit: "$/BBL", trend: "+", change: 1.31 },
+    { id: "PT", title: "PLATINUM", price: 906, unit: "$/OZ", trend: "+", change: 0.71 },
+    { id: "UR", title: "URANIUM (U3O8)", price: 97.32, unit: "$/LB", trend: "+", change: 1.69 },
+    { id: "PD", title: "PALLADIUM", price: 1040, unit: "$/OZ", trend: "+", change: 1.25 },
+    { id: "NG", title: "NATURAL GAS", price: 2.49, unit: "$/MMBtu", trend: "+", change: 2.9 }
 ];
 
 export default function ContinentalGoalsTicker() {
