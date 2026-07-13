@@ -9,13 +9,13 @@ const FALLBACK_DATA = [
     {
         id: "lithium",
         name: "LITHIUM (CARBONATE)",
-        price: 28180,
+        price: 28027,
         unit: "T",
         currency: "USD",
         trend: +3.8,
         source: "SunSirs / Benchmark Mineral",
         sourceUrl: "https://www.sunsirs.com/uk/prodetail-2023.html",
-        lastUpdated: "2026-07-12",
+        lastUpdated: "2026-07-13",
         frequency: "weekly",
         category: "CRITICAL",
         color: "#3b82f6"
@@ -23,13 +23,13 @@ const FALLBACK_DATA = [
     {
         id: "cobalt",
         name: "COBALT (99.8%)",
-        price: 60682,
+        price: 60768,
         unit: "T",
         currency: "USD",
         trend: +0.0,
         source: "LME / TradingEconomics",
         sourceUrl: "https://tradingeconomics.com/commodity/cobalt",
-        lastUpdated: "2026-07-12",
+        lastUpdated: "2026-07-13",
         frequency: "weekly",
         category: "CRITICAL",
         color: "#10b981"
@@ -37,13 +37,13 @@ const FALLBACK_DATA = [
     {
         id: "copper",
         name: "COPPER (GRADE A)",
-        price: 12730,
+        price: 12801,
         unit: "T",
         currency: "USD",
         trend: +0.35,
         source: "LME / Westmetall",
         sourceUrl: "https://tradingeconomics.com/commodity/copper",
-        lastUpdated: "2026-07-12",
+        lastUpdated: "2026-07-13",
         frequency: "daily",
         category: "STRATEGIC",
         color: "#f59e0b"
@@ -57,7 +57,7 @@ const FALLBACK_DATA = [
         trend: +0.82,
         source: "LBMA / Kitco",
         sourceUrl: "https://www.kitco.com/gold-price-today-usa/",
-        lastUpdated: "2026-07-12",
+        lastUpdated: "2026-07-13",
         frequency: "daily",
         category: "RESERVE",
         color: "#fbbf24"
@@ -65,13 +65,13 @@ const FALLBACK_DATA = [
     {
         id: "bauxite",
         name: "BAUXITE (GUINEA FOB)",
-        price: 61.14,
+        price: 61.01,
         unit: "T",
         currency: "USD",
         trend: -1.5,
         source: "S&P Global Platts / IndexBox",
         sourceUrl: "https://www.spglobal.com/commodityinsights/",
-        lastUpdated: "2026-07-12",
+        lastUpdated: "2026-07-13",
         frequency: "monthly",
         category: "REFRACTORY",
         color: "#ef4444"
