@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Globe, ShieldAlert, BarChart3, ArrowRight, Activity, Cpu, Download, Star, BrainCircuit, Newspaper, TrendingUp, Share2, Copy, Check, Info } from "lucide-react";
+import { X, Globe, ShieldAlert, BarChart3, ArrowRight, Activity, Cpu, Download, Star, BrainCircuit, Newspaper, TrendingUp, Share2, Check, Info } from "lucide-react";
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { isoToFlag } from "@/lib/flags";
@@ -8,6 +8,7 @@ import { jsPDF } from "jspdf";
 import { useWatchlist } from "@/lib/use-watchlist";
 import { supabase } from "@/lib/supabase";
 import SovereigntyTrendlineChart from "./sovereignty-trendline-chart";
+import type { DataMode, FreshnessMetadata } from "@/lib/intelligence/trust";
 
 export interface CountryData {
     country: string;
@@ -26,6 +27,20 @@ export interface CountryData {
     topExport?: string;
     fdiClimate?: string;
     strategicFocus?: string;
+    updated_at?: string;
+    dataMode?: DataMode;
+    sourceUpdatedAt?: string | null;
+    observedAt?: string | null;
+    asOf?: string | null;
+    freshness?: FreshnessMetadata;
+    publicationTier?: "trusted" | "legacy";
+    provenance?: {
+        publisher: string;
+        sourceUrl: string | null;
+        sourcePublishedAt: string | null;
+        observedAt: string | null;
+        retrievedAt?: string;
+    };
     keyInitiatives: { title: string, details: string }[];
     exportsData: { resource: string, volume: string, destination: string, value: string, status: string }[];
     frictionVectors: { title: string, severity: string, details: string }[];
@@ -44,6 +59,11 @@ export interface IntelligenceAlert {
     imageUrl?: string;
     url?: string;
     actor?: string;
+    dataMode?: DataMode;
+    sourceUpdatedAt?: string | null;
+    observedAt?: string | null;
+    asOf?: string | null;
+    freshness?: FreshnessMetadata;
 }
 
 export interface CountryDossierProps {

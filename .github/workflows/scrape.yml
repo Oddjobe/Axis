@@ -50,6 +50,25 @@ jobs:
           npx tsx scripts/update-countries.ts
           npx tsx scripts/advanced-scrape.ts
 
+      - name: Verify deterministic data quality
+        run: npm run data-quality
+
+      - name: Verify live post-write data quality
+        env:
+          QUALITY_BASE_URL: ${{ vars.QUALITY_BASE_URL }}
+          # Set the repository variable to "shadow" only before trusted publication promotion.
+          QUALITY_PUBLICATION_MODE: ${{ vars.QUALITY_PUBLICATION_MODE || 'trusted' }}
+        run: npm run data-quality:live
+
+      - name: Upload data quality report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: data-quality-report
+          path: quality-reports/data-quality-report.json
+          if-no-files-found: warn
+          retention-days: 30
+
       - name: Commit and Push Changes
         uses: stefanzweifel/git-auto-commit-action@v5
         with:

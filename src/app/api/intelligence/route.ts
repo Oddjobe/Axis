@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import {
+    getFreshnessMetadata,
+    getLatestTimestamp,
+    type DataMode,
+} from "@/lib/intelligence/trust";
+import { selectIntelligencePublications } from "@/lib/intelligence/publication-selection.server";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 60; // Cache for 1 minute at the edge
@@ -109,7 +114,7 @@ const FALLBACK_DATA = [
         summary: "African manufacturers brace for potential tariff hikes as US Congress stalls on reauthorizing the AGOA act.",
         severity: "HIGH",
         category: "OUTSIDE INFLUENCE",
-        isoCode: "PAN",
+        isoCode: "KEN",
         timeAgo: "24 HRS AGO",
         source: "The EastAfrican",
         url: "https://www.theeastafrican.co.ke/tea/search?query=AGOA",
@@ -117,49 +122,109 @@ const FALLBACK_DATA = [
     }
 ];
 
-function withImageFallbacks<T extends { imageUrl?: string | null }>(items: T[]) {
-    return items.map((item, index) => ({
-        ...item,
-        imageUrl: item.imageUrl || FALLBACK_DATA[index % FALLBACK_DATA.length].imageUrl
-    }));
+const FALLBACK_OBSERVED_AT = "2026-03-06T15:05:28.000Z";
+type IntelligenceRow = Record<string, unknown>;
+
+function fallbackSourceUpdatedAt(timeAgo: string) {
+    const hours = Number.parseInt(timeAgo, 10);
+    return new Date(
+        Date.parse(FALLBACK_OBSERVED_AT) - (Number.isFinite(hours) ? hours : 0) * 60 * 60 * 1_000,
+    ).toISOString();
+}
+
+function formatAge(asOf: string | null, generatedAt: string) {
+    if (!asOf) return "UNKNOWN AGE";
+    const hours = Math.max(0, Math.floor((Date.parse(generatedAt) - Date.parse(asOf)) / 3_600_000));
+    if (hours < 24) return `${hours} HRS AGO`;
+    return `${Math.floor(hours / 24)} DAYS AGO`;
+}
+
+function decorateItems(items: IntelligenceRow[], requestedMode: "live" | "fallback", generatedAt: string) {
+    return items.map((item, index) => {
+        const fallback = FALLBACK_DATA[index % FALLBACK_DATA.length];
+        const fallbackUpdatedAt = requestedMode === "fallback"
+            ? fallbackSourceUpdatedAt(String(item.timeAgo ?? ""))
+            : null;
+        const sourceUpdatedAt =
+            item.sourceUpdatedAt ??
+            item.source_updated_at ??
+            item.sourcePublishedAt ??
+            item.source_published_at ??
+            item.published_at ??
+            fallbackUpdatedAt;
+        const observedAt = item.observedAt ?? item.observed_at ?? item.created_at ?? FALLBACK_OBSERVED_AT;
+        const freshness = getFreshnessMetadata({
+            sourceUpdatedAt,
+            observedAt,
+            dataset: "intelligence",
+            requestedMode,
+        });
+        const publisher = typeof item.source === "string" ? item.source : "AXIS fallback snapshot";
+        const sourceUrl = typeof item.url === "string" ? item.url : null;
+
+        return {
+            ...item,
+            imageUrl: item.imageUrl || fallback.imageUrl,
+            created_at: item.created_at ?? freshness.observedAt,
+            timeAgo: formatAge(freshness.asOf, generatedAt),
+            ...freshness,
+            freshness,
+            provenance: {
+                publisher,
+                sourceUrl,
+                sourcePublishedAt: freshness.sourceUpdatedAt,
+                observedAt: freshness.observedAt,
+                retrievedAt: generatedAt,
+            },
+        };
+    });
 }
 
 export async function GET() {
-    const updatedAt = new Date().toISOString();
-    try {
-        const { data, error } = await supabase
-            .from('intelligence_alerts')
-            .select('*')
-            .order('created_at', { ascending: false })
-            .limit(15);
+    const generatedAt = new Date().toISOString();
+    let source = "legacy/static";
+    let publicationTier: "trusted" | "legacy" = "legacy";
+    let fallbackUsed = true;
+    let requestedMode: "live" | "fallback" = "fallback";
+    let rows: IntelligenceRow[] = FALLBACK_DATA;
 
-        if (error) throw error;
-
-        if (data && data.length > 0) {
-            return NextResponse.json({
-                success: true,
-                source: "supabase",
-                fallbackUsed: false,
-                updatedAt,
-                data: withImageFallbacks(data)
-            });
-        }
-
-        return NextResponse.json({
-            success: true,
-            source: "fallback",
-            fallbackUsed: true,
-            updatedAt,
-            data: FALLBACK_DATA
-        });
-    } catch (error) {
-        console.error("Supabase Intel Fetch Error:", error);
-        return NextResponse.json({
-            success: true,
-            source: "fallback-error",
-            fallbackUsed: true,
-            updatedAt,
-            data: FALLBACK_DATA
-        });
+    const selection = await selectIntelligencePublications(15);
+    if (selection) {
+        source = selection.source;
+        publicationTier = selection.publicationTier;
+        fallbackUsed = false;
+        requestedMode = "live";
+        rows = selection.records;
     }
+
+    const data = decorateItems(rows, requestedMode, generatedAt).map((item) => ({
+        ...item,
+        publicationTier,
+    }));
+    const sourceUpdatedAt = getLatestTimestamp(data.map((record) => record.sourceUpdatedAt));
+    const observedAt = getLatestTimestamp(data.map((record) => record.observedAt));
+    const dataMode: DataMode = getFreshnessMetadata({
+        sourceUpdatedAt,
+        observedAt,
+        dataset: "intelligence",
+        requestedMode,
+    }).dataMode;
+    const asOf = sourceUpdatedAt ?? observedAt;
+    const freshness = { dataMode, sourceUpdatedAt, observedAt, asOf };
+
+    return NextResponse.json({
+        success: true,
+        source,
+        publicationTier,
+        fallbackUsed,
+        dataMode,
+        generatedAt,
+        sourceUpdatedAt,
+        observedAt,
+        asOf,
+        freshness,
+        updatedAt: asOf,
+        timestamp: generatedAt,
+        data,
+    });
 }

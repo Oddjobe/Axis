@@ -1,5 +1,11 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import {
+    getFreshnessMetadata,
+    getLatestTimestamp,
+    type DataMode,
+} from "@/lib/intelligence/trust";
+import { getTrustedPublishedRecords } from "@/lib/intelligence/publication-selection.server";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 300; // Cache for 5 minutes
@@ -47,49 +53,117 @@ const FALLBACK_BLOGS = [
     }
 ];
 
-function withImageFallbacks<T extends { imageUrl?: string | null }>(items: T[]) {
-    return items.map((item, index) => ({
-        ...item,
-        imageUrl: item.imageUrl || FALLBACK_BLOGS[index % FALLBACK_BLOGS.length].imageUrl
-    }));
+const FALLBACK_OBSERVED_AT = "2026-03-06T15:05:28.000Z";
+type BlogRow = Record<string, unknown>;
+
+function decorateItems(items: BlogRow[], requestedMode: "live" | "fallback", generatedAt: string) {
+    return items.map((item, index) => {
+        const fallback = FALLBACK_BLOGS[index % FALLBACK_BLOGS.length];
+        const sourceUpdatedAt =
+            item.sourceUpdatedAt ??
+            item.source_updated_at ??
+            item.sourcePublishedAt ??
+            item.source_published_at ??
+            item.published_at ??
+            null;
+        const observedAt = item.observedAt ?? item.observed_at ?? item.created_at ?? FALLBACK_OBSERVED_AT;
+        const freshness = getFreshnessMetadata({
+            sourceUpdatedAt,
+            observedAt,
+            dataset: "blog",
+            requestedMode,
+        });
+        const publisher =
+            typeof item.source === "string"
+                ? item.source
+                : typeof item.author === "string"
+                    ? item.author
+                    : "AXIS editorial fallback";
+        const sourceUrl = typeof item.url === "string" ? item.url : null;
+
+        return {
+            ...item,
+            imageUrl: item.imageUrl || fallback.imageUrl,
+            source: publisher,
+            created_at: item.created_at ?? freshness.observedAt,
+            ...freshness,
+            freshness,
+            provenance: {
+                publisher,
+                sourceUrl,
+                sourcePublishedAt: freshness.sourceUpdatedAt,
+                observedAt: freshness.observedAt,
+                retrievedAt: generatedAt,
+            },
+        };
+    });
 }
 
 export async function GET() {
-    const updatedAt = new Date().toISOString();
-    try {
-        const { data, error } = await supabase
-            .from('blog_posts')
-            .select('*')
-            .order('created_at', { ascending: false })
-            .limit(10);
+    const generatedAt = new Date().toISOString();
+    let source = "legacy/static";
+    let publicationTier: "trusted" | "legacy" = "legacy";
+    let fallbackUsed = true;
+    let requestedMode: "live" | "fallback" = "fallback";
+    let rows: BlogRow[] = FALLBACK_BLOGS;
 
-        if (error) throw error;
+    const trustedRows = await getTrustedPublishedRecords("blog", 10);
+    if (trustedRows) {
+        source = "trusted";
+        publicationTier = "trusted";
+        fallbackUsed = false;
+        requestedMode = "live";
+        rows = trustedRows;
+    } else {
+        try {
+            const { data, error } = await supabase
+                .from('blog_posts')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(10);
 
-        if (data && data.length > 0) {
-            return NextResponse.json({
-                success: true,
-                source: "supabase",
-                fallbackUsed: false,
-                updatedAt,
-                data: withImageFallbacks(data)
-            });
+            if (error) throw error;
+
+            if (data && data.length > 0) {
+                source = "legacy/supabase";
+                fallbackUsed = false;
+                requestedMode = "live";
+                rows = data;
+            }
+        } catch (error) {
+            console.error("Supabase Blog Fetch Error:", error);
+            source = "legacy/static-error";
         }
-
-        return NextResponse.json({
-            success: true,
-            source: "fallback",
-            fallbackUsed: true,
-            updatedAt,
-            data: FALLBACK_BLOGS
-        });
-    } catch (error) {
-        console.error("Supabase Blog Fetch Error:", error);
-        return NextResponse.json({
-            success: true,
-            source: "fallback-error",
-            fallbackUsed: true,
-            updatedAt,
-            data: FALLBACK_BLOGS
-        });
     }
+
+    const data = decorateItems(rows, requestedMode, generatedAt).map((item) => ({
+        ...item,
+        publicationTier,
+    }));
+    const sourceUpdatedAt = getLatestTimestamp(data.map((record) => record.sourceUpdatedAt));
+    const observedAt = getLatestTimestamp(data.map((record) => record.observedAt));
+    const dataMode: DataMode = getFreshnessMetadata({
+        sourceUpdatedAt,
+        observedAt,
+        dataset: "blog",
+        requestedMode,
+    }).dataMode;
+    const asOf = sourceUpdatedAt ?? observedAt;
+    const freshness = { dataMode, sourceUpdatedAt, observedAt, asOf };
+
+    return NextResponse.json({
+        success: true,
+        source,
+        publicationTier,
+        fallbackUsed,
+        dataMode,
+        generatedAt,
+        sourceUpdatedAt,
+        observedAt,
+        asOf,
+        freshness,
+        updatedAt: asOf,
+        timestamp: generatedAt,
+        data,
+    });
 }

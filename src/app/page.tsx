@@ -55,7 +55,46 @@ import kpiData from "@/lib/kpi-data.json";
 import { AnimatePresence, motion } from "framer-motion";
 import { useRealtimeAlerts } from "@/lib/use-realtime-alerts";
 import { AXIS_TAGLINE } from "@/lib/brand";
+import {
+  getFreshnessMetadata,
+  STATIC_SCORE_BASELINE_AS_OF,
+  type DataMode,
+  type FreshnessMetadata,
+} from "@/lib/intelligence/trust";
+import { mergeAuthoritativeCountryScores } from "@/lib/intelligence/score-selection";
+import type { LegacyRecord } from "@/lib/intelligence/trust-rollout";
 const TOTAL_POPULATION = 1_444; // ~1.44 billion
+
+const STATIC_SCORE_FRESHNESS = getFreshnessMetadata({
+  sourceUpdatedAt: STATIC_SCORE_BASELINE_AS_OF,
+  observedAt: STATIC_SCORE_BASELINE_AS_OF,
+  dataset: "country-score",
+  requestedMode: "fallback",
+});
+
+const STATIC_COUNTRY_DATA = ALL_SOVEREIGN_DATA.map((country) => ({
+  ...country,
+  publicationTier: "legacy" as const,
+  ...STATIC_SCORE_FRESHNESS,
+  freshness: { ...STATIC_SCORE_FRESHNESS },
+  provenance: {
+    publisher: "AXIS Africa static baseline",
+    sourceUrl: "https://axis-mocha.vercel.app/methodology",
+    sourcePublishedAt: STATIC_SCORE_BASELINE_AS_OF,
+    observedAt: STATIC_SCORE_BASELINE_AS_OF,
+  },
+})) as CountryData[];
+
+interface DashboardCountryCache {
+  data: CountryData[];
+  sourceUpdatedAt: string | null;
+  observedAt: string | null;
+  publicationTier: "trusted" | "legacy";
+}
+
+interface DashboardFreshness extends FreshnessMetadata {
+  generatedAt: string | null;
+}
 
 export default function Home() {
   const [mode, setMode] = useState<"SOVEREIGNTY" | "OUTSIDE INFLUENCE">("SOVEREIGNTY");
@@ -76,8 +115,13 @@ export default function Home() {
   const currentYear = new Date().getFullYear();
   const [timeValue, setTimeValue] = useState(currentYear);
   const [language, setLanguage] = useState<Language>("en");
-  const [countryDataMaster, setCountryDataMaster] = useState<CountryData[]>([]);
-  const [dataSourceMode, setDataSourceMode] = useState<"LIVE" | "CACHED" | "FALLBACK">("FALLBACK");
+  const [countryDataMaster, setCountryDataMaster] = useState<CountryData[]>(STATIC_COUNTRY_DATA);
+  const [dataSourceMode, setDataSourceMode] = useState<DataMode>(STATIC_SCORE_FRESHNESS.dataMode);
+  const [scorePublicationTier, setScorePublicationTier] = useState<"trusted" | "legacy">("legacy");
+  const [dashboardFreshness, setDashboardFreshness] = useState<DashboardFreshness>({
+    ...STATIC_SCORE_FRESHNESS,
+    generatedAt: null,
+  });
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const { newAlertCount, clearNewAlerts } = useRealtimeAlerts();
@@ -111,45 +155,88 @@ export default function Home() {
       }
     }
 
-    // Fetch live data, cache in IndexedDB for offline use, or use static fallback
-    import("@/lib/supabase").then(async ({ supabase }) => {
+    // Fetch the authoritative public score selection, then cache it for offline use.
+    void (async () => {
+      const generatedAt = new Date().toISOString();
       try {
-        const { data, error } = await supabase.from('countries').select('*');
-        if (!error && data) {
-          const merged = data.map((dbCountry: any) => {
-            const staticData = ALL_SOVEREIGN_DATA.find(s => s.country === dbCountry.id);
-            return { ...staticData, ...dbCountry, country: dbCountry.id };
-          });
-          setCountryDataMaster(merged as CountryData[]);
-          setDataSourceMode("LIVE");
-          // Cache for offline use
-          import("@/lib/use-offline-cache").then(({ cacheData }) => {
-            cacheData('countryDataMaster', merged);
-          });
-        } else {
-          throw new Error('Supabase fetch failed');
+        const response = await fetch("/api/public/scores", {
+          headers: { Accept: "application/json" },
+        });
+        if (!response.ok) throw new Error("Public score fetch failed");
+        const payload = await response.json() as {
+          countries: LegacyRecord[];
+          count: number;
+          generatedAt?: string;
+          sourceUpdatedAt: string | null;
+          observedAt: string | null;
+          publicationTier: "trusted" | "legacy";
+        };
+        if (payload.count !== ALL_SOVEREIGN_DATA.length) {
+          throw new Error("Public score release is incomplete");
         }
+        const merged = mergeAuthoritativeCountryScores(
+          ALL_SOVEREIGN_DATA,
+          payload.countries,
+        ) as unknown as CountryData[];
+        const responseFreshness = getFreshnessMetadata({
+          sourceUpdatedAt: payload.sourceUpdatedAt,
+          observedAt: payload.observedAt,
+          dataset: "country-score",
+          requestedMode:
+            payload.publicationTier === "trusted" ? "live" : "fallback",
+        });
+        setCountryDataMaster(merged);
+        setDataSourceMode(responseFreshness.dataMode);
+        setScorePublicationTier(payload.publicationTier);
+        setDashboardFreshness({
+          ...responseFreshness,
+          generatedAt: payload.generatedAt ?? generatedAt,
+        });
+        const { cacheData } = await import("@/lib/use-offline-cache");
+        await cacheData<DashboardCountryCache>('countryDataMaster', {
+          data: merged,
+          sourceUpdatedAt: payload.sourceUpdatedAt,
+          observedAt: payload.observedAt,
+          publicationTier: payload.publicationTier,
+        });
       } catch {
-        // Try IndexedDB cache
         try {
           const { getCachedData } = await import("@/lib/use-offline-cache");
-          const cached = await getCachedData<CountryData[]>('countryDataMaster');
+          const cached = await getCachedData<DashboardCountryCache>('countryDataMaster');
           if (cached) {
-            setCountryDataMaster(cached);
-            setDataSourceMode("CACHED");
+            const cachedData = cached.data.map((country) => {
+              const freshness = getFreshnessMetadata({
+                sourceUpdatedAt: country.sourceUpdatedAt,
+                observedAt: country.observedAt,
+                dataset: "country-score",
+                requestedMode: "cached",
+              });
+              return { ...country, ...freshness, freshness };
+            });
+            const freshness = getFreshnessMetadata({
+              sourceUpdatedAt: cached.sourceUpdatedAt,
+              observedAt: cached.observedAt,
+              dataset: "country-score",
+              requestedMode: "cached",
+            });
+            setCountryDataMaster(cachedData);
+            setDataSourceMode(freshness.dataMode);
+            setScorePublicationTier(cached.publicationTier);
+            setDashboardFreshness({ ...freshness, generatedAt });
           } else {
-            setCountryDataMaster(ALL_SOVEREIGN_DATA as CountryData[]);
-            setDataSourceMode("FALLBACK");
+            setCountryDataMaster(STATIC_COUNTRY_DATA);
+            setDataSourceMode(STATIC_SCORE_FRESHNESS.dataMode);
+            setScorePublicationTier("legacy");
+            setDashboardFreshness({ ...STATIC_SCORE_FRESHNESS, generatedAt });
           }
         } catch {
-          setCountryDataMaster(ALL_SOVEREIGN_DATA as CountryData[]);
-          setDataSourceMode("FALLBACK");
+          setCountryDataMaster(STATIC_COUNTRY_DATA);
+          setDataSourceMode(STATIC_SCORE_FRESHNESS.dataMode);
+          setScorePublicationTier("legacy");
+          setDashboardFreshness({ ...STATIC_SCORE_FRESHNESS, generatedAt });
         }
       }
-    }).catch(() => {
-      setCountryDataMaster(ALL_SOVEREIGN_DATA as CountryData[]);
-      setDataSourceMode("FALLBACK");
-    });
+    })();
   }, []);
 
   // Global keyboard shortcuts
@@ -182,7 +269,7 @@ export default function Home() {
     .filter(Boolean) as CountryData[];
 
   // Function to parse strings like "35.6M" or "1.2B" to numbers
-  const parsePop = (popStr: any) => {
+  const parsePop = (popStr: unknown) => {
     if (typeof popStr === 'number') return popStr;
     if (!popStr || typeof popStr !== 'string') return 0;
     if (popStr.endsWith('B')) return parseFloat(popStr) * 1000;
@@ -290,19 +377,22 @@ export default function Home() {
               </div>
 
               <div
-                className={`hidden min-w-[10rem] flex-col justify-center gap-1 rounded-2xl border px-3 py-2 font-mono text-[9px] font-bold tracking-wider lg:flex ${dataSourceMode === "LIVE"
+                className={`hidden min-w-[10rem] flex-col justify-center gap-1 rounded-2xl border px-3 py-2 font-mono text-[9px] font-bold tracking-wider lg:flex ${dataSourceMode === "live"
                   ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-500"
-                  : dataSourceMode === "CACHED"
+                  : dataSourceMode === "cached"
                     ? "border-amber-500/30 bg-amber-500/10 text-amber-500"
                     : "border-red-500/30 bg-red-500/10 text-red-500"
                 }`}
-                title="Current country data source"
+                title={`Country scores: ${scorePublicationTier} publication, ${dataSourceMode}; as of ${dashboardFreshness.asOf ?? "unknown"}; requested ${dashboardFreshness.generatedAt ?? "during hydration"}`}
               >
                 <span className="uppercase tracking-[0.22em] opacity-70">Data Source</span>
                 <span className="flex items-center gap-2 text-xs">
-                  <span className="h-1.5 w-1.5 rounded-full bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.8)] animate-[pulse_2s_ease-in-out_infinite]" />
-                  <span className={`h-1.5 w-1.5 rounded-full ${dataSourceMode === "LIVE" ? "bg-emerald-500" : dataSourceMode === "CACHED" ? "bg-amber-500" : "bg-red-500"}`} />
-                  {dataSourceMode}
+                  <span className={`h-1.5 w-1.5 rounded-full ${dataSourceMode === "live" ? "bg-emerald-500" : dataSourceMode === "cached" ? "bg-amber-500" : "bg-red-500"}`} />
+                  {dataSourceMode === "cached"
+                    ? `${scorePublicationTier.toUpperCase()} / CACHED`
+                    : scorePublicationTier === "trusted"
+                      ? "TRUSTED"
+                      : `LEGACY / ${dataSourceMode.toUpperCase()}`}
                 </span>
               </div>
 
@@ -517,7 +607,7 @@ export default function Home() {
             {selectedCountries.length === 0 && (
               <div className="absolute inset-x-0 bottom-6 flex justify-center pointer-events-none p-4">
                 <div className="px-4 py-2 bg-panel/90 border border-border rounded-full text-[9px] lg:text-[10px] font-mono backdrop-blur-md shadow-lg text-cobalt group">
-                  D3 GEO ENGINE <span className="mx-1 opacity-30">//</span> CLICK COUNTRY TO FILTER
+                  D3 GEO ENGINE <span className="mx-1 opacity-30">{"//"}</span> CLICK COUNTRY TO FILTER
                 </div>
               </div>
             )}
@@ -843,7 +933,7 @@ export default function Home() {
       <ComparativeAnalyticsModal
         isOpen={comparativeOpen}
         onClose={() => setComparativeOpen(false)}
-        allData={ALL_SOVEREIGN_DATA}
+        allData={countryDataMaster}
         initialSelectedCodes={selectedCodes}
       />
       <TradeIntelligenceModal
@@ -854,8 +944,9 @@ export default function Home() {
       <SectorIntelligenceModal
         isOpen={sectorOpen}
         onClose={() => setSectorOpen(false)}
+        countryData={countryDataMaster}
         onSelectCountry={(iso) => {
-          const row = ALL_SOVEREIGN_DATA.find((c) => c.country === iso);
+          const row = countryDataMaster.find((c) => c.country === iso);
           if (row) setDossierCountry(row);
         }}
         onOpenNexus={(resource) => {

@@ -2,10 +2,11 @@
 
 import { useEffect, useState, useRef, useCallback } from "react"
 import Image from "next/image"
-import { ShieldAlert, Newspaper, Video, BookOpen, Lightbulb, Globe, Play, Square, ArrowUpRight, Users, Radio, Wifi, WifiOff } from "lucide-react"
+import { ShieldAlert, Newspaper, Video, BookOpen, Lightbulb, Globe, Play, Square, ArrowUpRight, Users } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useWatchlist } from "@/lib/use-watchlist"
 import type { IntelligenceAlert } from "./country-dossier-modal"
+import type { DataMode } from "@/lib/intelligence/trust"
 
 export interface BlogPost {
     id: string;
@@ -20,6 +21,9 @@ export interface BlogPost {
     readingTime?: string;
     author?: string;
     tag?: string;
+    dataMode?: DataMode;
+    sourceUpdatedAt?: string | null;
+    observedAt?: string | null;
 }
 
 interface Article {
@@ -34,7 +38,13 @@ interface Article {
     imageUrl?: string
     severity: "HIGH" | "MEDIUM" | "LOW"
     source?: string
+    dataMode?: DataMode
+    sourceUpdatedAt?: string | null
+    observedAt?: string | null
 }
+
+const isDataMode = (value: unknown): value is DataMode =>
+    value === "live" || value === "cached" || value === "fallback" || value === "stale";
 
 // Brand SVG Icons
 const YouTubeIcon = () => (
@@ -44,10 +54,9 @@ const YouTubeIcon = () => (
 )
 
 const SafeImage = ({ src, fallbackIcon: Icon, className, width, height, fill }: { src?: string; fallbackIcon: React.ComponentType<{ className?: string }>; className?: string; width?: number; height?: number; fill?: boolean }) => {
-    const [error, setError] = useState(false);
-    useEffect(() => setError(false), [src]);
+    const [failedSrc, setFailedSrc] = useState<string | null>(null);
 
-    if (error || !src) return (
+    if (failedSrc === src || !src) return (
         <div className={`flex items-center justify-center bg-gradient-to-br from-white/5 to-white/10 ${className}`}>
             <Icon className="w-8 h-8 opacity-20" />
         </div>
@@ -58,7 +67,7 @@ const SafeImage = ({ src, fallbackIcon: Icon, className, width, height, fill }: 
             src={src}
             alt=""
             className={`object-cover ${className}`}
-            onError={() => setError(true)}
+            onError={() => setFailedSrc(src)}
             referrerPolicy="no-referrer"
             width={width}
             height={height}
@@ -281,6 +290,8 @@ export default function FrictionEngine({ mode, filterCountries, onSelectCountry,
     const [blogs, setBlogs] = useState<BlogPost[]>([])
     const [loading, setLoading] = useState(true)
     const [blogsLoading, setBlogsLoading] = useState(true)
+    const [intelligenceMode, setIntelligenceMode] = useState<DataMode>("stale")
+    const [blogMode, setBlogMode] = useState<DataMode>("stale")
     const [activeTab, setActiveTab] = useState<"ALERTS" | "NEWS" | "MEDIA" | "BLOGS">("ALERTS")
     const [isPlayingAudio, setIsPlayingAudio] = useState(false);
     const [audioPaused, setAudioPaused] = useState(false);
@@ -310,15 +321,16 @@ export default function FrictionEngine({ mode, filterCountries, onSelectCountry,
             if (!Array.isArray(data) || data.length === 0) return;
 
             const enhancedData = data.map((alert: IntelligenceAlert, index: number) => {
-                const exactDate = alert.created_at ? new Date(alert.created_at) : new Date();
+                const exactDate = alert.sourceUpdatedAt ?? alert.observedAt ?? alert.created_at;
                 return {
                     ...alert,
                     imageUrl: alert.imageUrl || ALERT_IMAGE_FALLBACKS[index % ALERT_IMAGE_FALLBACKS.length],
-                    timestamp: exactDate.toISOString(),
+                    timestamp: exactDate ? new Date(exactDate).toISOString() : undefined,
                     timeAgo: ""
                 } as Article;
             });
 
+            if (isMounted && isDataMode(payload?.dataMode)) setIntelligenceMode(payload.dataMode);
             setAlerts((prev) => {
                 if (prev.length === 0) return enhancedData;
                 const merged = [...prev];
@@ -343,6 +355,7 @@ export default function FrictionEngine({ mode, filterCountries, onSelectCountry,
             const payload = await res.json();
             const data = Array.isArray(payload) ? payload : payload?.data;
             if (isMounted) {
+                if (isDataMode(payload?.dataMode)) setBlogMode(payload.dataMode);
                 setBlogs(Array.isArray(data) ? data.map((post: BlogPost, index: number) => ({
                     ...post,
                     imageUrl: post.imageUrl || BLOG_IMAGE_FALLBACKS[index % BLOG_IMAGE_FALLBACKS.length]
@@ -518,7 +531,7 @@ export default function FrictionEngine({ mode, filterCountries, onSelectCountry,
                 {activeTab === "ALERTS" && (
                     <>
                         <div className="flex justify-between items-center mb-2 px-1">
-                            <span className="text-[10px] font-mono text-slate-light/60 uppercase tracking-widest">Live Signals</span>
+                            <span className="text-[10px] font-mono text-slate-light/60 uppercase tracking-widest">{intelligenceMode} signals</span>
                             <button
                                 onClick={filteredAlerts.length > 0 ? (isPlayingAudio && !audioPaused ? stopAudio : toggleAudioBrief) : undefined}
                                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] font-bold tracking-widest transition-all ${filteredAlerts.length === 0 ? "opacity-30 cursor-not-allowed border border-border bg-background" :
@@ -689,8 +702,8 @@ export default function FrictionEngine({ mode, filterCountries, onSelectCountry,
                 {activeTab === "BLOGS" && (
                     <div className="space-y-4">
                         <div className="text-[10px] font-mono text-green-500 flex items-center gap-2 mb-2">
-                            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                            MEDIUM GEOPOLITICAL ANALYSIS
+                            <span className={`w-2 h-2 rounded-full ${blogMode === "live" ? "bg-green-500 animate-pulse" : "bg-amber-500"}`} />
+                            {blogMode} GEOPOLITICAL ANALYSIS
                         </div>
                         {blogsLoading && blogs.length === 0 ? (
                             <div className="space-y-3">

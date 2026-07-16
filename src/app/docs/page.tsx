@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import Link from 'next/link';
 
 export const metadata: Metadata = {
     title: 'API Documentation — AXIS Africa',
@@ -15,6 +16,10 @@ export default function DocsPage() {
             response: `{
   "success": true,
   "count": 54,
+  "generatedAt": "2026-07-16T19:15:09.411Z",
+  "sourceUpdatedAt": "2026-04-12T00:00:00.000Z",
+  "asOf": "2026-04-12T00:00:00.000Z",
+  "dataMode": "fallback",
   "data": [
     {
       "country": "NGA",
@@ -25,7 +30,9 @@ export default function DocsPage() {
       "policyIndependence": 60,
       "currencyStability": 45,
       "resourceWealth": 92,
-      "keyResources": ["Oil", "Gas", "Tin"]
+      "keyResources": ["Oil", "Gas", "Tin"],
+      "dataMode": "fallback",
+      "sourceUpdatedAt": "2026-04-12T00:00:00.000Z"
     }
   ]
 }`,
@@ -37,6 +44,9 @@ export default function DocsPage() {
             curl: 'curl -s https://axis-mocha.vercel.app/api/commodities | jq .',
             response: `{
   "success": true,
+  "generatedAt": "2026-07-16T19:15:09.411Z",
+  "sourceUpdatedAt": "2026-07-15T00:00:00.000Z",
+  "dataMode": "fallback",
   "data": [
     {
       "id": "gold",
@@ -47,7 +57,9 @@ export default function DocsPage() {
       "trend": 0.45,
       "source": "LBMA / Kitco",
       "frequency": "daily",
-      "lastUpdated": "2025-01-15"
+      "lastUpdated": "2026-07-15",
+      "dataMode": "fallback",
+      "sourceUpdatedAt": "2026-07-15T00:00:00.000Z"
     }
   ]
 }`,
@@ -89,9 +101,9 @@ export default function DocsPage() {
             <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-20">
                 {/* Header */}
                 <div className="mb-12">
-                    <a href="/" className="text-[10px] font-mono text-cobalt tracking-widest hover:underline mb-4 block">
+                    <Link href="/" className="text-[10px] font-mono text-cobalt tracking-widest hover:underline mb-4 block">
                         ← BACK TO DASHBOARD
-                    </a>
+                    </Link>
                     <h1 className="text-3xl sm:text-4xl font-black tracking-wider uppercase mb-3">
                         API <span className="text-cobalt">DOCUMENTATION</span>
                     </h1>
