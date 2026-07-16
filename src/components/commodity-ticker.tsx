@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown, ShieldCheck, Globe2, Clock } from 'lucide-react';
+import type { DataMode } from '@/lib/intelligence/trust';
 
 interface Commodity {
     id: string;
@@ -17,6 +18,9 @@ interface Commodity {
     frequency?: string;
     category: string;
     color: string;
+    dataMode?: DataMode;
+    sourceUpdatedAt?: string | null;
+    observedAt?: string | null;
 }
 
 function relativeTime(dateStr: string): string {
@@ -34,6 +38,7 @@ function relativeTime(dateStr: string): string {
 export default function CommodityTicker() {
     const [commodities, setCommodities] = useState<Commodity[]>([]);
     const [loading, setLoading] = useState(true);
+    const [dataMode, setDataMode] = useState<DataMode>("stale");
 
     useEffect(() => {
         const fetchCommodities = async () => {
@@ -42,6 +47,9 @@ export default function CommodityTicker() {
                 const json = await res.json();
                 if (json.success) {
                     setCommodities(json.data);
+                    if (["live", "cached", "fallback", "stale"].includes(json.dataMode)) {
+                        setDataMode(json.dataMode);
+                    }
                 }
             } catch (err) {
                 console.error("Ticker fetch failed", err);
@@ -66,7 +74,7 @@ export default function CommodityTicker() {
             {/* Vetted Source Badge */}
             <div className="absolute left-0 top-0 bottom-0 px-3 bg-cobalt/20 backdrop-blur-md border-r border-cobalt/30 flex items-center gap-2 z-20 shadow-[8px_0_15px_rgba(0,0,0,0.5)]">
                 <ShieldCheck className="w-3.5 h-3.5 text-cobalt" />
-                <span className="text-[9px] font-bold font-mono text-cobalt tracking-widest uppercase">VETTED DATA</span>
+                <span className="text-[9px] font-bold font-mono text-cobalt tracking-widest uppercase">{dataMode} DATA</span>
             </div>
 
             <motion.div

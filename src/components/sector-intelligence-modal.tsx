@@ -6,7 +6,7 @@ import {
     Building2, Ship, ArrowLeft, AlertTriangle, TrendingUp, Users, LayoutGrid,
     Share2, ArrowUpRight, ChevronRight,
 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTheme } from "next-themes";
 import {
@@ -15,10 +15,12 @@ import {
 import { ALL_SOVEREIGN_DATA } from "@/lib/mock-data";
 import { isoToFlag } from "@/lib/flags";
 import { type TradeCategory } from "@/lib/trade-categories";
+import type { CountryData } from "@/components/country-dossier-modal";
 
 interface Props {
     isOpen: boolean;
     onClose: () => void;
+    countryData?: CountryData[];
     onSelectCountry?: (iso: string) => void;
     onOpenNexus?: (resource: string) => void;
     onOpenTrade?: (category: TradeCategory) => void;
@@ -405,15 +407,6 @@ const SECTORS: Sector[] = [
     },
 ];
 
-const COUNTRY_BY_ISO: Record<string, { name: string; axisScore: number; status: string }> = {};
-ALL_SOVEREIGN_DATA.forEach((c) => {
-    COUNTRY_BY_ISO[c.country] = { name: c.name, axisScore: c.axisScore, status: c.status };
-});
-
-function getCountryByIso(iso: string) {
-    return COUNTRY_BY_ISO[iso] || null;
-}
-
 const RISK_STYLES: Record<RiskLevel, string> = {
     HIGH: "text-red-500 border-red-500/40 bg-red-500/10",
     MEDIUM: "text-amber-500 border-amber-500/40 bg-amber-500/10",
@@ -430,10 +423,20 @@ function statusColor(status: ProjectStatus): string {
     }
 }
 
-export default function SectorIntelligenceModal({ isOpen, onClose, onSelectCountry, onOpenNexus, onOpenTrade }: Props) {
+export default function SectorIntelligenceModal({ isOpen, onClose, countryData, onSelectCountry, onOpenNexus, onOpenTrade }: Props) {
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const { theme } = useTheme();
     const isDark = theme === "dark" || theme === "system" || !theme;
+    const countryByIso = useMemo(
+        () =>
+            new Map(
+                (countryData?.length ? countryData : ALL_SOVEREIGN_DATA).map(
+                    (country) => [country.country, country],
+                ),
+            ),
+        [countryData],
+    );
+    const getCountryByIso = (iso: string) => countryByIso.get(iso) ?? null;
 
     if (typeof window === "undefined") return null;
 
