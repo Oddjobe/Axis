@@ -8,10 +8,10 @@ import { useWatchlist } from "@/lib/use-watchlist"
 import type { IntelligenceAlert } from "./country-dossier-modal"
 import type { DataMode } from "@/lib/intelligence/trust"
 import {
-    getPresentationTone,
-    getPublicationPresentation,
-    type PublicationPresentation,
-} from "@/lib/intelligence/publication-health"
+    getPublicTrustStateLabel,
+    isPublicTrustState,
+    type PublicTrustState,
+} from "@/lib/intelligence/trust-health";
 
 export interface BlogPost {
     id: string;
@@ -47,9 +47,6 @@ interface Article {
     sourceUpdatedAt?: string | null
     observedAt?: string | null
 }
-
-const UNAVAILABLE_PRESENTATION = getPublicationPresentation({ success: false });
-
 
 // Brand SVG Icons
 const YouTubeIcon = () => (
@@ -295,12 +292,8 @@ export default function FrictionEngine({ mode, filterCountries, onSelectCountry,
     const [blogs, setBlogs] = useState<BlogPost[]>([])
     const [loading, setLoading] = useState(true)
     const [blogsLoading, setBlogsLoading] = useState(true)
-    const [intelligencePresentation, setIntelligencePresentation] = useState<PublicationPresentation>(
-        UNAVAILABLE_PRESENTATION,
-    )
-    const [blogPresentation, setBlogPresentation] = useState<PublicationPresentation>(
-        UNAVAILABLE_PRESENTATION,
-    )
+    const [intelligenceTrustState, setIntelligenceTrustState] = useState<PublicTrustState>("unavailable")
+    const [blogTrustState, setBlogTrustState] = useState<PublicTrustState>("unavailable")
     const [activeTab, setActiveTab] = useState<"ALERTS" | "NEWS" | "MEDIA" | "BLOGS">("ALERTS")
     const [isPlayingAudio, setIsPlayingAudio] = useState(false);
     const [audioPaused, setAudioPaused] = useState(false);
@@ -341,7 +334,10 @@ export default function FrictionEngine({ mode, filterCountries, onSelectCountry,
                 );
             }
             const data = Array.isArray(payload) ? payload : payload?.data;
-            if (!Array.isArray(data) || data.length === 0) return;
+            if (!Array.isArray(data) || data.length === 0) {
+                if (isMounted) setIntelligenceTrustState("unavailable");
+                return;
+            }
 
             const enhancedData = data.map((alert: IntelligenceAlert, index: number) => {
                 const exactDate = alert.sourceUpdatedAt ?? alert.observedAt ?? alert.created_at;
@@ -353,6 +349,11 @@ export default function FrictionEngine({ mode, filterCountries, onSelectCountry,
                 } as Article;
             });
 
+            if (isMounted) {
+                setIntelligenceTrustState(isPublicTrustState(payload?.trustState)
+                    ? payload.trustState
+                    : "unavailable");
+            }
             setAlerts((prev) => {
                 if (prev.length === 0) return enhancedData;
                 const merged = [...prev];
@@ -366,6 +367,7 @@ export default function FrictionEngine({ mode, filterCountries, onSelectCountry,
             });
         } catch (e) {
             console.error("Intelligence load failed", e);
+            if (isMounted) setIntelligenceTrustState("unavailable");
         } finally {
             if (isMounted) setLoading(false);
         }
@@ -377,18 +379,9 @@ export default function FrictionEngine({ mode, filterCountries, onSelectCountry,
             const payload = await res.json();
             const data = Array.isArray(payload) ? payload : payload?.data;
             if (isMounted) {
-                setBlogPresentation(
-                    getPublicationPresentation({
-                        success: payload?.success !== false,
-                        source: payload?.source,
-                        publicationTier: payload?.publicationTier,
-                        dataMode: payload?.dataMode,
-                        fallbackUsed: payload?.fallbackUsed,
-                        sourceUpdatedAt: payload?.sourceUpdatedAt,
-                        observedAt: payload?.observedAt,
-                        generatedAt: payload?.generatedAt,
-                    }),
-                );
+                setBlogTrustState(isPublicTrustState(payload?.trustState)
+                    ? payload.trustState
+                    : "unavailable");
                 setBlogs(Array.isArray(data) ? data.map((post: BlogPost, index: number) => ({
                     ...post,
                     imageUrl: post.imageUrl || BLOG_IMAGE_FALLBACKS[index % BLOG_IMAGE_FALLBACKS.length]
@@ -396,6 +389,7 @@ export default function FrictionEngine({ mode, filterCountries, onSelectCountry,
             }
         } catch (e) {
             console.error("Blog load failed", e);
+            if (isMounted) setBlogTrustState("unavailable");
         } finally {
             if (isMounted) setBlogsLoading(false);
         }
@@ -564,12 +558,7 @@ export default function FrictionEngine({ mode, filterCountries, onSelectCountry,
                 {activeTab === "ALERTS" && (
                     <>
                         <div className="flex justify-between items-center mb-2 px-1">
-                            <span
-                                className={`text-[10px] font-mono uppercase tracking-widest ${getPresentationTone(intelligencePresentation.state).text}`}
-                                title={intelligencePresentation.tooltip}
-                            >
-                                {intelligencePresentation.label} SIGNALS
-                            </span>
+                            <span className="text-[10px] font-mono text-slate-light/60 uppercase tracking-widest">{getPublicTrustStateLabel(intelligenceTrustState)} signals</span>
                             <button
                                 onClick={filteredAlerts.length > 0 ? (isPlayingAudio && !audioPaused ? stopAudio : toggleAudioBrief) : undefined}
                                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] font-bold tracking-widest transition-all ${filteredAlerts.length === 0 ? "opacity-30 cursor-not-allowed border border-border bg-background" :
@@ -739,12 +728,9 @@ export default function FrictionEngine({ mode, filterCountries, onSelectCountry,
 
                 {activeTab === "BLOGS" && (
                     <div className="space-y-4">
-                        <div
-                            className={`text-[10px] font-mono flex items-center gap-2 mb-2 ${getPresentationTone(blogPresentation.state).text}`}
-                            title={blogPresentation.tooltip}
-                        >
-                            <span className={`w-2 h-2 rounded-full ${getPresentationTone(blogPresentation.state).dot} ${blogPresentation.state === "trusted-current" || blogPresentation.state === "legacy-live-ingested" ? "animate-pulse" : ""}`} />
-                            {blogPresentation.label} · GEOPOLITICAL ANALYSIS
+                        <div className="text-[10px] font-mono text-green-500 flex items-center gap-2 mb-2">
+                            <span className={`w-2 h-2 rounded-full ${blogTrustState === "trusted-current" ? "bg-green-500 animate-pulse" : "bg-amber-500"}`} />
+                            {getPublicTrustStateLabel(blogTrustState)} GEOPOLITICAL ANALYSIS
                         </div>
                         {blogsLoading && blogs.length === 0 ? (
                             <div className="space-y-3">
