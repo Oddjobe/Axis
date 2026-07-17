@@ -12,6 +12,7 @@ import {
 } from "@/lib/intelligence/score-methodology";
 import {
   getTrustedPublishedRecords,
+  recordRetrievalTimestamp,
   trustedPublicationSelectionEnabled,
   trustedSnapshotUnavailable,
 } from "@/lib/intelligence/publication-selection.server";
@@ -119,10 +120,9 @@ export async function GET() {
             : "https://axis-mocha.vercel.app/methodology",
         sourcePublishedAt: trusted ? trustedTimestamp : score.asOf,
         observedAt: trusted ? trustedObservationTimestamp : score.asOf,
-        retrievedAt:
-          typeof trusted?.retrievedAt === "string"
-            ? trusted.retrievedAt
-            : SCORE_METHODOLOGY.baselineRetrievedAt,
+        retrievedAt: trusted
+          ? recordRetrievalTimestamp(trusted)
+          : SCORE_METHODOLOGY.baselineRetrievedAt,
       },
     };
   });

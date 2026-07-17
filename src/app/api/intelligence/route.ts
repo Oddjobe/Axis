@@ -5,6 +5,7 @@ import {
     type DataMode,
 } from "@/lib/intelligence/trust";
 import {
+    recordRetrievalTimestamp,
     selectIntelligencePublications,
     trustedSnapshotUnavailable,
 } from "@/lib/intelligence/publication-selection.server";
@@ -155,7 +156,12 @@ function decorateItems(items: IntelligenceRow[], requestedMode: "live" | "fallba
             item.source_published_at ??
             item.published_at ??
             fallbackUpdatedAt;
-        const observedAt = item.observedAt ?? item.observed_at ?? item.created_at ?? FALLBACK_OBSERVED_AT;
+        const retrievedAt = recordRetrievalTimestamp(item);
+        const observedAt =
+            item.observedAt ??
+            item.observed_at ??
+            retrievedAt ??
+            FALLBACK_OBSERVED_AT;
         const freshness = getFreshnessMetadata({
             sourceUpdatedAt,
             observedAt,
@@ -177,7 +183,7 @@ function decorateItems(items: IntelligenceRow[], requestedMode: "live" | "fallba
                 sourceUrl,
                 sourcePublishedAt: freshness.sourceUpdatedAt,
                 observedAt: freshness.observedAt,
-                retrievedAt: generatedAt,
+                retrievedAt,
             },
         };
     });

@@ -8,6 +8,7 @@ import {
 } from '@/lib/intelligence/trust';
 import {
     getLatestTrustedPublishedRecordsByIdentity,
+    recordRetrievalTimestamp,
     trustedPublicationSelectionEnabled,
     trustedSnapshotUnavailable,
 } from '@/lib/intelligence/publication-selection.server';
@@ -175,14 +176,9 @@ export function getCommodityTimestamps(
 ) {
     const sourceUpdatedAt =
         fresh?.sourcePublishedAt ??
-        fresh?.trustedPublishedAt ??
         fresh?.sourceUpdatedAt ??
-        fresh?.publishedAt ??
         fresh?.source_published_at ??
-        fresh?.trusted_published_at ??
         fresh?.source_updated_at ??
-        fresh?.published_at ??
-        fresh?.updated_at ??
         fallbackTimestamp;
     const observedAt =
         fresh?.observedAt ??
@@ -191,10 +187,6 @@ export function getCommodityTimestamps(
         fresh?.observed_at ??
         fresh?.source_published_at ??
         fresh?.retrieved_at ??
-        fresh?.trustedPublishedAt ??
-        fresh?.trusted_published_at ??
-        fresh?.published_at ??
-        fresh?.updated_at ??
         fallbackTimestamp;
 
     return { sourceUpdatedAt, observedAt };
@@ -203,7 +195,6 @@ export function getCommodityTimestamps(
 export function buildRecord(
     fallback: (typeof FALLBACK_DATA)[number],
     fresh: CommodityRow | undefined,
-    generatedAt: string,
     trusted: boolean,
 ) {
     const { sourceUpdatedAt, observedAt } = getCommodityTimestamps(
@@ -225,6 +216,7 @@ export function buildRecord(
                 : typeof fresh?.source_url === "string"
                     ? fresh.source_url
                     : fallback.sourceUrl;
+    const retrievedAt = fresh ? recordRetrievalTimestamp(fresh) : null;
 
     return {
         ...fallback,
@@ -248,7 +240,7 @@ export function buildRecord(
             sourceUrl,
             sourcePublishedAt: freshness.sourceUpdatedAt,
             observedAt: freshness.observedAt,
-            retrievedAt: generatedAt,
+            retrievedAt,
         },
     };
 }
@@ -355,7 +347,6 @@ export async function GET() {
         buildRecord(
             fallback,
             freshMap.get(fallback.id),
-            generatedAt,
             publicationTier !== "legacy",
         ),
     );

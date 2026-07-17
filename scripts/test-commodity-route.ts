@@ -38,8 +38,8 @@ assert.deepEqual(
     fallbackTimestamp,
   ),
   {
-    sourceUpdatedAt: "2026-07-15T09:00:00.000Z",
-    observedAt: "2026-07-15T09:00:00.000Z",
+    sourceUpdatedAt: "2025-01-01T00:00:00.000Z",
+    observedAt: fallbackTimestamp,
   },
 );
 
@@ -156,13 +156,17 @@ const trustedWithoutTrend = buildRecord(
     source: "Trading Economics",
     sourceUrl: "https://tradingeconomics.com/commodity/cobalt",
     sourcePublishedAt: "2026-07-16T09:00:00.000Z",
+    retrievedAt: "2026-07-16T10:00:00.000Z",
   },
-  "2026-07-17T09:00:00.000Z",
   true,
 );
 assert.equal(trustedWithoutTrend.trend, null);
 assert.equal(trustedWithoutTrend.fallbackUsed, false);
 assert.equal(trustedWithoutTrend.publicationTier, "trusted");
+assert.equal(
+  trustedWithoutTrend.provenance.retrievedAt,
+  "2026-07-16T10:00:00.000Z",
+);
 
 console.log(
   "Commodity route fixtures passed (trusted timestamps and newest-first versions are preserved).",
