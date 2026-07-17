@@ -19,6 +19,7 @@ import {
     COMMODITY_IDS,
     type CommodityId,
 } from '@/lib/intelligence/ingestion/commodity-sources';
+import { derivePublicTrustState } from '@/lib/intelligence/trust-health';
 
 export const revalidate = 3600; // Revalidate every hour
 
@@ -225,6 +226,15 @@ export function buildRecord(
                 : typeof fresh?.source_url === "string"
                     ? fresh.source_url
                     : fallback.sourceUrl;
+    const fallbackUsed =
+        !fresh || (!trusted && typeof fresh.trend !== "number");
+    const publicationTier = fresh && trusted ? "trusted" : "legacy";
+    const trustState = derivePublicTrustState({
+        publicationTier,
+        dataMode: freshness.dataMode,
+        fallbackUsed,
+        source: trusted ? "trusted" : fresh ? "legacy/supabase" : "legacy/static",
+    });
 
     return {
         ...fallback,
@@ -238,9 +248,9 @@ export function buildRecord(
         source,
         sourceUrl,
         lastUpdated: freshness.sourceUpdatedAt?.split("T")[0] ?? fallback.lastUpdated,
-        fallbackUsed:
-            !fresh || (!trusted && typeof fresh.trend !== "number"),
-        publicationTier: fresh && trusted ? "trusted" : "legacy",
+        fallbackUsed,
+        publicationTier,
+        trustState,
         ...freshness,
         freshness,
         provenance: {
@@ -288,6 +298,7 @@ export async function GET() {
                 },
                 fallbackUsed: false,
                 dataMode: "stale",
+                trustState: "unavailable",
                 generatedAt,
                 data: [],
                 error: "No trusted commodity snapshot is available.",
@@ -316,6 +327,7 @@ export async function GET() {
                     trustedCoverage,
                     fallbackUsed: false,
                     dataMode: "stale",
+                    trustState: "unavailable",
                     generatedAt,
                     data: [],
                     error: "The trusted commodity snapshot is incomplete.",
@@ -371,6 +383,12 @@ export async function GET() {
         dataset: "commodity",
         requestedMode: source === "trusted" && !fallbackUsed ? "live" : "fallback",
     }).dataMode;
+    const trustState = derivePublicTrustState({
+        publicationTier,
+        dataMode,
+        fallbackUsed,
+        source,
+    });
     const asOf = sourceUpdatedAt ?? observedAt;
     const freshness = { dataMode, sourceUpdatedAt, observedAt, asOf };
 
@@ -387,6 +405,7 @@ export async function GET() {
         },
         fallbackUsed,
         dataMode,
+        trustState,
         generatedAt,
         sourceUpdatedAt,
         observedAt,

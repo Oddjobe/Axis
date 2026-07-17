@@ -58,9 +58,14 @@ import { AXIS_TAGLINE } from "@/lib/brand";
 import {
   getFreshnessMetadata,
   STATIC_SCORE_BASELINE_AS_OF,
-  type DataMode,
   type FreshnessMetadata,
 } from "@/lib/intelligence/trust";
+import {
+  derivePublicTrustState,
+  getPublicTrustStateLabel,
+  isPublicTrustState,
+  type PublicTrustState,
+} from "@/lib/intelligence/trust-health";
 import { mergeAuthoritativeCountryScores } from "@/lib/intelligence/score-selection";
 import type { LegacyRecord } from "@/lib/intelligence/trust-rollout";
 const TOTAL_POPULATION = 1_444; // ~1.44 billion
@@ -116,8 +121,8 @@ export default function Home() {
   const [timeValue, setTimeValue] = useState(currentYear);
   const [language, setLanguage] = useState<Language>("en");
   const [countryDataMaster, setCountryDataMaster] = useState<CountryData[]>(STATIC_COUNTRY_DATA);
-  const [dataSourceMode, setDataSourceMode] = useState<DataMode>(STATIC_SCORE_FRESHNESS.dataMode);
   const [scorePublicationTier, setScorePublicationTier] = useState<"trusted" | "legacy">("legacy");
+  const [scoreTrustState, setScoreTrustState] = useState<PublicTrustState>("static-fallback");
   const [dashboardFreshness, setDashboardFreshness] = useState<DashboardFreshness>({
     ...STATIC_SCORE_FRESHNESS,
     generatedAt: null,
@@ -170,6 +175,7 @@ export default function Home() {
           sourceUpdatedAt: string | null;
           observedAt: string | null;
           publicationTier: "trusted" | "legacy";
+          trustState?: unknown;
         };
         if (payload.count !== ALL_SOVEREIGN_DATA.length) {
           throw new Error("Public score release is incomplete");
@@ -186,8 +192,15 @@ export default function Home() {
             payload.publicationTier === "trusted" ? "live" : "fallback",
         });
         setCountryDataMaster(merged);
-        setDataSourceMode(responseFreshness.dataMode);
         setScorePublicationTier(payload.publicationTier);
+        setScoreTrustState(isPublicTrustState(payload.trustState)
+          ? payload.trustState
+          : derivePublicTrustState({
+            publicationTier: payload.publicationTier,
+            dataMode: responseFreshness.dataMode,
+            fallbackUsed: payload.publicationTier !== "trusted",
+            source: payload.publicationTier === "trusted" ? "trusted" : "legacy/static",
+          }));
         setDashboardFreshness({
           ...responseFreshness,
           generatedAt: payload.generatedAt ?? generatedAt,
@@ -220,19 +233,19 @@ export default function Home() {
               requestedMode: "cached",
             });
             setCountryDataMaster(cachedData);
-            setDataSourceMode(freshness.dataMode);
             setScorePublicationTier(cached.publicationTier);
+            setScoreTrustState("cached");
             setDashboardFreshness({ ...freshness, generatedAt });
           } else {
             setCountryDataMaster(STATIC_COUNTRY_DATA);
-            setDataSourceMode(STATIC_SCORE_FRESHNESS.dataMode);
             setScorePublicationTier("legacy");
+            setScoreTrustState("static-fallback");
             setDashboardFreshness({ ...STATIC_SCORE_FRESHNESS, generatedAt });
           }
         } catch {
           setCountryDataMaster(STATIC_COUNTRY_DATA);
-          setDataSourceMode(STATIC_SCORE_FRESHNESS.dataMode);
           setScorePublicationTier("legacy");
+          setScoreTrustState("static-fallback");
           setDashboardFreshness({ ...STATIC_SCORE_FRESHNESS, generatedAt });
         }
       }
@@ -377,22 +390,18 @@ export default function Home() {
               </div>
 
               <div
-                className={`hidden min-w-[10rem] flex-col justify-center gap-1 rounded-2xl border px-3 py-2 font-mono text-[9px] font-bold tracking-wider lg:flex ${dataSourceMode === "live"
+                className={`hidden min-w-[10rem] flex-col justify-center gap-1 rounded-2xl border px-3 py-2 font-mono text-[9px] font-bold tracking-wider lg:flex ${scoreTrustState === "trusted-current"
                   ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-500"
-                  : dataSourceMode === "cached"
+                  : scoreTrustState === "cached" || scoreTrustState === "legacy-live-ingested"
                     ? "border-amber-500/30 bg-amber-500/10 text-amber-500"
                     : "border-red-500/30 bg-red-500/10 text-red-500"
                 }`}
-                title={`Country scores: ${scorePublicationTier} publication, ${dataSourceMode}; as of ${dashboardFreshness.asOf ?? "unknown"}; requested ${dashboardFreshness.generatedAt ?? "during hydration"}`}
+                title={`Country scores: ${getPublicTrustStateLabel(scoreTrustState)} (${scorePublicationTier}); as of ${dashboardFreshness.asOf ?? "unknown"}; requested ${dashboardFreshness.generatedAt ?? "during hydration"}`}
               >
                 <span className="uppercase tracking-[0.22em] opacity-70">Data Source</span>
                 <span className="flex items-center gap-2 text-xs">
-                  <span className={`h-1.5 w-1.5 rounded-full ${dataSourceMode === "live" ? "bg-emerald-500" : dataSourceMode === "cached" ? "bg-amber-500" : "bg-red-500"}`} />
-                  {dataSourceMode === "cached"
-                    ? `${scorePublicationTier.toUpperCase()} / CACHED`
-                    : scorePublicationTier === "trusted"
-                      ? "TRUSTED"
-                      : `LEGACY / ${dataSourceMode.toUpperCase()}`}
+                  <span className={`h-1.5 w-1.5 rounded-full ${scoreTrustState === "trusted-current" ? "bg-emerald-500" : scoreTrustState === "cached" || scoreTrustState === "legacy-live-ingested" ? "bg-amber-500" : "bg-red-500"}`} />
+                  {getPublicTrustStateLabel(scoreTrustState)}
                 </span>
               </div>
 
@@ -920,6 +929,7 @@ export default function Home() {
         onClose={() => setAnalyticsOpen(false)}
         data={countryDataMaster}
         selectedResource={selectedResource}
+        trustState={scoreTrustState}
       />
       <AiNexusModal
         isOpen={aiNexusOpen}

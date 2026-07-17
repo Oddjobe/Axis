@@ -9,6 +9,7 @@ import {
     getTrustedPublishedRecords,
     trustedSnapshotUnavailable,
 } from "@/lib/intelligence/publication-selection.server";
+import { derivePublicTrustState } from "@/lib/intelligence/trust-health";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 300; // Cache for 5 minutes
@@ -121,6 +122,7 @@ export async function GET() {
                 publicationTier: "trusted",
                 fallbackUsed: false,
                 dataMode: "stale",
+                trustState: "unavailable",
                 generatedAt,
                 data: [],
                 error: "No trusted blog snapshot is available.",
@@ -156,18 +158,25 @@ export async function GET() {
         }
     }
 
-    const data = decorateItems(rows, requestedMode, generatedAt).map((item) => ({
+    const decoratedData = decorateItems(rows, requestedMode, generatedAt).map((item) => ({
         ...item,
         publicationTier,
     }));
-    const sourceUpdatedAt = getLatestTimestamp(data.map((record) => record.sourceUpdatedAt));
-    const observedAt = getLatestTimestamp(data.map((record) => record.observedAt));
+    const sourceUpdatedAt = getLatestTimestamp(decoratedData.map((record) => record.sourceUpdatedAt));
+    const observedAt = getLatestTimestamp(decoratedData.map((record) => record.observedAt));
     const dataMode: DataMode = getFreshnessMetadata({
         sourceUpdatedAt,
         observedAt,
         dataset: "blog",
         requestedMode,
     }).dataMode;
+    const trustState = derivePublicTrustState({
+        publicationTier,
+        dataMode,
+        fallbackUsed,
+        source,
+    });
+    const data = decoratedData.map((record) => ({ ...record, trustState }));
     const asOf = sourceUpdatedAt ?? observedAt;
     const freshness = { dataMode, sourceUpdatedAt, observedAt, asOf };
 
@@ -177,6 +186,7 @@ export async function GET() {
         publicationTier,
         fallbackUsed,
         dataMode,
+        trustState,
         generatedAt,
         sourceUpdatedAt,
         observedAt,
