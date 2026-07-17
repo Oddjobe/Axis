@@ -26,6 +26,7 @@
     "test:trust-readiness": "tsx scripts/test-trust-readiness.ts",
     "test:trust-promotion": "tsx scripts/test-trust-promotion.ts",
     "test:trust-shadow-identities": "tsx scripts/test-trust-shadow-identities.ts",
+    "test:trust-health": "tsx scripts/test-trust-health.ts",
     "quality": "npm run data-quality",
     "quality:live": "npm run data-quality:live",
     "workflow:preflight": "tsx scripts/workflow-preflight.ts",

@@ -9,6 +9,10 @@ import { useWatchlist } from "@/lib/use-watchlist";
 import { supabase } from "@/lib/supabase";
 import SovereigntyTrendlineChart from "./sovereignty-trendline-chart";
 import type { DataMode, FreshnessMetadata } from "@/lib/intelligence/trust";
+import {
+    getPresentationTone,
+    getPublicationPresentation,
+} from "@/lib/intelligence/publication-health";
 
 export interface CountryData {
     country: string;
@@ -112,6 +116,16 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
         return { fdiRiskLevel, fdiColor, fdiDetail, diversityLevel, diversityColor, diversityDetail, heatLevel, heatColor, heatDetail };
     };
     const metrics = calculateSmartMetrics();
+    const scorePresentation = getPublicationPresentation({
+        success: true,
+        source: countryData?.publicationTier === "trusted" ? "trusted" : "legacy/static",
+        publicationTier: countryData?.publicationTier ?? "legacy",
+        dataMode: countryData?.dataMode ?? "fallback",
+        fallbackUsed: countryData?.publicationTier !== "trusted",
+        sourceUpdatedAt: countryData?.sourceUpdatedAt ?? countryData?.provenance?.sourcePublishedAt ?? null,
+        observedAt: countryData?.observedAt ?? countryData?.provenance?.observedAt ?? null,
+    });
+    const scorePresentationTone = getPresentationTone(scorePresentation.state);
 
     useEffect(() => {
         setMounted(true);
@@ -456,7 +470,12 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
                                 <div className="space-y-6">
                                     <div className="bg-slate-100/50 dark:bg-white/5 border border-black/10 dark:border-white/10 p-6 rounded-2xl relative shadow-sm hover:shadow-md transition-shadow">
                                         <div className="absolute top-4 right-4">
-                                            <span className="text-[10px] font-bold px-2 py-1 bg-cobalt/10 text-cobalt rounded-full border border-cobalt/20">Live Sync</span>
+                                            <span
+                                                className={`text-[10px] font-bold px-2 py-1 rounded-full border ${scorePresentationTone.bg} ${scorePresentationTone.text} ${scorePresentationTone.border}`}
+                                                title={scorePresentation.tooltip}
+                                            >
+                                                {scorePresentation.label}
+                                            </span>
                                         </div>
                                         <h3 className="text-xs font-bold text-slate-light mb-2 flex items-center gap-2 font-mono uppercase tracking-wider">
                                             <Activity className="w-4 h-4 text-cobalt" /> Composite Capability
