@@ -30,12 +30,21 @@ export const intelligenceSource = {
   name: "African Business Magazine",
   url: "https://african.business/",
   rssUrl: "https://african.business/feed/",
+  role: "authority" as const,
+  publisherType: "original-news" as const,
+  allowedHosts: ["african.business"],
+  sourceQuality: 0.9,
+  registryVersion: "2026-07-17.v1" as const,
 };
 
 export const blogSource = {
-  name: "Medium Africa",
-  url: "https://medium.com/tag/africa/recommended",
-  rssUrl: "https://medium.com/feed/tag/africa",
+  name: "World Bank Africa Can End Poverty",
+  url: "https://blogs.worldbank.org/en/africacan",
+  role: "authority" as const,
+  publisherType: "multilateral" as const,
+  allowedHosts: ["blogs.worldbank.org"],
+  sourceQuality: 0.98,
+  registryVersion: "2026-07-17.v1" as const,
 };
 
 export const supportedBlogCandidate: RawCandidate = {
@@ -44,12 +53,12 @@ export const supportedBlogCandidate: RawCandidate = {
     "African infrastructure investors are adapting financing models to AfCFTA trade and regional development priorities.",
   author: "Axis Research",
   tag: "African development",
-  url: "https://medium.com/@axis/african-infrastructure-financing",
+  url: "https://blogs.worldbank.org/en/africacan/african-infrastructure-financing",
   sourcePublishedAt: "2026-07-15T10:00:00.000Z",
   sourceEvidence: {
     origin: "rss",
     canonicalUrl:
-      "https://medium.com/@axis/african-infrastructure-financing",
+      "https://blogs.worldbank.org/en/africacan/african-infrastructure-financing",
     sourcePublishedAt: "2026-07-15T10:00:00.000Z",
     excerpt:
       "African infrastructure investors are adapting financing models to AfCFTA trade and regional development priorities.",

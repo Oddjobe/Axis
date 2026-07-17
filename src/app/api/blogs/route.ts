@@ -5,7 +5,10 @@ import {
     getLatestTimestamp,
     type DataMode,
 } from "@/lib/intelligence/trust";
-import { getTrustedPublishedRecords } from "@/lib/intelligence/publication-selection.server";
+import {
+    getTrustedPublishedRecords,
+    trustedSnapshotUnavailable,
+} from "@/lib/intelligence/publication-selection.server";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 300; // Cache for 5 minutes
@@ -108,6 +111,23 @@ export async function GET() {
     let rows: BlogRow[] = FALLBACK_BLOGS;
 
     const trustedRows = await getTrustedPublishedRecords("blog", 10);
+    if (
+        trustedSnapshotUnavailable(trustedRows)
+    ) {
+        return NextResponse.json(
+            {
+                success: false,
+                source: "trusted/unavailable",
+                publicationTier: "trusted",
+                fallbackUsed: false,
+                dataMode: "stale",
+                generatedAt,
+                data: [],
+                error: "No trusted blog snapshot is available.",
+            },
+            { status: 503 },
+        );
+    }
     if (trustedRows) {
         source = "trusted";
         publicationTier = "trusted";

@@ -7,6 +7,9 @@ import { fetchWithBoundedRetry, withBoundedRetry } from "./retry.server";
 import {
   BLOG_EXTRACT_SCHEMA,
   INTELLIGENCE_EXTRACT_SCHEMA,
+  sourceAllowsCanonicalUrl,
+  type BlogSource,
+  type IntelligenceSource,
 } from "./sources";
 import {
   selectCanonicalSourceUrl,
@@ -35,6 +38,11 @@ interface FeedCandidate extends RawCandidate {
   url?: string;
   sourcePublishedAt?: string;
   sourceEvidence: SourceEvidence;
+}
+
+interface OriginalPageEvidence extends SourceEvidence {
+  title: string;
+  author: string;
 }
 
 const quietLogger: IngestionLogger = {
@@ -140,6 +148,7 @@ function normalizedMatchText(value: unknown): string {
 export function mergeFeedProvenance(
   candidates: RawCandidate[],
   feed: FeedCandidate[],
+  source: IntelligenceSource | BlogSource,
 ): RawCandidate[] {
   const available = new Set(feed.map((_, index) => index));
   return candidates.map((candidate, index) => {
@@ -181,6 +190,13 @@ export function mergeFeedProvenance(
       candidate,
       item.sourceEvidence,
     );
+    if (
+      !item.sourceEvidence.canonicalUrl ||
+      !sourceAllowsCanonicalUrl(source, item.sourceEvidence.canonicalUrl)
+    ) {
+      disagreements.push("publisher_host:not_authoritative");
+      disagreements.sort();
+    }
     return {
       ...candidate,
       modelCandidate: candidate,
@@ -236,6 +252,27 @@ function pageMarkdown(payload: unknown): string {
   return typeof value === "string" ? value : "";
 }
 
+function textField(
+  records: readonly RawCandidate[],
+  fields: readonly string[],
+): string {
+  for (const field of fields) {
+    for (const record of records) {
+      const value = record[field];
+      if (typeof value === "string" && value.trim()) return value.trim();
+      if (field === "author" && value && typeof value === "object") {
+        const name = recordOf(value).name;
+        if (typeof name === "string" && name.trim()) return name.trim();
+      }
+    }
+  }
+  return "";
+}
+
+function markdownTitle(value: string): string {
+  return value.match(/^#\s+(.+)$/m)?.[1]?.trim() ?? "";
+}
+
 function firstSubstantiveParagraph(value: string): string {
   return value
     .split(/\n\s*\n/)
@@ -250,8 +287,9 @@ function firstSubstantiveParagraph(value: string): string {
 export function extractFirecrawlPageEvidence(
   payload: unknown,
   fallbackUrl: string,
-): SourceEvidence {
+): OriginalPageEvidence {
   const metadata = pageMetadataRecords(payload);
+  const markdown = pageMarkdown(payload);
   const timestamp = selectExplicitPublicationTimestamp(...metadata);
   const metadataCanonicalUrl = selectCanonicalSourceUrl(...metadata);
   return {
@@ -262,7 +300,11 @@ export function extractFirecrawlPageEvidence(
     sourcePublishedAt: timestamp?.value ?? null,
     excerpt:
       selectSourceExcerpt(...metadata) ||
-      firstSubstantiveParagraph(pageMarkdown(payload)),
+      firstSubstantiveParagraph(markdown),
+    title:
+      textField(metadata, ["headline", "title", "ogTitle", "name"]) ||
+      markdownTitle(markdown),
+    author: textField(metadata, ["author", "byline", "articleAuthor"]),
     timestampField: timestamp?.field ?? null,
     supported: false,
     disagreements: metadataCanonicalUrl
@@ -274,7 +316,7 @@ export function extractFirecrawlPageEvidence(
 export function extractJinaPageEvidence(
   content: string,
   fallbackUrl: string,
-): SourceEvidence {
+): OriginalPageEvidence {
   const header: RawCandidate = {};
   for (const line of content.split(/\r?\n/).slice(0, 30)) {
     const match = line.match(/^([^:]{2,40}):\s*(.+)$/);
@@ -290,6 +332,10 @@ export function extractJinaPageEvidence(
       header.datePublished = match[2].trim();
     } else if (key === "description") {
       header.description = match[2].trim();
+    } else if (key === "title") {
+      header.title = match[2].trim();
+    } else if (key === "author" || key === "byline") {
+      header.author = match[2].trim();
     }
   }
   const timestamp = selectExplicitPublicationTimestamp(header);
@@ -303,6 +349,10 @@ export function extractJinaPageEvidence(
     sourcePublishedAt: timestamp?.value ?? null,
     excerpt:
       selectSourceExcerpt(header) || firstSubstantiveParagraph(markdown),
+    title:
+      textField([header], ["headline", "title", "name"]) ||
+      markdownTitle(markdown),
+    author: textField([header], ["author", "byline"]),
     timestampField: timestamp?.field ?? null,
     supported: false,
     disagreements: metadataCanonicalUrl
@@ -313,7 +363,9 @@ export function extractJinaPageEvidence(
 
 function mergePageEvidence(
   candidates: RawCandidate[],
-  pageEvidence: SourceEvidence,
+  pageEvidence: OriginalPageEvidence,
+  source: IntelligenceSource | BlogSource,
+  requireAuthor: boolean,
 ): RawCandidate[] {
   return candidates.map((candidate) => {
     const disagreements = [
@@ -322,19 +374,32 @@ function mergePageEvidence(
     ].sort();
     const samePage =
       selectCanonicalSourceUrl(candidate) === pageEvidence.canonicalUrl;
+    const authoritativePage = Boolean(
+      pageEvidence.canonicalUrl &&
+        sourceAllowsCanonicalUrl(source, pageEvidence.canonicalUrl),
+    );
+    if (!authoritativePage) {
+      disagreements.push("publisher_host:not_authoritative");
+      disagreements.sort();
+    }
     const supported =
       samePage &&
+      authoritativePage &&
       disagreements.length === 0 &&
       Boolean(
         pageEvidence.canonicalUrl &&
           pageEvidence.sourcePublishedAt &&
-          pageEvidence.excerpt,
+          pageEvidence.excerpt &&
+          pageEvidence.title &&
+          (!requireAuthor || pageEvidence.author),
       );
     return {
       ...candidate,
       modelCandidate: candidate,
       ...(supported
         ? {
+            title: pageEvidence.title,
+            ...(pageEvidence.author ? { author: pageEvidence.author } : {}),
             summary: pageEvidence.excerpt,
             excerpt: pageEvidence.excerpt,
             url: pageEvidence.canonicalUrl,
@@ -459,7 +524,7 @@ export function createProductionIngestionAdapter(
     label: string,
     url: string,
     signal: AbortSignal,
-  ): Promise<{ content: string; evidence: SourceEvidence }> {
+  ): Promise<{ content: string; evidence: OriginalPageEvidence }> {
     const content = await fetchWithBoundedRetry(
       `Jina ${label}`,
       `https://r.jina.ai/${url}`,
@@ -483,9 +548,110 @@ export function createProductionIngestionAdapter(
     };
   }
 
+  async function firecrawlPageEvidence(
+    label: string,
+    url: string,
+    signal: AbortSignal,
+  ): Promise<OriginalPageEvidence> {
+    if (!options.firecrawlApiKey) {
+      throw new Error("Firecrawl is not configured");
+    }
+    const payload = await fetchWithBoundedRetry(
+      `Firecrawl ${label}`,
+      "https://api.firecrawl.dev/v1/scrape",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${options.firecrawlApiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ url, formats: ["markdown"] }),
+      },
+      async (response, attemptSignal) => {
+        const body: unknown = await response.json();
+        attemptSignal.throwIfAborted();
+        return body;
+      },
+      {
+        attempts: 2,
+        timeoutMs: 45_000,
+        deadlineAt: options.deadlineAt,
+        signal,
+      },
+    );
+    signal.throwIfAborted();
+    if (
+      typeof payload === "object" &&
+      payload !== null &&
+      "success" in payload &&
+      payload.success === false
+    ) {
+      throw new Error("Firecrawl returned success=false");
+    }
+    return extractFirecrawlPageEvidence(payload, url);
+  }
+
+  async function verifyOriginalPages(
+    label: string,
+    source: IntelligenceSource | BlogSource,
+    candidates: RawCandidate[],
+    loadEvidence: (url: string) => Promise<OriginalPageEvidence>,
+    requireAuthor = false,
+  ): Promise<RawCandidate[]> {
+    const settled = await Promise.allSettled(
+      candidates.slice(0, 3).map(async (candidate) => {
+        const canonicalUrl = selectCanonicalSourceUrl(candidate);
+        if (!canonicalUrl || !sourceAllowsCanonicalUrl(source, canonicalUrl)) {
+          return mergePageEvidence(
+            [candidate],
+            {
+              origin: "firecrawl-page",
+              canonicalUrl,
+              sourcePublishedAt: null,
+              excerpt: "",
+              title: "",
+              author: "",
+              timestampField: null,
+              supported: false,
+              disagreements: ["publisher_host:not_authoritative"],
+            },
+            source,
+            requireAuthor,
+          )[0];
+        }
+        return mergePageEvidence(
+          [candidate],
+          await loadEvidence(canonicalUrl),
+          source,
+          requireAuthor,
+        )[0];
+      }),
+    );
+    const verified = settled.flatMap((result) =>
+      result.status === "fulfilled" ? [result.value] : []
+    );
+    const supported = verified.filter((candidate) =>
+      (candidate.sourceEvidence as SourceEvidence | undefined)?.supported === true
+    );
+    if (supported.length === 0) {
+      const failures = settled.flatMap((result) =>
+        result.status === "rejected"
+          ? [result.reason instanceof Error ? result.reason.message : String(result.reason)]
+          : []
+      );
+      throw new Error(
+        `${label} returned no authoritative original-page evidence${
+          failures.length ? ` (${failures.join(" | ")})` : ""
+        }`,
+      );
+    }
+    return verified;
+  }
+
   async function firecrawlExtract(
     label: string,
     url: string,
+    source: IntelligenceSource | BlogSource,
     key: "articles" | "posts",
     prompt: string,
     schema: unknown,
@@ -530,12 +696,17 @@ export function createProductionIngestionAdapter(
     ) {
       throw new Error("Firecrawl returned success=false");
     }
-    return requireItems(
-      mergePageEvidence(
-        arrayAt(payload, key),
-        extractFirecrawlPageEvidence(payload, url),
-      ),
+    const candidates = requireItems(
+      arrayAt(payload, key),
+      `Firecrawl ${label} listing`,
+    ).slice(0, 3);
+    return verifyOriginalPages(
       `Firecrawl ${label}`,
+      source,
+      candidates,
+      (canonicalUrl) =>
+        firecrawlPageEvidence(`${label} article`, canonicalUrl, signal),
+      key === "posts",
     );
   }
 
@@ -594,7 +765,11 @@ export function createProductionIngestionAdapter(
                         .join("\n---\n"),
                     );
                     return requireItems(
-                      mergeFeedProvenance(arrayAt(result, "articles"), feed),
+                      mergeFeedProvenance(
+                        arrayAt(result, "articles"),
+                        feed,
+                        source,
+                      ),
                       `RSS + Foundry ${source.name}`,
                     );
                   },
@@ -607,6 +782,7 @@ export function createProductionIngestionAdapter(
              firecrawlExtract(
                source.name,
                source.url,
+               source,
                "articles",
                `Extract the top 3 current articles with each original article URL and publication time as sourcePublishedAt in ISO-8601 format. ${isoInstruction}`,
                INTELLIGENCE_EXTRACT_SCHEMA,
@@ -624,9 +800,20 @@ export function createProductionIngestionAdapter(
                 signal,
                 page.content,
               );
-              return requireItems(
-                mergePageEvidence(arrayAt(result, "articles"), page.evidence),
+              return verifyOriginalPages(
                 `Jina + Foundry ${source.name}`,
+                source,
+                requireItems(
+                  arrayAt(result, "articles"),
+                  `Jina + Foundry ${source.name} listing`,
+                ),
+                async (canonicalUrl) =>
+                  (await jina(
+                    `${source.name} article`,
+                    canonicalUrl,
+                    signal,
+                  )).evidence,
+                false,
               );
             },
           },
@@ -637,10 +824,11 @@ export function createProductionIngestionAdapter(
 
     async collectBlog(source, signal) {
       return fallback(source.name, [
-        {
-          name: "RSS + Foundry",
-          run: async () => {
-            const feed = await rss(source.name, source.rssUrl, signal);
+        ...(source.rssUrl
+          ? [{
+              name: "RSS + Foundry",
+              run: async () => {
+                const feed = await rss(source.name, source.rssUrl!, signal);
             const result = await phi(
               source.name,
               "Classify each blog post from the supplied evidence. Do not invent titles, excerpts, authors, tags, URLs, or timestamps.",
@@ -654,17 +842,19 @@ export function createProductionIngestionAdapter(
                 .join("\n---\n"),
             );
             return requireItems(
-              mergeFeedProvenance(arrayAt(result, "posts"), feed),
+              mergeFeedProvenance(arrayAt(result, "posts"), feed, source),
               `RSS + Foundry ${source.name}`,
             );
-          },
-        },
+              },
+            }]
+          : []),
         {
           name: "Firecrawl",
           run: () =>
             firecrawlExtract(
               source.name,
               source.url,
+              source,
               "posts",
               "Extract the top 3 current African development or geopolitics blog posts with each original post URL and publication time as sourcePublishedAt in ISO-8601 format.",
               BLOG_EXTRACT_SCHEMA,
@@ -682,9 +872,20 @@ export function createProductionIngestionAdapter(
               signal,
               page.content,
             );
-            return requireItems(
-              mergePageEvidence(arrayAt(result, "posts"), page.evidence),
+            return verifyOriginalPages(
               `Jina + Foundry ${source.name}`,
+              source,
+              requireItems(
+                arrayAt(result, "posts"),
+                `Jina + Foundry ${source.name} listing`,
+              ),
+              async (canonicalUrl) =>
+                (await jina(
+                  `${source.name} post`,
+                  canonicalUrl,
+                  signal,
+                )).evidence,
+              true,
             );
           },
         },

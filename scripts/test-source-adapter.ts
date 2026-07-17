@@ -1,0 +1,127 @@
+import assert from "node:assert/strict";
+
+import { createProductionIngestionAdapter } from "../src/lib/intelligence/ingestion/adapters.server";
+import { INTELLIGENCE_SOURCES } from "../src/lib/intelligence/ingestion/sources";
+
+const source = (() => {
+  const found = INTELLIGENCE_SOURCES.find(
+    (item) => item.name === "African Business Magazine",
+  );
+  if (!found) {
+    throw new Error("African Business Magazine fixture source missing");
+  }
+  return found;
+})();
+
+function listing(urls: string[]): Response {
+  return Response.json({
+    success: true,
+    data: {
+      extract: {
+        articles: urls.map((url, index) => ({
+          title: `Verified article ${index + 1}`,
+          summary:
+            "A model candidate summary that must be replaced by original-page evidence.",
+          severity: "MEDIUM",
+          category: "SOVEREIGNTY RISK",
+          isoCode: "NGA",
+          actor: "",
+          timeAgo: "1 hour ago",
+          url,
+          sourcePublishedAt: "2026-07-17T10:00:00.000Z",
+        })),
+      },
+    },
+  });
+}
+
+function article(url: string): Response {
+  return Response.json({
+    success: true,
+    data: {
+      metadata: {
+        canonicalUrl: url,
+        title: "Authoritative original title",
+        author: "Original Reporter",
+        datePublished: "2026-07-17T10:00:00.000Z",
+        description:
+          "Nigeria expanded a regional digital trade programme with documented cross-border infrastructure investment.",
+      },
+      markdown:
+        "# Verified article\n\nNigeria expanded a regional digital trade programme with documented cross-border infrastructure investment.",
+    },
+  });
+}
+
+async function main(): Promise<void> {
+  const originalFetch = globalThis.fetch;
+  try {
+    let failingArticleAttempts = 0;
+    globalThis.fetch = async (input, init) => {
+      const url = String(input);
+      if (url.startsWith("https://r.jina.ai/")) {
+        return new Response("Title: listing\nMarkdown Content:\n\nNo evidence.");
+      }
+      const body = JSON.parse(String(init?.body)) as { url: string };
+      if (body.url === source.url) {
+        return listing([
+          "https://african.business/2026/07/trade/verified",
+          "https://african.business/2026/07/trade/unavailable",
+        ]);
+      }
+      if (body.url.endsWith("/verified")) return article(body.url);
+      if (body.url.endsWith("/unavailable")) {
+        failingArticleAttempts += 1;
+        return new Response("upstream unavailable", { status: 503 });
+      }
+      throw new Error(`Unexpected request ${url} for ${body.url}`);
+    };
+
+    const adapter = createProductionIngestionAdapter({
+      firecrawlApiKey: "fixture-key",
+    });
+    const partial = await adapter.collectIntelligence(
+      source,
+      new AbortController().signal,
+    );
+    assert.equal(partial.length, 1);
+    assert.equal(partial[0].title, "Authoritative original title");
+    assert.notEqual(partial[0].title, "Verified article 1");
+    assert.equal(
+      (partial[0].sourceEvidence as { supported: boolean }).supported,
+      true,
+    );
+    assert.equal(failingArticleAttempts, 2);
+
+    globalThis.fetch = async (input, init) => {
+      const url = String(input);
+      if (url.startsWith("https://r.jina.ai/")) {
+        return new Response("Title: listing\nMarkdown Content:\n\nNo evidence.");
+      }
+      const body = JSON.parse(String(init?.body)) as { url: string };
+      if (body.url === source.url) {
+        return listing(["https://news.google.com/articles/not-authoritative"]);
+      }
+      throw new Error(`Unexpected original-page request for ${body.url}`);
+    };
+    await assert.rejects(
+      () =>
+        adapter.collectIntelligence(
+          source,
+          new AbortController().signal,
+        ),
+      /no authoritative original-page evidence/,
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+
+  console.log(
+    "Source adapter fixtures passed (partial original-page success retained; zero authoritative evidence fails over).",
+  );
+}
+
+void main().catch((error: unknown) => {
+  console.error(error);
+  process.exitCode = 1;
+});

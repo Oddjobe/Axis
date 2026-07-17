@@ -6,7 +6,11 @@ import {
     getLatestTimestamp,
     type DataMode,
 } from '@/lib/intelligence/trust';
-import { getTrustedPublishedRecords } from '@/lib/intelligence/publication-selection.server';
+import {
+    getLatestTrustedPublishedRecordsByIdentity,
+    trustedPublicationSelectionEnabled,
+    trustedSnapshotUnavailable,
+} from '@/lib/intelligence/publication-selection.server';
 import {
     getPublicationCoverage,
     type PublicationCoverage,
@@ -263,17 +267,62 @@ export async function GET() {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-    const trustedRows = await getTrustedPublishedRecords("commodity", 100);
+    const trustedRows = await getLatestTrustedPublishedRecordsByIdentity(
+        "commodity",
+        COMMODITY_IDS,
+    );
+    if (
+        trustedSnapshotUnavailable(trustedRows)
+    ) {
+        return NextResponse.json(
+            {
+                success: false,
+                source: "trusted/unavailable",
+                publicationTier: "trusted",
+                coverageMode: "partial",
+                trustedCoverage: {
+                    records: 0,
+                    total: COMMODITY_IDS.length,
+                    ratio: 0,
+                    missingIds: [...COMMODITY_IDS],
+                },
+                fallbackUsed: false,
+                dataMode: "stale",
+                generatedAt,
+                data: [],
+                error: "No trusted commodity snapshot is available.",
+            },
+            { status: 503 },
+        );
+    }
     if (trustedRows) {
         const trustedMap = indexNewestCommodityRows(
-            trustedRows.filter((row) =>
-                isFreshTrustedCommodityRow(row, Date.parse(generatedAt)),
-            ),
+            trustedRows,
         );
         trustedCoverage = getPublicationCoverage(
             COMMODITY_IDS,
             trustedMap.keys(),
         );
+        if (
+            trustedPublicationSelectionEnabled() &&
+            trustedCoverage.records !== COMMODITY_IDS.length
+        ) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    source: "trusted/incomplete",
+                    publicationTier: "trusted",
+                    coverageMode: "partial",
+                    trustedCoverage,
+                    fallbackUsed: false,
+                    dataMode: "stale",
+                    generatedAt,
+                    data: [],
+                    error: "The trusted commodity snapshot is incomplete.",
+                },
+                { status: 503 },
+            );
+        }
         if (trustedCoverage.records > 0) {
             freshMap = trustedMap;
             source = trustedCoverage.coverageMode === "trusted"

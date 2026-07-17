@@ -387,12 +387,6 @@ function numberValue(value: unknown): number {
   return normalized ? Number(normalized) : Number.NaN;
 }
 
-function sameHost(left: string, right: string): boolean {
-  const a = new URL(left).hostname.replace(/^www\./, "").toLowerCase();
-  const b = new URL(right).hostname.replace(/^www\./, "").toLowerCase();
-  return a === b || a.endsWith(`.${b}`) || b.endsWith(`.${a}`);
-}
-
 function rawText(raw: RawCommodityCandidate, key: string): string {
   return normalizeText(raw[key]);
 }
@@ -551,7 +545,7 @@ function normalizeCandidate(
   }
   if (
     !canonicalUrl ||
-    !sameHost(canonicalUrl, source.url) ||
+    canonicalUrl !== canonicalizeUrl(source.url) ||
     publisher.toLowerCase() !== source.publisher.toLowerCase()
   ) {
     reasons.push(
@@ -562,12 +556,15 @@ function normalizeCandidate(
       ),
     );
   }
-  if (!sourceMarket || excerpt.length < 20) {
+  if (
+    sourceMarket.toLowerCase() !== source.market.toLowerCase() ||
+    excerpt.length < 20
+  ) {
     reasons.push(
       reason(
         "schema_invalid",
         "schema_invalid",
-        "A source market and substantive supporting excerpt are required.",
+        "The configured source market and a substantive supporting excerpt are required.",
       ),
     );
   }

@@ -168,8 +168,8 @@ function validBlogFixture() {
       "A review of how African infrastructure investors are adapting financing models to regional trade priorities.",
     author: "Axis Research",
     tag: "African development",
-    source: "Medium Africa",
-    url: "https://medium.com/@axis/african-infrastructure?source=feed",
+    source: "World Bank Africa Can End Poverty",
+    url: "https://blogs.worldbank.org/en/africacan/african-infrastructure?source=feed",
     sourcePublishedAt: "2026-07-15T10:00:00.000Z",
   };
 }
@@ -196,6 +196,10 @@ function persistedFixture(): IngestionPersistence {
 }
 
 async function ingestionSummaryCheck(now: Date): Promise<CheckEvidence> {
+  const governedSource = INTELLIGENCE_SOURCES.find(
+    (source) => source.name === "African Business Magazine",
+  );
+  invariant(governedSource, "African Business fixture source missing");
   const adapter: IngestionAdapter = {
     async collectIntelligence(source) {
       if (source.name === "Broken fixture") {
@@ -212,7 +216,7 @@ async function ingestionSummaryCheck(now: Date): Promise<CheckEvidence> {
     persist: persistedFixture(),
     now,
     intelligenceSources: [
-      { name: "Working fixture", url: "https://african.business/" },
+      governedSource,
       { name: "Broken fixture", url: "https://example.invalid/" },
     ],
     blogSources: [BLOG_SOURCES[0]],
@@ -746,8 +750,17 @@ export async function runDeterministicQualitySuite(
     }),
     runCheck("rss-intelligence-parity", "RSS and intelligence parity", () => {
       invariant(
-        INTELLIGENCE_SOURCES.every((source) => Boolean(source.rssUrl)),
-        "every intelligence source needs an RSS fallback",
+        INTELLIGENCE_SOURCES.some((source) => Boolean(source.rssUrl)),
+        "at least one original publisher needs an RSS path",
+      );
+      invariant(
+        [...INTELLIGENCE_SOURCES, ...BLOG_SOURCES].every(
+          (source) =>
+            source.role === "authority" &&
+            Boolean(source.allowedHosts?.length) &&
+            (source.sourceQuality ?? 0) >= 0.85,
+        ),
+        "active ingestion sources must be governed authorities",
       );
       const source = INTELLIGENCE_SOURCES.find(
         (item) => item.name === "African Business Magazine",
@@ -795,7 +808,7 @@ export async function runDeterministicQualitySuite(
         "RSS-shaped blog",
       );
       return {
-        detail: "Configured RSS fallbacks produce the same publishable trust shape as direct extraction.",
+        detail: "Governed original-publisher RSS paths produce the same publishable trust shape as direct extraction.",
         metrics: {
           intelligenceSources: INTELLIGENCE_SOURCES.length,
           rssFallbacks: INTELLIGENCE_SOURCES.filter((item) => item.rssUrl).length,

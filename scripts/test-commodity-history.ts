@@ -139,12 +139,22 @@ assert(
       call.args[1] === "commodity",
   ),
 );
-assert.deepEqual(
-  loadedMock.calls.filter((call) => call.method === "order").map((call) => call.args),
-  [
-    ["source_published_at", { ascending: false }],
-    ["published_at", { ascending: false }],
-  ],
+assert.equal(
+  loadedMock.calls.filter(
+    (call) =>
+      call.method === "eq" &&
+      call.args[0] === "record->>id" &&
+      COMMODITY_IDS.includes(call.args[1] as CommodityId),
+  ).length,
+  COMMODITY_IDS.length,
+);
+assert.equal(
+  loadedMock.calls.filter(
+    (call) =>
+      call.method === "order" &&
+      call.args[0] === "source_published_at",
+  ).length,
+  COMMODITY_IDS.length,
 );
 
 const duplicateMock = mockClient({

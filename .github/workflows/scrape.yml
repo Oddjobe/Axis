@@ -52,6 +52,14 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: npm run trust:readiness -- --compact > quality-reports/trust-readiness.json
 
+      - name: Verify source trust policy before writes
+        id: source_safety
+        if: steps.preflight.outcome == 'success' && steps.trust_readiness.outcome == 'success'
+        run: |
+          npm run test:source-governance
+          npm run test:source-adapter
+          npm run test:trusted-snapshot-selection
+
       - name: Run Metadata Automation
         id: metadata
         if: steps.preflight.outputs.foundry_available == 'true'
@@ -76,7 +84,7 @@ jobs:
 
       - name: Run intelligence, blog, and commodity shadow ingestion
         id: shadow_ingestion
-        if: always() && steps.preflight.outcome == 'success' && steps.trust_readiness.outcome == 'success'
+        if: always() && steps.preflight.outcome == 'success' && steps.trust_readiness.outcome == 'success' && steps.source_safety.outcome == 'success'
         continue-on-error: true
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
@@ -89,7 +97,7 @@ jobs:
 
       - name: Refresh legacy scores and report trusted readiness
         id: score_refresh
-        if: always() && steps.preflight.outcome == 'success' && steps.trust_readiness.outcome == 'success'
+        if: always() && steps.preflight.outcome == 'success' && steps.trust_readiness.outcome == 'success' && steps.source_safety.outcome == 'success'
         continue-on-error: true
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
@@ -152,6 +160,7 @@ jobs:
         env:
           PREFLIGHT_OUTCOME: ${{ steps.preflight.outcome }}
           TRUST_READINESS_OUTCOME: ${{ steps.trust_readiness.outcome }}
+          SOURCE_SAFETY_OUTCOME: ${{ steps.source_safety.outcome }}
           SHADOW_INGESTION_OUTCOME: ${{ steps.shadow_ingestion.outcome }}
           SCORE_REFRESH_OUTCOME: ${{ steps.score_refresh.outcome }}
           DATA_QUALITY_OUTCOME: ${{ steps.data_quality.outcome }}
@@ -160,6 +169,7 @@ jobs:
           for outcome in \
             "$PREFLIGHT_OUTCOME" \
             "$TRUST_READINESS_OUTCOME" \
+            "$SOURCE_SAFETY_OUTCOME" \
             "$SHADOW_INGESTION_OUTCOME" \
             "$SCORE_REFRESH_OUTCOME" \
             "$DATA_QUALITY_OUTCOME" \
