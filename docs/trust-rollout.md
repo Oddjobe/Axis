@@ -88,9 +88,11 @@ npx tsx scripts/test-trust-readiness.ts
    Scheduled commodity ingestion also loads the newest published trusted price
    for each of those five IDs before anomaly evaluation. An available view with
    no rows may proceed for one explicitly labeled bootstrap run; its successful
-   publications supply subsequent history. Query, permission, malformed, or
-   partial-history results fail the commodity lane rather than bypassing the
-   previous-price check.
+   publications supply subsequent history. A partial bootstrap preserves and
+   validates existing identity baselines while allowing only missing identities
+   to establish their first trusted price. Query, permission, or malformed
+   history fails the commodity lane rather than bypassing the previous-price
+   check.
 5. Validate fixture behavior without touching production state:
 
    ```powershell
@@ -107,7 +109,24 @@ npx tsx scripts/test-trust-readiness.ts
    the final command is expected to fail because fixtures can never authorize
    production promotion.
 6. Set `TRUSTED_PUBLICATIONS_ENABLED=true` only after promotion approval and
-   redeploy. APIs then prefer `trusted_published_records`; missing or incomplete
-   trusted data automatically falls back to outputs labeled `legacy/*`.
-   Rollback is setting the flag to `false` (or removing it); no legacy data is
-   removed.
+   redeploy. APIs then serve the latest trusted snapshot even when it has become
+   stale, preserving its original source timestamps and stale status. If the
+   trusted view is unavailable, empty, or lacks a complete 54-country release,
+   the affected API returns `503` with no legacy substitution. Rollback is
+   setting the flag to `false` (or removing it); no legacy data is removed.
+
+## Source governance
+
+- Registry version `2026-07-17.v1` separates active authorities from discovery
+  helpers. Google News and generic Medium tag feeds are discovery-only and have
+  no publication confidence.
+- Active intelligence authorities include AU, AfDB, UNECA, and allowlisted
+  original African publishers. Active analysis sources are the World Bank
+  Africa blog, AfDB Opinion, UNECA Blogs, and ISS Africa.
+- Firecrawl may discover candidates from a governed listing page, but each
+  candidate must then be scraped from its original allowlisted publisher URL.
+  Listing-page metadata, Firecrawl, Jina, Foundry, aggregators, and open
+  platforms are never recorded as the authoritative publisher.
+- Commodity evidence uses the exact configured product page. Guinea bauxite
+  uses AluHub's public market-data page rather than a generic commodity
+  provider homepage.

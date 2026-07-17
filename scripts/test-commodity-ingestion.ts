@@ -218,6 +218,37 @@ assert.deepEqual(convertedCopper.sourceEvidence.canonicalQuote, {
   currency: "USD",
 });
 
+const wrongBauxiteEvidence = mockedAdapter((source) => [
+  quote(
+    source,
+    source.id === "bauxite"
+      ? {
+          canonicalUrl: "https://www.alu-hub.com/blog",
+          sourceMarket: "Generic bauxite",
+        }
+      : {},
+  ),
+]);
+const exactSourceRun = await runCommodityIngestion({
+  adapter: wrongBauxiteEvidence.adapter,
+  now,
+  previousPrices: prices,
+});
+const rejectedBauxite = exactSourceRun.decisions.find(
+  (item) => item.normalized?.id === "bauxite",
+);
+assert.equal(rejectedBauxite?.decision, "quarantine");
+assert(
+  rejectedBauxite?.reasons.some(
+    (item) => item.commodityCode === "source_mismatch",
+  ),
+);
+assert(
+  rejectedBauxite?.reasons.some(
+    (item) => item.commodityCode === "schema_invalid",
+  ),
+);
+
 const stableHashMock = mockedAdapter((source) => [quote(source)]);
 const stableHashRun = await runCommodityIngestion({
   adapter: stableHashMock.adapter,

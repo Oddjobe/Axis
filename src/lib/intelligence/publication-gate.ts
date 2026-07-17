@@ -8,6 +8,9 @@ import {
   confidenceSchema,
   type Confidence,
 } from "@/lib/intelligence/trust";
+import {
+  configuredSourceQuality,
+} from "@/lib/intelligence/ingestion/sources";
 
 export const severitySchema = z.enum(["HIGH", "MEDIUM", "LOW"]);
 export const intelligenceCategorySchema = z.enum([
@@ -139,20 +142,6 @@ export const MINIMUM_SOURCE_QUALITY = {
   intelligence: 0.75,
   blog: 0.7,
 } as const;
-const APPROVED_SOURCE_QUALITY_BY_HOST: Readonly<Record<string, number>> = {
-  "worldbank.org": 0.95,
-  "imf.org": 0.95,
-  "un.org": 0.95,
-  "afdb.org": 0.95,
-  "africanews.com": 0.88,
-  "african.business": 0.88,
-  "theafricareport.com": 0.88,
-  "dailymaverick.co.za": 0.88,
-  "premiumtimesng.com": 0.88,
-  "miningweekly.com": 0.88,
-  "news.google.com": 0.78,
-  "medium.com": 0.75,
-};
 const AFRICA_TERMS = [
   "africa", "african", "afcfta", "maghreb", "sahel", "sub-saharan",
   "algeria", "angola", "benin", "botswana", "burkina", "burundi",
@@ -457,17 +446,15 @@ export function sourceQuality(
 ): number {
   const configuredQuality =
     approvedSourceQuality[candidate.source.toLowerCase()];
-  if (configuredQuality !== undefined) return configuredQuality;
-  const host = new URL(candidate.sourceUrl).hostname;
-  if (host.endsWith(".gov") || host.endsWith(".gov.za") || host.endsWith(".int")) {
-    return 0.95;
-  }
-  for (const [approvedHost, quality] of Object.entries(
-    APPROVED_SOURCE_QUALITY_BY_HOST,
-  )) {
-    if (host === approvedHost || host.endsWith(`.${approvedHost}`)) return quality;
-  }
-  return 0;
+  const registryQuality = configuredSourceQuality(
+    candidate.source,
+    candidate.sourceUrl,
+    candidate.dataset,
+  );
+  if (registryQuality === null) return 0;
+  return configuredQuality === undefined
+    ? registryQuality
+    : Math.min(configuredQuality, registryQuality);
 }
 
 export function calculateConfidenceComponents(

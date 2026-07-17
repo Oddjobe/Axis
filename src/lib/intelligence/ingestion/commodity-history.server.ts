@@ -53,7 +53,6 @@ interface TrustedCommodityRow {
 }
 
 const HISTORY_SELECT = "record,source_published_at,published_at";
-const HISTORY_LIMIT = 500;
 
 function normalizePrice(value: unknown): number {
   const normalized =
@@ -142,33 +141,54 @@ export async function loadPreviousCommodityPrices(
   client: SupabaseClient,
   { signal }: { signal?: AbortSignal } = {},
 ): Promise<CommodityHistoryLoad> {
-  let result: {
+  let results: Array<{
+    id: CommodityId;
     data: unknown;
     error: unknown;
-  };
+  }>;
   try {
-    let query = client
-      .from("trusted_published_records")
-      .select(HISTORY_SELECT)
-      .eq("dataset", "commodity")
-      .order("source_published_at", { ascending: false })
-      .order("published_at", { ascending: false });
-    if (signal) query = query.abortSignal(signal);
-    result = await query.limit(HISTORY_LIMIT);
+    results = await Promise.all(
+      COMMODITY_IDS.map(async (id) => {
+        let query = client
+          .from("trusted_published_records")
+          .select(HISTORY_SELECT)
+          .eq("dataset", "commodity")
+          .eq("record->>id", id)
+          .order("source_published_at", { ascending: false })
+          .order("published_at", { ascending: false });
+        if (signal) query = query.abortSignal(signal);
+        const result = await query.limit(1);
+        return { id, ...result };
+      }),
+    );
   } catch (error) {
     return failedHistory(queryError(error), { viewAvailable: false });
   }
 
-  if (result.error) {
-    return failedHistory(queryError(result.error), { viewAvailable: false });
+  const failed = results.find((result) => result.error);
+  if (failed?.error) {
+    return failedHistory(queryError(failed.error), { viewAvailable: false });
   }
-  if (!Array.isArray(result.data)) {
+  if (results.some((result) => !Array.isArray(result.data))) {
     return failedHistory(
       "trusted commodity history schema failed: query data must be an array",
       { viewAvailable: true },
     );
   }
-  if (result.data.length === 0) {
+  let rows: TrustedCommodityRow[];
+  try {
+    rows = results.flatMap(({ id, data }) =>
+      (data as unknown[])
+        .map(parseRow)
+        .filter((row) => row.id === id),
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return failedHistory(`trusted commodity history schema failed: ${message}`, {
+      viewAvailable: true,
+    });
+  }
+  if (rows.length === 0) {
     return {
       status: "bootstrap",
       bootstrap: true,
@@ -188,8 +208,7 @@ export async function loadPreviousCommodityPrices(
   }
 
   try {
-    const newest = result.data
-      .map(parseRow)
+    const newest = rows
       .sort(
         (left, right) =>
           right.sourcePublishedAt - left.sourcePublishedAt ||
@@ -222,7 +241,7 @@ export async function loadPreviousCommodityPrices(
         bootstrap: true,
         historyUnavailable: false,
         viewAvailable: true,
-        rowsRead: result.data.length,
+        rowsRead: rows.length,
         duplicateRowsIgnored,
         loadedIds,
         missingIds,
@@ -245,7 +264,7 @@ export async function loadPreviousCommodityPrices(
       bootstrap: false,
       historyUnavailable: false,
       viewAvailable: true,
-      rowsRead: result.data.length,
+      rowsRead: rows.length,
       duplicateRowsIgnored,
       loadedIds,
       missingIds,
@@ -266,7 +285,7 @@ export async function loadPreviousCommodityPrices(
     const message = error instanceof Error ? error.message : String(error);
     return failedHistory(`trusted commodity history schema failed: ${message}`, {
       viewAvailable: true,
-      rowsRead: result.data.length,
+      rowsRead: rows.length,
     });
   }
 }

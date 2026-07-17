@@ -4,7 +4,10 @@ import {
     getLatestTimestamp,
     type DataMode,
 } from "@/lib/intelligence/trust";
-import { selectIntelligencePublications } from "@/lib/intelligence/publication-selection.server";
+import {
+    selectIntelligencePublications,
+    trustedSnapshotUnavailable,
+} from "@/lib/intelligence/publication-selection.server";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 60; // Cache for 1 minute at the edge
@@ -189,6 +192,23 @@ export async function GET() {
     let rows: IntelligenceRow[] = FALLBACK_DATA;
 
     const selection = await selectIntelligencePublications(15);
+    if (
+        trustedSnapshotUnavailable(selection?.records)
+    ) {
+        return NextResponse.json(
+            {
+                success: false,
+                source: "trusted/unavailable",
+                publicationTier: "trusted",
+                fallbackUsed: false,
+                dataMode: "stale",
+                generatedAt,
+                data: [],
+                error: "No trusted intelligence snapshot is available.",
+            },
+            { status: 503 },
+        );
+    }
     if (selection) {
         source = selection.source;
         publicationTier = selection.publicationTier;

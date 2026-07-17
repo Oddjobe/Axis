@@ -82,6 +82,7 @@ const merged = mergeFeedProvenance(
     },
   ],
   [feedEvidenceFixture],
+  intelligenceSource,
 )[0];
 assert.equal(merged.summary, rssExcerpt);
 assert.equal(
@@ -101,6 +102,7 @@ const disagreement = mergeFeedProvenance(
     },
   ],
   [feedEvidenceFixture],
+  intelligenceSource,
 )[0];
 assert.equal(
   (disagreement.sourceEvidence as Record<string, unknown>).supported,

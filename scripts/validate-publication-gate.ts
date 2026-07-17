@@ -61,7 +61,7 @@ assert(
 
 const configuredSourceCandidate = {
   ...fixture,
-  source: "Google News Geopolitics",
+  source: "African Business Magazine",
   url: "https://publisher.example/africa-story",
 };
 const unverifiedConfiguredName = evaluatePublicationCandidate(
@@ -80,7 +80,16 @@ const configuredSource = evaluatePublicationCandidate(
   configuredSourceCandidate,
   { now, approvedSourceQuality: CONFIGURED_SOURCE_QUALITY },
 );
-assert.equal(configuredSource.decision, "publish");
+assert.equal(configuredSource.decision, "quarantine");
+const governedSource = evaluatePublicationCandidate(
+  "intelligence",
+  {
+    ...configuredSourceCandidate,
+    url: "https://african.business/africa-story",
+  },
+  { now, approvedSourceQuality: CONFIGURED_SOURCE_QUALITY },
+);
+assert.equal(governedSource.decision, "publish");
 
 const missingSource = evaluatePublicationCandidate(
   "intelligence",
@@ -133,11 +142,11 @@ const blog = evaluatePublicationCandidate(
       "A review of how African infrastructure investors are adapting their financing models to regional trade priorities.",
     author: "Axis Research",
     tag: "africa",
-    source: "Medium",
-    url: "https://medium.com/@axis/african-infrastructure-123?source=feed",
+    source: "World Bank Africa Can End Poverty",
+    url: "https://blogs.worldbank.org/en/africacan/infrastructure-financing",
     sourcePublishedAt: "2026-07-15T10:00:00.000Z",
   },
-  { now },
+  { now, approvedSourceQuality: CONFIGURED_SOURCE_QUALITY },
 );
 assert.equal(blog.decision, "publish");
 

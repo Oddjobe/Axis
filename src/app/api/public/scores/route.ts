@@ -10,7 +10,11 @@ import {
   SCORE_BASELINE_AS_OF,
   SCORE_METHODOLOGY,
 } from "@/lib/intelligence/score-methodology";
-import { getTrustedPublishedRecords } from "@/lib/intelligence/publication-selection.server";
+import {
+  getTrustedPublishedRecords,
+  trustedPublicationSelectionEnabled,
+  trustedSnapshotUnavailable,
+} from "@/lib/intelligence/publication-selection.server";
 import {
   resolveAuthoritativeScore,
   selectLatestCompleteTrustedScoreRelease,
@@ -23,6 +27,27 @@ export async function GET() {
   const trustedRows = await getTrustedPublishedRecords("country-score", 500);
   const trustedRelease =
     selectLatestCompleteTrustedScoreRelease(trustedRows);
+  if (
+    trustedSnapshotUnavailable(trustedRows) ||
+    (trustedPublicationSelectionEnabled() && !trustedRelease)
+  ) {
+    return NextResponse.json(
+      {
+        success: false,
+        source: "trusted/unavailable",
+        publicationTier: "trusted",
+        fallbackUsed: false,
+        dataMode: "stale",
+        generatedAt,
+        countries: [],
+        data: [],
+        count: 0,
+        total: 0,
+        error: "No complete trusted country-score snapshot is available.",
+      },
+      { status: 503 },
+    );
+  }
   const trustedByCountry = trustedRelease
     ? new Map(
         trustedRelease.records.map((row) => [
@@ -43,9 +68,13 @@ export async function GET() {
       typeof trusted?.sourcePublishedAt === "string"
         ? trusted.sourcePublishedAt
         : null;
+    const trustedObservationTimestamp =
+      typeof trusted?.observedAt === "string"
+        ? trusted.observedAt
+        : null;
     const recordFreshness = getFreshnessMetadata({
-      sourceUpdatedAt: trustedTimestamp ?? score.asOf,
-      observedAt: trustedTimestamp ?? score.asOf,
+      sourceUpdatedAt: trusted ? trustedTimestamp : score.asOf,
+      observedAt: trusted ? trustedObservationTimestamp : score.asOf,
       dataset: "country-score",
       requestedMode: trusted ? "live" : "fallback",
     });
@@ -88,8 +117,8 @@ export async function GET() {
           typeof trusted?.sourceUrl === "string"
             ? trusted.sourceUrl
             : "https://axis-mocha.vercel.app/methodology",
-        sourcePublishedAt: trustedTimestamp ?? score.asOf,
-        observedAt: trustedTimestamp ?? score.asOf,
+        sourcePublishedAt: trusted ? trustedTimestamp : score.asOf,
+        observedAt: trusted ? trustedObservationTimestamp : score.asOf,
         retrievedAt:
           typeof trusted?.retrievedAt === "string"
             ? trusted.retrievedAt
@@ -97,12 +126,17 @@ export async function GET() {
       },
     };
   });
-  const latest = getLatestTimestamp(
+  const latestSource = getLatestTimestamp(
     countries.map((country) => country.sourceUpdatedAt),
   );
+  const latestObservation = getLatestTimestamp(
+    countries.map((country) => country.observedAt),
+  );
   const freshness: FreshnessMetadata = getFreshnessMetadata({
-    sourceUpdatedAt: latest ?? SCORE_BASELINE_AS_OF,
-    observedAt: latest ?? SCORE_BASELINE_AS_OF,
+    sourceUpdatedAt:
+      latestSource ?? (trustedByCountry ? null : SCORE_BASELINE_AS_OF),
+    observedAt:
+      latestObservation ?? (trustedByCountry ? null : SCORE_BASELINE_AS_OF),
     dataset: "country-score",
     requestedMode: trustedByCountry ? "live" : "fallback",
   });
