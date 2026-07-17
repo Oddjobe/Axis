@@ -10,6 +10,35 @@ export default function DocsPage() {
     const endpoints = [
         {
             method: 'GET',
+            path: '/api/public/trust-health',
+            description: 'Sanitized aggregate trust health for public country scores, commodities, intelligence, and blogs. A dataset is trusted-current only when its complete response is current, non-fallback, and publisher-attributed.',
+            curl: 'curl -s https://axis-mocha.vercel.app/api/public/trust-health | jq .',
+            response: `{
+  "contractVersion": "1.0.0",
+  "status": "degraded",
+  "currentTrusted": false,
+  "generatedAt": "2026-07-18T00:00:00.000Z",
+  "summary": {
+    "trusted-current": 0,
+    "trusted-stale": 0,
+    "legacy live-ingested": 1,
+    "cached": 0,
+    "static fallback": 2,
+    "unavailable": 1
+  },
+  "datasets": {
+    "commodities": {
+      "label": "static fallback",
+      "currentTrusted": false,
+      "records": 5,
+      "total": 5,
+      "asOf": "2026-07-16T00:00:00.000Z"
+    }
+  }
+}`,
+        },
+        {
+            method: 'GET',
             path: '/api/public/scores',
             description: 'Returns sovereignty scores for all 54 African nations. Includes axisScore, status, key resources, and sub-indices.',
             curl: 'curl -s https://axis-mocha.vercel.app/api/public/scores | jq .',
