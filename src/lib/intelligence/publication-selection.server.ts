@@ -120,6 +120,60 @@ function retainCurrentTrustedRecords(
   return retained;
 }
 
+export function selectLatestCurrentTrustedRecord(
+  dataset: RolloutDataset,
+  records: readonly LegacyRecord[],
+): LegacyRecord | null {
+  return (
+    records.find((record) =>
+      trustedRecordMatchesCurrentPolicy(dataset, record),
+    ) ?? null
+  );
+}
+
+async function getLatestCurrentTrustedRecordByIdentity(
+  dataset: RolloutDataset,
+  identity: string,
+): Promise<{ record: LegacyRecord | null; error: string | null }> {
+  const pageSize = 100;
+
+  for (let offset = 0; ; offset += pageSize) {
+    const result = await supabase
+      .from("trusted_published_records")
+      .select("record,source_published_at,published_at")
+      .eq("dataset", dataset)
+      .eq("record->>id", identity)
+      .order("source_published_at", { ascending: false })
+      .order("published_at", { ascending: false })
+      .range(offset, offset + pageSize - 1);
+
+    if (result.error) {
+      return { record: null, error: result.error.message };
+    }
+
+    const records = (result.data ?? []).map(trustedRecord);
+    const record = selectLatestCurrentTrustedRecord(dataset, records);
+    if (record) {
+      const rejectedCount = offset + records.indexOf(record);
+      if (rejectedCount > 0) {
+        console.warn(
+          `Rejected ${rejectedCount} newer obsolete trusted ${dataset} record(s) for ${identity} under source registry ${SOURCE_REGISTRY_VERSION}.`,
+        );
+      }
+      return { record, error: null };
+    }
+    if (records.length < pageSize) {
+      const rejectedCount = offset + records.length;
+      if (rejectedCount > 0) {
+        console.warn(
+          `Rejected ${rejectedCount} obsolete trusted ${dataset} record(s) for ${identity} under source registry ${SOURCE_REGISTRY_VERSION}.`,
+        );
+      }
+      return { record: null, error: null };
+    }
+  }
+}
+
 export async function getTrustedPublishedRecords(
   dataset: RolloutDataset,
   limit: number,
@@ -156,30 +210,19 @@ export async function getLatestTrustedPublishedRecordsByIdentity(
   if (!trustedPublicationSelectionEnabled()) return null;
   const results = await Promise.all(
     identities.map((identity) =>
-      supabase
-        .from("trusted_published_records")
-        .select("record,source_published_at,published_at")
-        .eq("dataset", dataset)
-        .eq("record->>id", identity)
-        .order("source_published_at", { ascending: false })
-        .order("published_at", { ascending: false })
-        .limit(1)
-        .maybeSingle()
+      getLatestCurrentTrustedRecordByIdentity(dataset, identity),
     ),
   );
   const failed = results.find((result) => result.error);
   if (failed?.error) {
     console.error(
       `Trusted ${dataset} identity selection unavailable; failing closed:`,
-      failed.error.message,
+      failed.error,
     );
     return [];
   }
-  return retainCurrentTrustedRecords(
-    dataset,
-    results.flatMap((result) =>
-      result.data ? [trustedRecord(result.data)] : [],
-    ),
+  return results.flatMap(({ record }) =>
+    record ? [record] : [],
   );
 }
 
