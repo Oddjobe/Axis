@@ -1,0 +1,177 @@
+name: Trust Shadow Evidence
+
+# Manually dispatchable, shadow-only evidence run. It gathers trusted-readiness,
+# live-shadow comparison, promotion-check, and deterministic quality evidence and
+# uploads sanitized artifacts. It never enables trusted publication, never writes
+# to trusted tables, and never commits to the repository. Turning the collected
+# evidence into a production activation remains an explicit, separate operator
+# action (see docs/trust-rollout.md).
+
+on:
+  workflow_dispatch:
+    inputs:
+      required_runs:
+        description: "Consecutive live-shadow passes required before promotion becomes eligible"
+        required: false
+        default: "3"
+      min_coverage:
+        description: "Minimum per-dataset identity coverage ratio (0-1)"
+        required: false
+        default: "0.9"
+      min_freshness:
+        description: "Minimum per-dataset fresh trusted identity ratio (0-1)"
+        required: false
+        default: "0.9"
+      max_rejection:
+        description: "Maximum per-dataset rejection ratio (0-1)"
+        required: false
+        default: "0.1"
+
+# Least privilege: this workflow only reads the repository. It performs no writes,
+# no commits, and no deployments.
+permissions:
+  contents: read
+
+concurrency:
+  group: trust-shadow-evidence
+  cancel-in-progress: false
+
+jobs:
+  shadow-evidence:
+    runs-on: ubuntu-latest
+
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      # Never enable trusted publication from an evidence run.
+      TRUSTED_PUBLICATIONS_ENABLED: "false"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Prepare report directory
+        run: mkdir -p quality-reports
+
+      - name: Preflight workflow configuration
+        id: preflight
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
+          FOUNDRY_API_KEY: ${{ secrets.FOUNDRY_API_KEY }}
+          FOUNDRY_ENDPOINT: ${{ secrets.FOUNDRY_ENDPOINT }}
+          FOUNDRY_MODEL: ${{ secrets.FOUNDRY_MODEL }}
+          QUALITY_BASE_URL: ${{ vars.QUALITY_BASE_URL || 'https://axis-mocha.vercel.app' }}
+          QUALITY_PUBLICATION_MODE: shadow
+        run: npm run workflow:preflight
+
+      - name: Verify source trust policy
+        id: source_safety
+        if: steps.preflight.outcome == 'success'
+        run: |
+          npm run test:source-governance
+          npm run test:source-adapter
+          npm run test:trusted-snapshot-selection
+
+      - name: Verify trust storage readiness
+        id: trust_readiness
+        if: steps.preflight.outcome == 'success' && steps.source_safety.outcome == 'success'
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: npm run trust:readiness -- --compact > quality-reports/trust-readiness.json
+
+      - name: Collect live shadow evidence
+        id: shadow
+        if: steps.preflight.outcome == 'success' && steps.source_safety.outcome == 'success' && steps.trust_readiness.outcome == 'success'
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          npm run trust:shadow -- \
+            --required-runs "${{ inputs.required_runs }}" \
+            --min-coverage "${{ inputs.min_coverage }}" \
+            --min-freshness "${{ inputs.min_freshness }}" \
+            --max-rejection "${{ inputs.max_rejection }}"
+
+      - name: Evaluate promotion eligibility (report only)
+        id: promotion
+        if: always() && steps.shadow.outcome == 'success'
+        continue-on-error: true
+        run: |
+          if npm run trust:promotion-check -- --report=quality-reports/trust-shadow-report.json; then
+            echo "promotion_eligible=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "promotion_eligible=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Verify deterministic data quality
+        id: data_quality
+        if: always() && steps.preflight.outcome == 'success'
+        run: npm run data-quality -- --output quality-reports/workflow-data-quality-report.json
+
+      - name: Publish evidence summary
+        if: always()
+        run: |
+          {
+            echo "## Trust shadow evidence"
+            echo ""
+            echo "| Step | Outcome |"
+            echo "| --- | --- |"
+            echo "| Preflight | ${{ steps.preflight.outcome }} |"
+            echo "| Source trust policy | ${{ steps.source_safety.outcome }} |"
+            echo "| Trust storage readiness | ${{ steps.trust_readiness.outcome }} |"
+            echo "| Live shadow comparison | ${{ steps.shadow.outcome }} |"
+            echo "| Deterministic data quality | ${{ steps.data_quality.outcome }} |"
+            echo "| Promotion eligible | ${{ steps.promotion.outputs.promotion_eligible || 'unknown' }} |"
+            echo ""
+            echo "Trusted publication remains disabled. This run collects evidence only;"
+            echo "activation is a separate, explicit operator action."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload sanitized shadow evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trust-shadow-evidence
+          path: |
+            quality-reports/workflow-preflight.json
+            quality-reports/trust-readiness.json
+            quality-reports/trust-shadow-report.json
+            quality-reports/trust-shadow-state.json
+            quality-reports/workflow-data-quality-report.json
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Enforce required evidence outcomes
+        if: always()
+        env:
+          PREFLIGHT_OUTCOME: ${{ steps.preflight.outcome }}
+          SOURCE_SAFETY_OUTCOME: ${{ steps.source_safety.outcome }}
+          TRUST_READINESS_OUTCOME: ${{ steps.trust_readiness.outcome }}
+          SHADOW_OUTCOME: ${{ steps.shadow.outcome }}
+          DATA_QUALITY_OUTCOME: ${{ steps.data_quality.outcome }}
+        run: |
+          for outcome in \
+            "$PREFLIGHT_OUTCOME" \
+            "$SOURCE_SAFETY_OUTCOME" \
+            "$TRUST_READINESS_OUTCOME" \
+            "$SHADOW_OUTCOME" \
+            "$DATA_QUALITY_OUTCOME"; do
+            if [ "$outcome" != "success" ]; then
+              echo "Required shadow evidence outcome failed or was skipped: $outcome"
+              exit 1
+            fi
+          done
