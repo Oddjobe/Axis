@@ -11,7 +11,7 @@ interface Commodity {
     price: number;
     unit: string;
     currency: string;
-    trend: number;
+    trend: number | null;
     source: string;
     sourceUrl?: string;
     lastUpdated: string;
@@ -94,7 +94,7 @@ export default function CommodityTicker() {
                         <div className="flex flex-col">
                             <div className="flex items-center gap-2">
                                 <span className="text-[9px] font-bold font-mono text-slate-light">{item.name}</span>
-                                {item.trend > 0 ? (
+                                {item.trend === null ? null : item.trend > 0 ? (
                                     <TrendingUp className="w-3 h-3 text-emerald-500" />
                                 ) : (
                                     <TrendingDown className="w-3 h-3 text-red-500" />
@@ -105,8 +105,8 @@ export default function CommodityTicker() {
                                     {item.currency} {item.price.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                 </span>
                                 <span className="text-[8px] font-mono text-slate-light">/{item.unit}</span>
-                                <span className={`text-[8px] font-bold font-mono ${item.trend > 0 ? 'text-emerald-500' : 'text-red-500'}`}>
-                                    {item.trend > 0 ? '+' : ''}{item.trend}%
+                                <span className={`text-[8px] font-bold font-mono ${item.trend === null ? 'text-zinc-500' : item.trend > 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                                    {item.trend === null ? 'N/A' : `${item.trend > 0 ? '+' : ''}${item.trend}%`}
                                 </span>
                             </div>
                         </div>

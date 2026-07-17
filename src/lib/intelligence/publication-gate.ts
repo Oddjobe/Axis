@@ -133,6 +133,7 @@ const RETRYABLE_REASONS = new Set<GateReasonCode>([
   "africa_relevance_failed",
   "classification_incoherent",
 ]);
+const MAX_FUTURE_SKEW_MS = 5 * 60 * 1_000;
 const AFRICAN_ISO_SET = new Set<string>(AFRICAN_ISO3_CODES);
 export const MINIMUM_SOURCE_QUALITY = {
   intelligence: 0.75,
@@ -342,6 +343,8 @@ function candidateDate(
   raw: Record<string, unknown>,
   now: Date,
 ): string | null {
+  const strictEvidence = raw.evidencePolicy === "strict";
+  if (strictEvidence) return normalizeDate(raw.sourcePublishedAt, now);
   return normalizeDate(
     raw.sourcePublishedAt ??
       raw.isoDate ??
@@ -376,6 +379,8 @@ function normalizeCandidate(
       normalizeDate(raw.retrievedAt, now) ??
       normalizeDate(raw.created_at, now) ??
       now.toISOString(),
+    evidencePolicy: raw.evidencePolicy,
+    sourceEvidence: raw.sourceEvidence,
   };
   if (dataset === "blog") {
     return {
@@ -474,11 +479,12 @@ export function calculateConfidenceComponents(
 ): ConfidenceExplanation {
   const now = options.now ?? new Date();
   const policy = DATASET_TRUST_POLICIES[candidate.dataset];
-  const ageMs = Math.max(
-    0,
-    now.getTime() - Date.parse(candidate.sourcePublishedAt),
-  );
-  const recency = Math.max(0, 1 - ageMs / policy.maximumAgeMs);
+  const rawAgeMs = now.getTime() - Date.parse(candidate.sourcePublishedAt);
+  const ageMs = Math.max(0, rawAgeMs);
+  const recency =
+    rawAgeMs < -MAX_FUTURE_SKEW_MS
+      ? 0
+      : Math.max(0, 1 - ageMs / policy.maximumAgeMs);
   const completeness =
     candidate.dataset === "intelligence"
       ? [candidate.title, candidate.summary, candidate.sourceUrl, candidate.isoCode]
@@ -580,6 +586,13 @@ export function evaluateDatasetPolicy(
     reasons.push(
       reason("missing_provenance", "A valid source publication date is required."),
     );
+  } else if (ageMs < -MAX_FUTURE_SKEW_MS) {
+    reasons.push(
+      reason(
+        "stale_source",
+        "Source publication date is in the future beyond the allowed clock skew.",
+      ),
+    );
   } else if (ageMs > policy.maximumAgeMs) {
     reasons.push(
       reason(
@@ -608,8 +621,78 @@ export function evaluateDatasetPolicy(
   return reasons;
 }
 
+function evidenceRecord(raw: Record<string, unknown>): Record<string, unknown> {
+  return typeof raw.sourceEvidence === "object" && raw.sourceEvidence !== null
+    ? (raw.sourceEvidence as Record<string, unknown>)
+    : {};
+}
+
+function strictEvidenceReasons(
+  raw: Record<string, unknown>,
+): QuarantineReasonOutput[] {
+  if (raw.evidencePolicy !== "strict") return [];
+  const evidence = evidenceRecord(raw);
+  const claims =
+    typeof raw.modelCandidate === "object" && raw.modelCandidate !== null
+      ? (raw.modelCandidate as Record<string, unknown>)
+      : raw;
+  const excerpt = normalizeText(evidence.excerpt);
+  const disagreements = Array.isArray(evidence.disagreements)
+    ? evidence.disagreements
+        .filter((item): item is string => typeof item === "string")
+        .map(normalizeText)
+        .filter(Boolean)
+    : [];
+  const claimedUrl = normalizeUrl(
+    claims.canonicalUrl ?? claims.url ?? claims.link,
+  );
+  const evidenceUrl = normalizeUrl(evidence.canonicalUrl);
+  if (claimedUrl && evidenceUrl && claimedUrl !== evidenceUrl) {
+    disagreements.push(`canonical_url:${claimedUrl}!=${evidenceUrl}`);
+  }
+  const claimedTimestamp = normalizeDate(
+    claims.sourcePublishedAt ??
+      claims.datePublished ??
+      claims.publishedAt ??
+      claims.isoDate ??
+      claims.pubDate,
+  );
+  const evidenceTimestamp = normalizeDate(evidence.sourcePublishedAt);
+  if (
+    claimedTimestamp &&
+    evidenceTimestamp &&
+    claimedTimestamp !== evidenceTimestamp
+  ) {
+    disagreements.push(
+      `publication_timestamp:${claimedTimestamp}!=${evidenceTimestamp}`,
+    );
+  }
+  const uniqueDisagreements = [...new Set(disagreements)].sort();
+  const reasons: QuarantineReasonOutput[] = [];
+  if (excerpt.length < 40) {
+    reasons.push(
+      reason(
+        "summary_missing",
+        "Source evidence requires a substantive excerpt of at least 40 characters.",
+      ),
+    );
+  }
+  if (evidence.supported !== true || uniqueDisagreements.length > 0) {
+    reasons.push(
+      reason(
+        "source_untrusted",
+        uniqueDisagreements.length > 0
+          ? `Source evidence disagrees with candidate claims: ${uniqueDisagreements.join("; ")}.`
+          : "Source metadata does not support the candidate URL, publication time, and excerpt.",
+      ),
+    );
+  }
+  return reasons;
+}
+
 function schemaReasons(
   issues: z.core.$ZodIssue[],
+  raw: Record<string, unknown>,
 ): QuarantineReasonOutput[] {
   const details = issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`);
   const reasons = [
@@ -627,7 +710,20 @@ function schemaReasons(
   if (issues.some((issue) => issue.path.includes("isoCode"))) {
     reasons.push(reason("country_unresolved", "A supported African ISO-3 code is required."));
   }
-  return reasons;
+  if (
+    issues.some(
+      (issue) =>
+        issue.path.includes("category") || issue.path.includes("actor"),
+    )
+  ) {
+    reasons.push(
+      reason(
+        "classification_incoherent",
+        "Actor and category must use a supported, coherent classification.",
+      ),
+    );
+  }
+  return [...reasons, ...strictEvidenceReasons(raw)];
 }
 
 function emptyConfidence(): ConfidenceExplanation {
@@ -664,6 +760,10 @@ export function evaluatePublicationCandidate(
   options: PublicationGateOptions = {},
 ): PublicationDecision {
   const now = options.now ?? new Date();
+  const rawInput =
+    typeof input === "object" && input !== null
+      ? (input as Record<string, unknown>)
+      : {};
   const normalizedInput = normalizeCandidate(dataset, input, now);
   const parsed = normalizedPublicationCandidateSchema.safeParse(normalizedInput);
   if (!parsed.success) {
@@ -675,14 +775,24 @@ export function evaluatePublicationCandidate(
       normalized: null,
       identity: null,
       confidence: emptyConfidence(),
-      reasons: schemaReasons(parsed.error.issues),
+      reasons: [
+        ...new Map(
+          schemaReasons(
+            parsed.error.issues,
+            rawInput,
+          ).map((item) => [item.code, item]),
+        ).values(),
+      ],
     };
   }
 
   const candidate = parsed.data;
   const identity = createPublicationIdentity(candidate);
   const confidence = calculateConfidenceComponents(candidate, options);
-  const reasons = evaluateDatasetPolicy(candidate, confidence.confidence, now);
+  const reasons = [
+    ...evaluateDatasetPolicy(candidate, confidence.confidence, now),
+    ...strictEvidenceReasons(rawInput),
+  ];
 
   if (!isAfricaRelevant(candidate)) {
     reasons.push(
@@ -704,6 +814,20 @@ export function evaluatePublicationCandidate(
         `Matches existing candidate "${duplicate.title}" by URL, hash, or text similarity.`,
       ),
     );
+    if (
+      candidate.dataset === "intelligence" &&
+      duplicate.dataset === "intelligence" &&
+      (candidate.category !== duplicate.category ||
+        candidate.actor !== duplicate.actor ||
+        candidate.isoCode !== duplicate.isoCode)
+    ) {
+      reasons.push(
+        reason(
+          "classification_incoherent",
+          `Near-duplicate source evidence disagrees on classification (${duplicate.isoCode}/${duplicate.category}/${duplicate.actor ?? "none"} versus ${candidate.isoCode}/${candidate.category}/${candidate.actor ?? "none"}).`,
+        ),
+      );
+    }
   }
 
   const uniqueReasons = [...new Map(reasons.map((item) => [item.code, item])).values()];

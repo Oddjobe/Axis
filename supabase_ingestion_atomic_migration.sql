@@ -18,13 +18,18 @@ DECLARE
     v_evidence_id UUID;
     v_observation_id UUID;
     v_candidate_id UUID;
+    v_commodity_id TEXT;
+    v_latest_source_published_at TIMESTAMPTZ;
+    v_latest_price NUMERIC;
+    v_incoming_price NUMERIC;
+    v_maximum_change_ratio NUMERIC;
     published_count INTEGER := 0;
     quarantined_count INTEGER := 0;
     audit_count INTEGER := 0;
     remaining_ms INTEGER;
     warnings JSONB := '[]'::jsonb;
 BEGIN
-    IF p_dataset NOT IN ('intelligence', 'blog') THEN
+    IF p_dataset NOT IN ('intelligence', 'blog', 'commodity') THEN
         RAISE EXCEPTION 'Unsupported publication dataset: %', p_dataset;
     END IF;
     IF jsonb_typeof(p_items) <> 'array' THEN
@@ -54,6 +59,77 @@ BEGIN
         END IF;
 
         evidence := item->'evidence';
+        IF p_dataset = 'commodity' AND item->>'decision' = 'publish' THEN
+            v_commodity_id := coalesce(
+                nullif(evidence->'normalizedValue'->>'commodityId', ''),
+                nullif(evidence->'normalizedValue'->>'id', '')
+            );
+            IF v_commodity_id IS NULL THEN
+                RAISE EXCEPTION 'Commodity publication is missing its identity';
+            END IF;
+
+            -- Serialize each commodity identity so overlapping ingestion runs cannot
+            -- validate against the same stale baseline and publish out of order.
+            PERFORM pg_advisory_xact_lock(
+                hashtextextended('commodity:' || v_commodity_id, 0)
+            );
+            SELECT
+                source_evidence.source_published_at,
+                nullif(existing_candidate.normalized_value->>'price', '')::NUMERIC
+            INTO v_latest_source_published_at, v_latest_price
+            FROM public.intelligence_candidates AS existing_candidate
+            JOIN public.intelligence_raw_observations AS existing_observation
+              ON existing_observation.id = existing_candidate.raw_observation_id
+            JOIN public.intelligence_source_evidence AS source_evidence
+              ON source_evidence.id = existing_observation.evidence_id
+            JOIN public.intelligence_evidence_publications AS existing_publication
+              ON existing_publication.evidence_id = source_evidence.id
+            WHERE existing_candidate.validation_state = 'accepted'
+              AND existing_publication.publication_state = 'published'
+              AND existing_candidate.normalized_value->>'dataset' = 'commodity'
+              AND coalesce(
+                    existing_candidate.normalized_value->>'commodityId',
+                    existing_candidate.normalized_value->>'id'
+                  ) = v_commodity_id
+            ORDER BY source_evidence.source_published_at DESC,
+                     existing_publication.published_at DESC
+            LIMIT 1;
+
+            IF v_latest_source_published_at IS NOT NULL
+               AND nullif(evidence->>'sourcePublishedAt', '')::TIMESTAMPTZ
+                   < v_latest_source_published_at THEN
+                RAISE EXCEPTION
+                    'Commodity % source timestamp % is older than trusted baseline %',
+                    v_commodity_id,
+                    evidence->>'sourcePublishedAt',
+                    v_latest_source_published_at
+                    USING ERRCODE = '22000';
+            END IF;
+
+            v_incoming_price :=
+                nullif(evidence->'normalizedValue'->>'price', '')::NUMERIC;
+            v_maximum_change_ratio :=
+                nullif(evidence->'normalizedValue'->>'maximumChangeRatio', '')::NUMERIC;
+            IF v_incoming_price IS NULL OR v_incoming_price <= 0
+               OR v_maximum_change_ratio IS NULL
+               OR v_maximum_change_ratio <= 0
+               OR v_maximum_change_ratio > 1 THEN
+                RAISE EXCEPTION
+                    'Commodity % publication is missing valid atomic price controls',
+                    v_commodity_id
+                    USING ERRCODE = '22000';
+            END IF;
+            IF v_latest_price IS NOT NULL
+               AND v_latest_price > 0
+               AND abs(v_incoming_price - v_latest_price) / v_latest_price
+                   > v_maximum_change_ratio THEN
+                RAISE EXCEPTION
+                    'Commodity % price change exceeds atomic trusted baseline limit',
+                    v_commodity_id
+                    USING ERRCODE = '22000';
+            END IF;
+        END IF;
+
         SELECT e.id INTO v_evidence_id
         FROM public.intelligence_source_evidence AS e
         WHERE e.content_sha256 = evidence->>'contentHash'
@@ -78,7 +154,11 @@ BEGIN
                 evidence->>'sourceUrl',
                 nullif(evidence->>'canonicalUrl', ''),
                 evidence->>'sourceName',
-                CASE WHEN p_dataset = 'blog' THEN 'other' ELSE 'news' END,
+                CASE
+                    WHEN p_dataset = 'blog' THEN 'other'
+                    WHEN p_dataset = 'commodity' THEN 'commercial'
+                    ELSE 'news'
+                END,
                 nullif(evidence->>'sourcePublishedAt', '')::TIMESTAMPTZ,
                 (evidence->>'retrievedAt')::TIMESTAMPTZ,
                 'application/json',
@@ -126,6 +206,8 @@ BEGIN
         SELECT c.id INTO v_candidate_id
         FROM public.intelligence_candidates AS c
         WHERE c.raw_observation_id = v_observation_id
+          AND c.validation_state = CASE WHEN item->>'decision' = 'publish'
+              THEN 'accepted' ELSE 'quarantined' END
         ORDER BY created_at
         LIMIT 1;
 
@@ -177,8 +259,16 @@ BEGIN
                 THEN timezone('utc'::TEXT, now()) ELSE NULL END
         )
         ON CONFLICT (evidence_id) DO UPDATE
-        SET publication_state = EXCLUDED.publication_state,
-            published_at = EXCLUDED.published_at;
+        SET publication_state = CASE
+                WHEN intelligence_evidence_publications.publication_state = 'published'
+                    THEN 'published'
+                ELSE EXCLUDED.publication_state
+            END,
+            published_at = CASE
+                WHEN intelligence_evidence_publications.publication_state = 'published'
+                    THEN intelligence_evidence_publications.published_at
+                ELSE EXCLUDED.published_at
+            END;
 
         IF item->>'decision' = 'quarantine' THEN
             FOR reason IN SELECT value FROM jsonb_array_elements(item->'reasons')
@@ -224,7 +314,7 @@ BEGIN
                     (legacy->>'created_at')::TIMESTAMPTZ
                 )
                 ON CONFLICT (title) DO NOTHING;
-            ELSE
+            ELSIF p_dataset = 'blog' THEN
                 INSERT INTO public.blog_posts (
                     title, summary, author, tag, url, created_at
                 )
@@ -237,6 +327,13 @@ BEGIN
                     (legacy->>'created_at')::TIMESTAMPTZ
                 )
                 ON CONFLICT (url) DO NOTHING;
+            ELSE
+                warnings := warnings || jsonb_build_array(
+                    format(
+                        'Commodity %s was atomically published to trust storage; no legacy commodity write was attempted.',
+                        coalesce(legacy->>'id', item->>'idempotencyKey', 'record')
+                    )
+                );
             END IF;
             published_count := published_count + 1;
         END IF;
@@ -255,7 +352,7 @@ END;
 $$;
 
 REVOKE ALL ON FUNCTION public.persist_publication_batch_atomic(TEXT, JSONB, TIMESTAMPTZ)
-FROM PUBLIC;
+FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.persist_publication_batch_atomic(TEXT, JSONB, TIMESTAMPTZ)
 TO service_role;
 

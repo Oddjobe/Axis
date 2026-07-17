@@ -1,9 +1,14 @@
 import type { PublicationDecision } from "@/lib/intelligence/publication-gate";
 import type { PublicationPersistenceResult } from "@/lib/intelligence/publication-storage";
+import type {
+  AtomicPublicationDecision,
+} from "@/lib/intelligence/publication-storage";
 
 import type { BlogSource, IntelligenceSource } from "./sources";
+import type { CommodityRunSummary } from "./commodity-runner.server";
 
-export type IngestionDataset = "intelligence" | "blog";
+export type IngestionDataset = "intelligence" | "blog" | "commodity";
+export type GateIngestionDataset = Exclude<IngestionDataset, "commodity">;
 export type RawCandidate = Record<string, unknown>;
 
 export interface IngestionAdapter {
@@ -17,7 +22,7 @@ export interface IngestionAdapter {
 export interface IngestionPersistence {
   (
     dataset: IngestionDataset,
-    decisions: readonly PublicationDecision[],
+    decisions: readonly AtomicPublicationDecision[],
     signal: AbortSignal,
   ): Promise<PublicationPersistenceResult>;
 }
@@ -82,6 +87,7 @@ export interface IngestionRunSummary {
   deadlineAt: string | null;
   intelligence: DatasetRunSummary;
   blog: DatasetRunSummary;
+  commodity: CommodityRunSummary | null;
   totals: {
     sourcesAttempted: number;
     sourcesSucceeded: number;

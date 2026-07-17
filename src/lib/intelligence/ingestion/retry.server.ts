@@ -99,12 +99,13 @@ export async function withBoundedRetry<T>(
   throw new Error(`${label} failed (${errors.join("; ")})`);
 }
 
-export async function fetchWithBoundedRetry(
+export async function fetchWithBoundedRetry<T>(
   label: string,
   url: string,
   init: RequestInit = {},
+  consume: (response: Response, signal: AbortSignal) => Promise<T>,
   options: RetryOptions = {},
-): Promise<Response> {
+): Promise<T> {
   const timeoutMs = options.timeoutMs ?? 30_000;
   return withBoundedRetry(
     label,
@@ -113,7 +114,7 @@ export async function fetchWithBoundedRetry(
       if (!response.ok) {
         throw new Error(`HTTP ${response.status} ${response.statusText}`);
       }
-      return response;
+      return consume(response, signal);
     },
     { ...options, timeoutMs },
   );

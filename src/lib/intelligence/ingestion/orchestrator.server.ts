@@ -12,10 +12,19 @@ import {
   type BlogSource,
   type IntelligenceSource,
 } from "./sources";
+import type { CommodityAdapter } from "./commodity-adapter.server";
+import type { CommodityHistorySummary } from "./commodity-history.server";
+import {
+  runCommodityIngestion,
+} from "./commodity-runner.server";
+import type {
+  CommodityId,
+  CommoditySource,
+} from "./commodity-sources";
 import type {
   DatasetRunSummary,
+  GateIngestionDataset,
   IngestionAdapter,
-  IngestionDataset,
   IngestionLogger,
   IngestionPersistence,
   IngestionRunSummary,
@@ -26,9 +35,14 @@ import type {
 
 interface RunIngestionOptions {
   adapter: IngestionAdapter;
+  commodityAdapter?: CommodityAdapter;
   persist: IngestionPersistence;
   intelligenceSources?: readonly IntelligenceSource[];
   blogSources?: readonly BlogSource[];
+  commoditySources?: readonly CommoditySource[];
+  previousCommodityPrices?: Partial<Record<CommodityId, number>>;
+  previousCommoditySourcePublishedAt?: Partial<Record<CommodityId, string>>;
+  commodityHistory?: CommodityHistorySummary;
   now?: Date;
   logger?: IngestionLogger;
   deadlineAt?: number;
@@ -112,7 +126,7 @@ function failedPersistence(message: string): PublicationPersistenceResult {
 }
 
 async function collectSources<TSource extends { name: string }>(
-  dataset: IngestionDataset,
+  dataset: GateIngestionDataset,
   sources: readonly TSource[],
   collect: (source: TSource) => Promise<RawCandidate[]>,
   shape: (
@@ -184,7 +198,7 @@ function countRejectionReasons(
 }
 
 async function runDataset<TSource extends { name: string }>(
-  dataset: IngestionDataset,
+  dataset: GateIngestionDataset,
   sources: readonly TSource[],
   collect: (source: TSource) => Promise<RawCandidate[]>,
   shape: (
@@ -319,43 +333,92 @@ export async function runIntelligenceIngestion(
         logger,
         signal,
       ),
+      options.commodityAdapter
+        ? runCommodityIngestion({
+            adapter: options.commodityAdapter,
+            persist: options.persist,
+            sources: options.commoditySources,
+            previousPrices: options.previousCommodityPrices,
+            previousSourcePublishedAt:
+              options.previousCommoditySourcePublishedAt,
+            history: options.commodityHistory,
+            now,
+            signal,
+          })
+        : Promise.resolve(null),
     ]);
     ensureActive(signal);
     const rejected = settled.find(
       (item): item is PromiseRejectedResult => item.status === "rejected",
     );
     if (rejected) throw rejected.reason;
-    const [intelligence, blog] = settled.map(
-      (item) => (item as PromiseFulfilledResult<DatasetRunSummary>).value,
-    );
+    const intelligence = (
+      settled[0] as PromiseFulfilledResult<DatasetRunSummary>
+    ).value;
+    const blog = (
+      settled[1] as PromiseFulfilledResult<DatasetRunSummary>
+    ).value;
+    const commodity = (
+      settled[2] as PromiseFulfilledResult<
+        Awaited<ReturnType<typeof runCommodityIngestion>> | null
+      >
+    ).value;
     const totals = {
       sourcesAttempted:
-        intelligence.sourcesAttempted + blog.sourcesAttempted,
+        intelligence.sourcesAttempted +
+        blog.sourcesAttempted +
+        (commodity?.sourceStatus.length ?? 0),
       sourcesSucceeded:
-        intelligence.sourcesSucceeded + blog.sourcesSucceeded,
-      sourcesFailed: intelligence.sourcesFailed + blog.sourcesFailed,
-      candidates: intelligence.candidates + blog.candidates,
-      published: intelligence.published + blog.published,
-      quarantined: intelligence.quarantined + blog.quarantined,
+        intelligence.sourcesSucceeded +
+        blog.sourcesSucceeded +
+        (commodity?.sourceStatus.filter((item) => item.status === "succeeded")
+          .length ?? 0),
+      sourcesFailed:
+        intelligence.sourcesFailed +
+        blog.sourcesFailed +
+        (commodity?.quality.sourceFailureCount ?? 0),
+      candidates:
+        intelligence.candidates +
+        blog.candidates +
+        (commodity?.quality.candidateCount ?? 0),
+      published:
+        intelligence.published + blog.published +
+        (commodity?.persistence?.published ?? 0),
+      quarantined:
+        intelligence.quarantined +
+        blog.quarantined +
+        (commodity?.persistence?.quarantined ??
+          commodity?.quality.quarantinedCount ??
+          0),
       accepted:
-        intelligence.quality.acceptedCount + blog.quality.acceptedCount,
-      errors: intelligence.errors.length + blog.errors.length,
+        intelligence.quality.acceptedCount +
+        blog.quality.acceptedCount +
+        (commodity?.quality.acceptedCount ?? 0),
+      errors:
+        intelligence.errors.length +
+        blog.errors.length +
+        (commodity?.persistence?.errors.length ?? 0),
       rejectionReasons: Object.fromEntries(
         [
           ...new Set([
             ...Object.keys(intelligence.quality.rejectionReasons),
             ...Object.keys(blog.quality.rejectionReasons),
+            ...Object.keys(commodity?.quality.rejectionReasons ?? {}),
           ]),
         ]
           .sort()
           .map((code) => [
             code,
             (intelligence.quality.rejectionReasons[code] ?? 0) +
-              (blog.quality.rejectionReasons[code] ?? 0),
+              (blog.quality.rejectionReasons[code] ?? 0) +
+              (commodity?.quality.rejectionReasons[code] ?? 0),
           ]),
       ),
     };
-    const success = totals.sourcesFailed === 0 && totals.errors === 0;
+    const success =
+      totals.sourcesFailed === 0 &&
+      totals.errors === 0 &&
+      (commodity?.success ?? true);
     const partialSuccess =
       !success &&
       (totals.sourcesSucceeded > 0 ||
@@ -371,6 +434,7 @@ export async function runIntelligenceIngestion(
         : null,
       intelligence,
       blog,
+      commodity,
       totals,
     };
     logger.info("Intelligence ingestion summary", summary);

@@ -1,7 +1,7 @@
 import "dotenv/config";
 
 import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { dirname, isAbsolute, relative, resolve } from "node:path";
+import { basename, dirname, isAbsolute, relative, resolve } from "node:path";
 
 import { createClient } from "@supabase/supabase-js";
 
@@ -12,8 +12,12 @@ import {
   type RolloutDataset,
   type RolloutInventory,
 } from "../src/lib/intelligence/trust-rollout";
-import { DATASET_TRUST_POLICIES } from "../src/lib/intelligence/trust";
+import {
+  AFRICAN_ISO3_CODES,
+  DATASET_TRUST_POLICIES,
+} from "../src/lib/intelligence/trust";
 import { canonicalizeUrl } from "../src/lib/intelligence/publication-gate";
+import { COMMODITY_IDS } from "../src/lib/intelligence/ingestion/commodity-sources";
 
 const DATASETS: RolloutDataset[] = [
   "intelligence",
@@ -34,6 +38,53 @@ const FIXTURE_REPORT =
   "quality-reports/fixtures/trust-shadow-report.json";
 const FIXTURE_STATE =
   "quality-reports/fixtures/trust-shadow-state.json";
+const IDENTITY_SCHEMA_VERSION = 1 as const;
+const REQUIRED_IDENTITIES: Partial<Record<RolloutDataset, readonly string[]>> = {
+  "country-score": AFRICAN_ISO3_CODES,
+  commodity: COMMODITY_IDS,
+};
+
+export interface ShadowThresholds {
+  minCoverage: number;
+  minFreshness: number;
+  maxRejection: number;
+  requiredRuns: number;
+}
+
+export interface ShadowIdentityMetrics {
+  schemaVersion: typeof IDENTITY_SCHEMA_VERSION;
+  currentIdentities: string[];
+  trustedIdentities: string[];
+  matchedIdentities: string[];
+  freshMatchedIdentities: string[];
+  staleMatchedIdentities: string[];
+  requiredIdentities: string[];
+  missingCurrentIdentities: string[];
+  missingTrustedIdentities: string[];
+  missingFreshIdentities: string[];
+  unexpectedCurrentIdentities: string[];
+  requirementsSatisfied: boolean;
+}
+
+export interface ShadowDatasetReport {
+  currentCount: number;
+  comparableCount: number;
+  trustedCount: number;
+  matchedCount: number;
+  freshCount: number;
+  rejectedCount: number;
+  currentIdentityCount: number;
+  trustedIdentityCount: number;
+  matchedIdentityCount: number;
+  freshMatchedIdentityCount: number;
+  freshRowCount: number;
+  duplicateTrustedRowCount: number;
+  coverageRate: number;
+  freshnessRate: number;
+  rejectionRate: number;
+  thresholdsPassed: boolean;
+  identity: ShadowIdentityMetrics;
+}
 
 function argument(name: string, fallback: string): string {
   const direct = process.argv.find((value) => value.startsWith(`${name}=`));
@@ -167,12 +218,7 @@ function identity(dataset: RolloutDataset, record: LegacyRecord): string {
 async function previousConsecutive(
   path: string,
   expectedMode: "fixtures" | "live-shadow",
-  expectedThresholds: {
-    minCoverage: number;
-    minFreshness: number;
-    maxRejection: number;
-    requiredRuns: number;
-  },
+  expectedThresholds: ShadowThresholds,
 ): Promise<number> {
   try {
     const parsed = JSON.parse(await readFile(path, "utf8")) as {
@@ -181,7 +227,7 @@ async function previousConsecutive(
       thresholds?: unknown;
       consecutiveSuccessfulRuns?: unknown;
     };
-    return parsed.version === 2 &&
+    return parsed.version === 3 &&
       parsed.mode === expectedMode &&
       JSON.stringify(parsed.thresholds) ===
         JSON.stringify(expectedThresholds) &&
@@ -191,6 +237,130 @@ async function previousConsecutive(
   } catch {
     return 0;
   }
+}
+
+function sorted(values: Iterable<string>): string[] {
+  return [...new Set(values)].sort();
+}
+
+function difference(
+  left: readonly string[],
+  right: ReadonlySet<string>,
+): string[] {
+  return left.filter((value) => !right.has(value));
+}
+
+export function summarizeShadowDataset(
+    dataset: RolloutDataset,
+    current: readonly LegacyRecord[],
+    trustedRows: readonly LegacyRecord[],
+    rejectedCount: number,
+    generatedAt: string,
+    thresholds: Pick<
+      ShadowThresholds,
+      "minCoverage" | "minFreshness" | "maxRejection"
+    >,
+  ): ShadowDatasetReport {
+    const generatedAtMs = Date.parse(generatedAt);
+    const currentIdentities = sorted(
+      current.map((record) => identity(dataset, record)).filter(Boolean),
+    );
+    const trustedIdentities = sorted(
+      trustedRows.map((record) => identity(dataset, record)).filter(Boolean),
+    );
+    const currentSet = new Set(currentIdentities);
+    const trustedSet = new Set(trustedIdentities);
+    const matchedIdentities = currentIdentities.filter((key) =>
+      trustedSet.has(key),
+    );
+    const freshRows = trustedRows.filter((record) => {
+      const value = timestamp(record);
+      if (value === null || !Number.isFinite(generatedAtMs)) return false;
+      const age = generatedAtMs - value;
+      return (
+        age >= 0 &&
+        age <= DATASET_TRUST_POLICIES[dataset].maximumAgeMs
+      );
+    });
+    const freshMatchedIdentities = sorted(
+      freshRows
+        .map((record) => identity(dataset, record))
+        .filter((key) => key && currentSet.has(key)),
+    );
+    const freshSet = new Set(freshMatchedIdentities);
+    const matchedSet = new Set(matchedIdentities);
+    const requiredIdentities = sorted(REQUIRED_IDENTITIES[dataset] ?? []);
+    const requiredSet = new Set(requiredIdentities);
+    const staleMatchedIdentities = difference(matchedIdentities, freshSet);
+    const missingCurrentIdentities = difference(requiredIdentities, currentSet);
+    const missingTrustedIdentities = difference(requiredIdentities, trustedSet);
+    const missingFreshIdentities = difference(requiredIdentities, freshSet);
+    const unexpectedCurrentIdentities = requiredIdentities.length
+      ? difference(currentIdentities, requiredSet)
+      : [];
+    const requirementsSatisfied =
+      requiredIdentities.length === 0 ||
+      (
+        missingCurrentIdentities.length === 0 &&
+        missingTrustedIdentities.length === 0 &&
+        missingFreshIdentities.length === 0 &&
+        unexpectedCurrentIdentities.length === 0 &&
+        currentIdentities.length === requiredIdentities.length &&
+        matchedSet.size === requiredIdentities.length &&
+        freshSet.size === requiredIdentities.length
+      );
+    const coverageRate = ratio(matchedIdentities.length, currentIdentities.length);
+    const freshnessRate = ratio(
+      freshMatchedIdentities.length,
+      currentIdentities.length,
+    );
+    const rejectionRate = ratio(rejectedCount, current.length);
+    const thresholdsPassed =
+      current.length > 0 &&
+      currentIdentities.length > 0 &&
+      trustedRows.length > 0 &&
+      matchedIdentities.length > 0 &&
+      freshMatchedIdentities.length > 0 &&
+      requirementsSatisfied &&
+      coverageRate >= thresholds.minCoverage &&
+      freshnessRate >= thresholds.minFreshness &&
+      rejectionRate <= thresholds.maxRejection;
+
+    return {
+      currentCount: current.length,
+      comparableCount: currentIdentities.length,
+      trustedCount: trustedRows.length,
+      matchedCount: matchedIdentities.length,
+      freshCount: freshMatchedIdentities.length,
+      rejectedCount,
+      currentIdentityCount: currentIdentities.length,
+      trustedIdentityCount: trustedIdentities.length,
+      matchedIdentityCount: matchedIdentities.length,
+      freshMatchedIdentityCount: freshMatchedIdentities.length,
+      freshRowCount: freshRows.length,
+      duplicateTrustedRowCount: Math.max(
+        0,
+        trustedRows.length - trustedIdentities.length,
+      ),
+      coverageRate,
+      freshnessRate,
+      rejectionRate,
+      thresholdsPassed,
+      identity: {
+        schemaVersion: IDENTITY_SCHEMA_VERSION,
+        currentIdentities,
+        trustedIdentities,
+        matchedIdentities,
+        freshMatchedIdentities,
+        staleMatchedIdentities,
+        requiredIdentities,
+        missingCurrentIdentities,
+        missingTrustedIdentities,
+        missingFreshIdentities,
+        unexpectedCurrentIdentities,
+        requirementsSatisfied,
+      },
+    };
 }
 
 async function main(): Promise<void> {
@@ -265,6 +435,23 @@ async function main(): Promise<void> {
           .map((item) => item.prepared!),
       ]),
     ) as Record<RolloutDataset, LegacyRecord[]>;
+    const scoreTemplate = trusted["country-score"][0];
+    const commodityTemplate = trusted.commodity[0];
+    if (!scoreTemplate || !commodityTemplate) {
+      throw new Error(
+        "Trust rollout fixtures must include country-score and commodity templates.",
+      );
+    }
+    trusted["country-score"] = AFRICAN_ISO3_CODES.map((country) => ({
+      ...scoreTemplate,
+      country,
+      id: country,
+    }));
+    trusted.commodity = COMMODITY_IDS.map((id) => ({
+      ...commodityTemplate,
+      id,
+      name: id,
+    }));
     inventory = {
       source: "fixtures",
       warnings: [],
@@ -281,70 +468,23 @@ async function main(): Promise<void> {
     DATASETS.map((dataset) => {
       const current = inventory.records[dataset];
       const trustedRows = trusted[dataset];
-      const currentIdentities = new Set(
-        current.map((record) => identity(dataset, record)).filter(Boolean),
-      );
-      const trustedIdentities = new Set(
-        trustedRows.map((record) => identity(dataset, record)).filter(Boolean),
-      );
-      const matched = [...currentIdentities].filter((key) =>
-        trustedIdentities.has(key),
-      ).length;
       const rejected = decisions.filter(
         (item) =>
           item.dataset === dataset && item.disposition === "quarantine",
       ).length;
-      const fresh = trustedRows.filter((record) => {
-        const value = timestamp(record);
-        return (
-          value !== null &&
-          Date.parse(generatedAt) - value <=
-            DATASET_TRUST_POLICIES[dataset].maximumAgeMs
-        );
-      }).length;
-      const coverageRate = ratio(matched, currentIdentities.size);
-      const freshnessRate = ratio(fresh, trustedRows.length);
-      const rejectionRate = ratio(rejected, current.length);
-      const thresholdsPassed =
-        current.length > 0 &&
-        currentIdentities.size > 0 &&
-        trustedRows.length > 0 &&
-        matched > 0 &&
-        fresh > 0 &&
-        coverageRate >= minCoverage &&
-        freshnessRate >= minFreshness &&
-        rejectionRate <= maxRejection;
       return [
         dataset,
-        {
-          currentCount: current.length,
-          comparableCount: currentIdentities.size,
-          trustedCount: trustedRows.length,
-          matchedCount: matched,
-          freshCount: fresh,
-          rejectedCount: rejected,
-          coverageRate,
-          freshnessRate,
-          rejectionRate,
-          thresholdsPassed,
-        },
+        summarizeShadowDataset(
+          dataset,
+          current,
+          trustedRows,
+          rejected,
+          generatedAt,
+          thresholds,
+        ),
       ];
     }),
-  ) as Record<
-    RolloutDataset,
-    {
-      currentCount: number;
-      comparableCount: number;
-      trustedCount: number;
-      matchedCount: number;
-      freshCount: number;
-      rejectedCount: number;
-      coverageRate: number;
-      freshnessRate: number;
-      rejectionRate: number;
-      thresholdsPassed: boolean;
-    }
-  >;
+  ) as Record<RolloutDataset, ShadowDatasetReport>;
   const currentTotal = Object.values(byDataset).reduce(
     (sum, value) => sum + value.currentCount,
     0,
@@ -357,30 +497,17 @@ async function main(): Promise<void> {
     (sum, value) => sum + value.matchedCount,
     0,
   );
-  const trustedTotal = Object.values(byDataset).reduce(
-    (sum, value) => sum + value.trustedCount,
-    0,
-  );
   const rejectedTotal = Object.values(byDataset).reduce(
     (sum, value) => sum + value.rejectedCount,
     0,
   );
-  const freshTotal = DATASETS.reduce(
-    (sum, dataset) =>
-      sum +
-      trusted[dataset].filter((record) => {
-        const value = timestamp(record);
-        return (
-          value !== null &&
-          Date.parse(generatedAt) - value <=
-            DATASET_TRUST_POLICIES[dataset].maximumAgeMs
-        );
-      }).length,
+  const freshTotal = Object.values(byDataset).reduce(
+    (sum, value) => sum + value.freshCount,
     0,
   );
   const metrics = {
     coverageRate: ratio(matchedTotal, comparableTotal),
-    freshnessRate: ratio(freshTotal, trustedTotal),
+    freshnessRate: ratio(freshTotal, comparableTotal),
     rejectionRate: ratio(rejectedTotal, currentTotal),
   };
   const thresholdsPassed =
@@ -397,7 +524,8 @@ async function main(): Promise<void> {
   const promotionEligible =
     !fixtures && consecutiveSuccessfulRuns >= requiredRuns;
   const report = {
-    version: 2,
+    version: 3,
+    identitySchemaVersion: IDENTITY_SCHEMA_VERSION,
     mode: fixtures ? "fixtures" : "live-shadow",
     generatedAt,
     thresholds,
@@ -419,7 +547,8 @@ async function main(): Promise<void> {
       statePath,
       `${JSON.stringify(
         {
-          version: 2,
+          version: 3,
+          identitySchemaVersion: IDENTITY_SCHEMA_VERSION,
           mode: fixtures ? "fixtures" : "live-shadow",
           lastRunAt: generatedAt,
           thresholds,
@@ -449,9 +578,11 @@ async function main(): Promise<void> {
   if (flag("--require-promotion") && !promotionEligible) process.exitCode = 1;
 }
 
-main().catch((error) => {
-  console.error(
-    `Trust shadow failed: ${error instanceof Error ? error.message : String(error)}`,
-  );
-  process.exitCode = 1;
-});
+if (basename(process.argv[1] ?? "") === "trust-shadow.ts") {
+  main().catch((error) => {
+    console.error(
+      `Trust shadow failed: ${error instanceof Error ? error.message : String(error)}`,
+    );
+    process.exitCode = 1;
+  });
+}

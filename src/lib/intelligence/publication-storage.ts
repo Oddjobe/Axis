@@ -24,6 +24,36 @@ export interface PublicationPersistenceResult {
   errors: string[];
 }
 
+export interface AtomicPublicationDecision {
+  decision: "publish" | "quarantine";
+  dataset: "intelligence" | "blog" | "commodity";
+  rawCandidate: unknown;
+  evaluatedAt: string;
+  normalized: {
+    dataset: "intelligence" | "blog" | "commodity";
+    source: string;
+    sourceUrl: string;
+    canonicalUrl: string;
+    sourcePublishedAt: string;
+    retrievedAt: string;
+    contentHash?: string;
+    isoCode?: string;
+  } | null;
+  identity: {
+    canonicalUrl: string;
+    contentHash: string;
+    idempotencyKey: string;
+  } | null;
+  confidence: {
+    confidence: { overall: number };
+  };
+  reasons: readonly {
+    code: GateReasonCode;
+    detail: string;
+    retryable: boolean;
+  }[];
+}
+
 const TRUST_REASON_MAP: Record<GateReasonCode, string> = {
   schema_invalid: "schema_invalid",
   missing_provenance: "missing_provenance",
@@ -106,7 +136,7 @@ function rawRecord(value: unknown): Record<string, unknown> {
     : { value: safe };
 }
 
-function auditMaterial(decision: PublicationDecision): AuditMaterial {
+function atomicAuditMaterial(decision: AtomicPublicationDecision): AuditMaterial {
   if (decision.normalized && decision.identity) {
     const candidate = decision.normalized;
     return {
@@ -124,7 +154,7 @@ function auditMaterial(decision: PublicationDecision): AuditMaterial {
       },
       normalizedValue: candidate,
       countryCode:
-        candidate.dataset === "intelligence" ? candidate.isoCode : null,
+        candidate.dataset === "intelligence" ? candidate.isoCode ?? null : null,
       observedAt: candidate.sourcePublishedAt,
     };
   }
@@ -164,8 +194,30 @@ function auditMaterial(decision: PublicationDecision): AuditMaterial {
   };
 }
 
+function auditMaterial(decision: PublicationDecision): AuditMaterial {
+  return atomicAuditMaterial(decision);
+}
+
+function atomicLegacyRecord(
+  decision: AtomicPublicationDecision,
+): Record<string, unknown> | null {
+  if (decision.decision !== "publish" || !decision.normalized) return null;
+  if (decision.dataset !== "commodity") {
+    return toLegacyRecord(decision as PublicationDecision);
+  }
+  return {
+    ...decision.normalized,
+    id: String(
+      (decision.normalized as Record<string, unknown>).id ??
+        (decision.normalized as Record<string, unknown>).commodityId ??
+        "",
+    ),
+    updated_at: decision.normalized.sourcePublishedAt,
+  };
+}
+
 export function buildAtomicPublicationItems(
-  decisions: readonly PublicationDecision[],
+  decisions: readonly AtomicPublicationDecision[],
 ): AtomicPublicationItem[] {
   return decisions.map((decision) => ({
     duplicate: decision.reasons.some(
@@ -174,15 +226,14 @@ export function buildAtomicPublicationItems(
     decision: decision.decision,
     idempotencyKey: decision.identity?.idempotencyKey ?? null,
     schemaValid: decision.normalized !== null,
-    evidence: auditMaterial(decision),
+    evidence: atomicAuditMaterial(decision),
     confidence: decision.confidence.confidence.overall,
     reasons: decision.reasons.map((item) => ({
       code: TRUST_REASON_MAP[item.code],
       detail: `${item.code}: ${item.detail}`,
       retryable: item.retryable,
     })),
-    legacyRecord:
-      decision.decision === "publish" ? toLegacyRecord(decision) : null,
+    legacyRecord: atomicLegacyRecord(decision),
   }));
 }
 

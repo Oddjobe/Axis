@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import {
+    DATASET_TRUST_POLICIES,
     getFreshnessMetadata,
     getLatestTimestamp,
     type DataMode,
@@ -10,6 +11,10 @@ import {
     getPublicationCoverage,
     type PublicationCoverage,
 } from '@/lib/intelligence/publication-coverage';
+import {
+    COMMODITY_IDS,
+    type CommodityId,
+} from '@/lib/intelligence/ingestion/commodity-sources';
 
 export const revalidate = 3600; // Revalidate every hour
 
@@ -24,7 +29,7 @@ const FALLBACK_DATA = [
         currency: "USD",
         trend: +3.8,
         source: "SunSirs / Benchmark Mineral",
-        sourceUrl: "https://www.sunsirs.com/uk/prodetail-2023.html",
+        sourceUrl: "https://www.sunsirs.com/uk/prodetail-1162.html",
         lastUpdated: "2026-07-16",
         frequency: "weekly",
         category: "CRITICAL",
@@ -90,16 +95,74 @@ const FALLBACK_DATA = [
 
 type CommodityRow = Record<string, unknown>;
 
+function sourceTimestampValue(row: CommodityRow): number {
+    const value =
+        row.sourcePublishedAt ??
+        row.source_published_at ??
+        row.sourceUpdatedAt ??
+        row.source_updated_at;
+    if (typeof value !== "string" && !(value instanceof Date)) {
+        return Number.NEGATIVE_INFINITY;
+    }
+    const timestamp = new Date(value).getTime();
+    return Number.isFinite(timestamp) ? timestamp : Number.NEGATIVE_INFINITY;
+}
+
+function publicationTimestampValue(row: CommodityRow): number {
+    const value =
+        row.trustedPublishedAt ??
+        row.trusted_published_at ??
+        row.publishedAt ??
+        row.published_at ??
+        row.updated_at;
+    if (typeof value !== "string" && !(value instanceof Date)) {
+        return Number.NEGATIVE_INFINITY;
+    }
+    const timestamp = new Date(value).getTime();
+    return Number.isFinite(timestamp) ? timestamp : Number.NEGATIVE_INFINITY;
+}
+
 export function indexNewestCommodityRows(
     rows: readonly CommodityRow[],
 ): Map<string, CommodityRow> {
     const newestById = new Map<string, CommodityRow>();
     for (const row of rows) {
-        if (typeof row.id === "string" && !newestById.has(row.id)) {
-            newestById.set(row.id, row);
+        if (typeof row.id !== "string") continue;
+        const id = row.id.trim().toLowerCase() as CommodityId;
+        if (!COMMODITY_IDS.includes(id)) continue;
+        const existing = newestById.get(id);
+        const sourceDelta =
+            sourceTimestampValue(row) - sourceTimestampValue(existing ?? {});
+        const publicationDelta =
+            publicationTimestampValue(row) -
+            publicationTimestampValue(existing ?? {});
+        if (
+            !existing ||
+            sourceDelta > 0 ||
+            (sourceDelta === 0 && publicationDelta > 0)
+        ) {
+            newestById.set(id, { ...row, id });
         }
     }
     return newestById;
+}
+
+export function isFreshTrustedCommodityRow(
+    row: CommodityRow,
+    now = Date.now(),
+): boolean {
+    const sourceTimestamp =
+        row.sourcePublishedAt ??
+        row.source_published_at ??
+        row.sourceUpdatedAt ??
+        row.source_updated_at;
+    if (typeof sourceTimestamp !== "string" && !(sourceTimestamp instanceof Date)) {
+        return false;
+    }
+    const timestamp = new Date(sourceTimestamp).getTime();
+    if (!Number.isFinite(timestamp)) return false;
+    const ageMs = now - timestamp;
+    return ageMs >= 0 && ageMs <= DATASET_TRUST_POLICIES.commodity.maximumAgeMs;
 }
 
 export function getCommodityTimestamps(
@@ -119,11 +182,12 @@ export function getCommodityTimestamps(
         fallbackTimestamp;
     const observedAt =
         fresh?.observedAt ??
-        fresh?.trustedPublishedAt ??
         fresh?.sourcePublishedAt ??
         fresh?.retrievedAt ??
         fresh?.observed_at ??
+        fresh?.source_published_at ??
         fresh?.retrieved_at ??
+        fresh?.trustedPublishedAt ??
         fresh?.trusted_published_at ??
         fresh?.published_at ??
         fresh?.updated_at ??
@@ -132,7 +196,7 @@ export function getCommodityTimestamps(
     return { sourceUpdatedAt, observedAt };
 }
 
-function buildRecord(
+export function buildRecord(
     fallback: (typeof FALLBACK_DATA)[number],
     fresh: CommodityRow | undefined,
     generatedAt: string,
@@ -149,16 +213,29 @@ function buildRecord(
         requestedMode: fresh ? "live" : "fallback",
     });
     const source = typeof fresh?.source === "string" ? fresh.source : fallback.source;
-    const sourceUrl = typeof fresh?.source_url === "string" ? fresh.source_url : fallback.sourceUrl;
+    const sourceUrl =
+        typeof fresh?.sourceUrl === "string"
+            ? fresh.sourceUrl
+            : typeof fresh?.canonicalUrl === "string"
+                ? fresh.canonicalUrl
+                : typeof fresh?.source_url === "string"
+                    ? fresh.source_url
+                    : fallback.sourceUrl;
 
     return {
         ...fallback,
         price: typeof fresh?.price === "number" ? fresh.price : fallback.price,
-        trend: typeof fresh?.trend === "number" ? fresh.trend : fallback.trend,
+        trend:
+            typeof fresh?.trend === "number"
+                ? fresh.trend
+                : fresh && trusted
+                    ? null
+                    : fallback.trend,
         source,
         sourceUrl,
         lastUpdated: freshness.sourceUpdatedAt?.split("T")[0] ?? fallback.lastUpdated,
-        fallbackUsed: !fresh,
+        fallbackUsed:
+            !fresh || (!trusted && typeof fresh.trend !== "number"),
         publicationTier: fresh && trusted ? "trusted" : "legacy",
         ...freshness,
         freshness,
@@ -179,7 +256,7 @@ export async function GET() {
     let publicationTier: "trusted" | "mixed" | "legacy" = "legacy";
     let coverageMode: "trusted" | "partial" | "legacy" = "legacy";
     let trustedCoverage: PublicationCoverage = getPublicationCoverage(
-        FALLBACK_DATA.map((item) => item.id),
+        COMMODITY_IDS,
         [],
     );
 
@@ -188,9 +265,13 @@ export async function GET() {
 
     const trustedRows = await getTrustedPublishedRecords("commodity", 100);
     if (trustedRows) {
-        const trustedMap = indexNewestCommodityRows(trustedRows);
+        const trustedMap = indexNewestCommodityRows(
+            trustedRows.filter((row) =>
+                isFreshTrustedCommodityRow(row, Date.parse(generatedAt)),
+            ),
+        );
         trustedCoverage = getPublicationCoverage(
-            FALLBACK_DATA.map((item) => item.id),
+            COMMODITY_IDS,
             trustedMap.keys(),
         );
         if (trustedCoverage.records > 0) {
@@ -230,6 +311,9 @@ export async function GET() {
         ),
     );
     const fallbackUsed = data.some((record) => record.fallbackUsed);
+    const missingIds = FALLBACK_DATA
+        .map((item) => item.id)
+        .filter((id) => !freshMap.has(id) || publicationTier === "legacy");
     const sourceUpdatedAt = getLatestTimestamp(data.map((record) => record.sourceUpdatedAt));
     const observedAt = getLatestTimestamp(data.map((record) => record.observedAt));
     const dataMode: DataMode = getFreshnessMetadata({
@@ -250,6 +334,7 @@ export async function GET() {
             records: trustedCoverage.records,
             total: trustedCoverage.total,
             ratio: trustedCoverage.ratio,
+            missingIds,
         },
         fallbackUsed,
         dataMode,
