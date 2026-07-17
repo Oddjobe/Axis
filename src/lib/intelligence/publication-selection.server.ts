@@ -30,6 +30,20 @@ export function trustedSnapshotUnavailable(
   return trustedPublicationSelectionEnabled() && (!records || records.length === 0);
 }
 
+export function recordRetrievalTimestamp(record: LegacyRecord): string | null {
+  for (const key of ["retrievedAt", "retrieved_at", "created_at"] as const) {
+    const value = record[key];
+    const timestamp =
+      value instanceof Date
+        ? value.getTime()
+        : typeof value === "string"
+          ? Date.parse(value)
+          : Number.NaN;
+    if (Number.isFinite(timestamp)) return new Date(timestamp).toISOString();
+  }
+  return null;
+}
+
 function trustedRecord(row: {
   record: unknown;
   source_published_at: unknown;

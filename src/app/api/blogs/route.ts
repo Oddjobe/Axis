@@ -7,6 +7,7 @@ import {
 } from "@/lib/intelligence/trust";
 import {
     getTrustedPublishedRecords,
+    recordRetrievalTimestamp,
     trustedSnapshotUnavailable,
 } from "@/lib/intelligence/publication-selection.server";
 
@@ -59,7 +60,7 @@ const FALLBACK_BLOGS = [
 const FALLBACK_OBSERVED_AT = "2026-03-06T15:05:28.000Z";
 type BlogRow = Record<string, unknown>;
 
-function decorateItems(items: BlogRow[], requestedMode: "live" | "fallback", generatedAt: string) {
+function decorateItems(items: BlogRow[], requestedMode: "live" | "fallback") {
     return items.map((item, index) => {
         const fallback = FALLBACK_BLOGS[index % FALLBACK_BLOGS.length];
         const sourceUpdatedAt =
@@ -69,7 +70,12 @@ function decorateItems(items: BlogRow[], requestedMode: "live" | "fallback", gen
             item.source_published_at ??
             item.published_at ??
             null;
-        const observedAt = item.observedAt ?? item.observed_at ?? item.created_at ?? FALLBACK_OBSERVED_AT;
+        const retrievedAt = recordRetrievalTimestamp(item);
+        const observedAt =
+            item.observedAt ??
+            item.observed_at ??
+            retrievedAt ??
+            FALLBACK_OBSERVED_AT;
         const freshness = getFreshnessMetadata({
             sourceUpdatedAt,
             observedAt,
@@ -96,7 +102,7 @@ function decorateItems(items: BlogRow[], requestedMode: "live" | "fallback", gen
                 sourceUrl,
                 sourcePublishedAt: freshness.sourceUpdatedAt,
                 observedAt: freshness.observedAt,
-                retrievedAt: generatedAt,
+                retrievedAt,
             },
         };
     });
@@ -156,7 +162,7 @@ export async function GET() {
         }
     }
 
-    const data = decorateItems(rows, requestedMode, generatedAt).map((item) => ({
+    const data = decorateItems(rows, requestedMode).map((item) => ({
         ...item,
         publicationTier,
     }));
