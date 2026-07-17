@@ -11,6 +11,7 @@ import { runCommodityIngestion } from "../src/lib/intelligence/ingestion/commodi
 import { runIntelligenceIngestion } from "../src/lib/intelligence/ingestion/orchestrator.server";
 import {
   COMMODITY_IDS,
+  COMMODITY_SOURCES,
   type CommodityId,
   type CommoditySource,
 } from "../src/lib/intelligence/ingestion/commodity-sources";
@@ -35,32 +36,70 @@ function mockClient(result: { data: unknown; error: unknown }): {
   calls: QueryCall[];
 } {
   const calls: QueryCall[] = [];
-  const query = {
-    select(...args: unknown[]) {
-      calls.push({ method: "select", args });
-      return query;
-    },
-    eq(...args: unknown[]) {
-      calls.push({ method: "eq", args });
-      return query;
-    },
-    order(...args: unknown[]) {
-      calls.push({ method: "order", args });
-      return query;
-    },
-    abortSignal(...args: unknown[]) {
-      calls.push({ method: "abortSignal", args });
-      return query;
-    },
-    limit(...args: unknown[]) {
-      calls.push({ method: "limit", args });
-      return Promise.resolve(result);
-    },
-  };
   return {
     client: {
       from(relation: string) {
         calls.push({ method: "from", args: [relation] });
+        const filters: Array<[string, unknown]> = [];
+        const orders: Array<[string, { ascending?: boolean }]> = [];
+        const query = {
+          select(...args: unknown[]) {
+            calls.push({ method: "select", args });
+            return query;
+          },
+          eq(...args: unknown[]) {
+            calls.push({ method: "eq", args });
+            filters.push([String(args[0]), args[1]]);
+            return query;
+          },
+          order(...args: unknown[]) {
+            calls.push({ method: "order", args });
+            orders.push([
+              String(args[0]),
+              (args[1] as { ascending?: boolean } | undefined) ?? {},
+            ]);
+            return query;
+          },
+          abortSignal(...args: unknown[]) {
+            calls.push({ method: "abortSignal", args });
+            return query;
+          },
+          range(...args: unknown[]) {
+            calls.push({ method: "range", args });
+            if (!Array.isArray(result.data)) {
+              return Promise.resolve(result);
+            }
+            let rows = [...result.data] as Array<Record<string, unknown>>;
+            for (const [column, expected] of filters) {
+              if (column === "dataset") {
+                rows = rows.filter((row) => row.dataset === expected);
+              } else if (column === "record->>id") {
+                rows = rows.filter(
+                  (row) =>
+                    (row.record as Record<string, unknown> | undefined)?.id ===
+                    expected,
+                );
+              }
+            }
+            rows.sort((left, right) => {
+              for (const [column, options] of orders) {
+                const leftValue = Date.parse(String(left[column] ?? ""));
+                const rightValue = Date.parse(String(right[column] ?? ""));
+                const difference = leftValue - rightValue;
+                if (difference !== 0) {
+                  return options.ascending ? difference : -difference;
+                }
+              }
+              return 0;
+            });
+            const from = Number(args[0]);
+            const to = Number(args[1]);
+            return Promise.resolve({
+              data: rows.slice(from, to + 1),
+              error: result.error,
+            });
+          },
+        };
         return query;
       },
     } as unknown as SupabaseClient,
@@ -73,9 +112,22 @@ function historyRow(
   price: number | string,
   publishedAt = "2026-07-16T12:00:00.000Z",
   sourcePublishedAt = "2026-07-16T10:00:00.000Z",
+  recordOverrides: Record<string, unknown> = {},
 ) {
+  const source = COMMODITY_SOURCES.find((candidate) => candidate.id === id);
+  assert(source);
   return {
-    record: { dataset: "commodity", id, commodityId: id, price },
+    dataset: "commodity",
+    record: {
+      dataset: "commodity",
+      id,
+      commodityId: id,
+      price,
+      publisher: source.publisher,
+      sourceMarket: source.market,
+      canonicalUrl: source.url,
+      ...recordOverrides,
+    },
     source_published_at: sourcePublishedAt,
     published_at: publishedAt,
   };
@@ -174,7 +226,7 @@ const duplicateMock = mockClient({
 const deduplicated = await loadPreviousCommodityPrices(duplicateMock.client);
 assert.equal(deduplicated.status, "loaded");
 assert.equal(deduplicated.previousCommodityPrices.cobalt, 60_050);
-assert.equal(deduplicated.duplicateRowsIgnored, 1);
+assert.equal(deduplicated.duplicateRowsIgnored, 0);
 assert.equal(
   deduplicated.previousCommoditySourcePublishedAt.cobalt,
   "2026-07-16T10:00:00.000Z",
@@ -213,6 +265,32 @@ assert.equal(
 assert.equal(
   tieBreak.previousCommodityPublishedAt.cobalt,
   "2026-07-16T13:00:00.000Z",
+);
+
+const obsoleteBauxite = await loadPreviousCommodityPrices(
+  mockClient({
+    data: [
+      historyRow(
+        "bauxite",
+        99,
+        "2026-07-17T12:00:00.000Z",
+        "2026-07-17T10:00:00.000Z",
+        {
+          publisher: "S&P Global Platts / IndexBox",
+          sourceMarket: "Guinea bauxite FOB",
+          canonicalUrl: "https://www.spglobal.com/commodityinsights/",
+        },
+      ),
+      ...COMMODITY_IDS.map((id) => historyRow(id, prices[id])),
+    ],
+    error: null,
+  }).client,
+);
+assert.equal(obsoleteBauxite.status, "loaded");
+assert.equal(obsoleteBauxite.previousCommodityPrices.bauxite, prices.bauxite);
+assert.equal(
+  obsoleteBauxite.previousCommoditySourcePublishedAt.bauxite,
+  "2026-07-16T10:00:00.000Z",
 );
 
 const bootstrap = await loadPreviousCommodityPrices(
@@ -392,7 +470,7 @@ assert(
 );
 
 console.log(
-  "Commodity history fixtures passed (loaded, newest dedupe, normalized prices, labeled bootstrap, query failure, anomaly quarantine).",
+  "Commodity history fixtures passed (loaded, current-policy selection, normalized prices, labeled bootstrap, query failure, anomaly quarantine).",
 );
 }
 
