@@ -9,6 +9,10 @@ import { useWatchlist } from "@/lib/use-watchlist";
 import { supabase } from "@/lib/supabase";
 import SovereigntyTrendlineChart from "./sovereignty-trendline-chart";
 import type { DataMode, FreshnessMetadata } from "@/lib/intelligence/trust";
+import {
+    getPublicTrustStateLabel,
+    type PublicTrustState,
+} from "@/lib/intelligence/trust-health";
 
 export interface CountryData {
     country: string;
@@ -82,6 +86,7 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
     const [showScoreExplainer, setShowScoreExplainer] = useState(false);
     const [intelAlerts, setIntelAlerts] = useState<IntelligenceAlert[]>([]);
     const [intelLoading, setIntelLoading] = useState(false);
+    const [intelTrustState, setIntelTrustState] = useState<PublicTrustState>("unavailable");
     const { watchlist, togglePin } = useWatchlist();
     const isPinned = countryData ? watchlist.includes(countryData.country) : false;
 
@@ -121,6 +126,7 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
         if (!countryData?.country) return;
         setIntelAlerts([]);
         setIntelLoading(true);
+        setIntelTrustState("unavailable");
 
         supabase
             .from('intelligence_alerts')
@@ -129,7 +135,12 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
             .order('created_at', { ascending: false })
             .limit(25)
             .then(({ data, error }) => {
-                if (!error && data) setIntelAlerts(data);
+                if (!error && data) {
+                    setIntelAlerts(data);
+                    setIntelTrustState(data.length > 0
+                        ? "legacy-live-ingested"
+                        : "unavailable");
+                }
                 setIntelLoading(false);
             });
     }, [countryData?.country]);
@@ -436,7 +447,7 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
                             onClick={() => setActiveTab("INTEL")}
                             className={`pb-3 border-b-2 transition-colors flex items-center gap-2 shrink-0 ${activeTab === "INTEL" ? "border-amber-500 text-amber-500 font-bold" : "border-transparent text-slate-light hover:text-foreground"}`}
                         >
-                            <Newspaper className="w-4 h-4" /> LIVE INTEL
+                            <Newspaper className="w-4 h-4" /> INTELLIGENCE
                             {intelAlerts.length > 0 && (
                                 <span className="text-[9px] px-1.5 py-0.5 bg-amber-500/20 text-amber-500 rounded-full font-bold">{intelAlerts.length}</span>
                             )}
@@ -744,9 +755,9 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
                                             </h3>
                                             <div className="flex items-center gap-2">
                                                 {liveRisk.length > 0 && (
-                                                    <span className="text-[10px] font-mono px-2 py-1 bg-green-500/10 text-green-500 border border-green-500/30 rounded flex items-center gap-1">
-                                                        <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                                                        LIVE · {liveRisk.length}
+                                                    <span className="text-[10px] font-mono px-2 py-1 bg-amber-500/10 text-amber-500 border border-amber-500/30 rounded flex items-center gap-1">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                                                        {getPublicTrustStateLabel(intelTrustState)} · {liveRisk.length}
                                                     </span>
                                                 )}
                                                 <span className={`text-[10px] font-black px-2 py-1 rounded border font-mono ${riskTextColor} bg-current/10 border-current/30`} style={{ backgroundColor: 'transparent', borderColor: riskScore >= 60 ? 'rgba(239,68,68,0.3)' : riskScore >= 35 ? 'rgba(249,115,22,0.3)' : riskScore >= 15 ? 'rgba(234,179,8,0.3)' : 'rgba(34,197,94,0.3)' }}>
@@ -800,19 +811,19 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
                             <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-500">
                                 <div className="flex items-center justify-between border-b border-border pb-2">
                                     <h3 className="text-xs font-bold text-amber-500 font-mono flex items-center gap-2 uppercase tracking-wider">
-                                        <Newspaper className="w-4 h-4" /> Live Intelligence Feed
+                                        <Newspaper className="w-4 h-4" /> Intelligence Feed
                                     </h3>
                                     {intelAlerts.length > 0 && (
-                                        <span className="text-[10px] font-mono px-2 py-1 bg-green-500/10 text-green-500 border border-green-500/30 rounded flex items-center gap-1">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                                            LIVE · {intelAlerts.length} RECORDS
+                                        <span className="text-[10px] font-mono px-2 py-1 bg-amber-500/10 text-amber-500 border border-amber-500/30 rounded flex items-center gap-1">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                                            {getPublicTrustStateLabel(intelTrustState)} · {intelAlerts.length} RECORDS
                                         </span>
                                     )}
                                 </div>
 
                                 {intelLoading ? (
                                     <div className="flex flex-col items-center justify-center py-12 opacity-50 space-y-2">
-                                        <span className="text-xs font-mono animate-pulse">PULLING LIVE INTEL...</span>
+                                        <span className="text-xs font-mono animate-pulse">LOADING INTELLIGENCE...</span>
                                     </div>
                                 ) : intelAlerts.length === 0 ? (
                                     <div className="flex flex-col items-center justify-center py-12 opacity-50 space-y-2 text-center px-4">

@@ -1,14 +1,15 @@
 "use client"
 
 import React, { useMemo, useEffect, useState, useCallback } from 'react';
-import { ResponsiveSankey } from '@nivo/sankey';
+import {
+    ResponsiveSankey,
+    type SankeyLinkDatum,
+    type SankeyNodeDatum,
+} from '@nivo/sankey';
 import { useTheme } from 'next-themes';
 import { supabase } from '@/lib/supabase';
-import type { CountryData, IntelligenceAlert } from './country-dossier-modal';
-
-interface InfluenceSankeyChartProps {
-    data: CountryData[];
-}
+import { getPublicTrustStateLabel } from '@/lib/intelligence/trust-health';
+import type { IntelligenceAlert } from './country-dossier-modal';
 
 // Hardcoded stable fallback flows when Supabase has no data yet
 const STATIC_FLOWS = [
@@ -49,16 +50,16 @@ const ISO_TO_NAME: Record<string, string> = {
 };
 
 type Flow = { source: string; target: string; value: number };
+type FlowNode = { id: string; nodeColor: string };
 
 const TOP_N = 12;
 
-export default function InfluenceSankeyChart({ data: _data }: InfluenceSankeyChartProps) {
+export default function InfluenceSankeyChart() {
     const { theme } = useTheme();
     const isDark = theme === "dark" || theme === "system" || !theme;
 
     const [liveAlerts, setLiveAlerts] = useState<IntelligenceAlert[]>([]);
     const [alertCount, setAlertCount] = useState(0);
-    const [isLive, setIsLive] = useState(false);
 
     // Interaction state
     const [selectedActors, setSelectedActors] = useState<Set<string>>(new Set());
@@ -78,7 +79,6 @@ export default function InfluenceSankeyChart({ data: _data }: InfluenceSankeyCha
             if (!error && data && data.length > 0) {
                 setLiveAlerts(data);
                 setAlertCount(data.length);
-                setIsLive(true);
             }
         }
         fetchInfluenceAlerts();
@@ -89,7 +89,10 @@ export default function InfluenceSankeyChart({ data: _data }: InfluenceSankeyCha
         return liveAlerts.some(alert => alert.actor && SOURCE_META[alert.actor]);
     }, [liveAlerts]);
 
-    const showLive = isLive && hasInfluenceActors;
+    const showLive = liveAlerts.length > 0 && hasInfluenceActors;
+    const trustState = showLive
+        ? "legacy-live-ingested"
+        : "static-fallback";
 
     // The complete (unfiltered) set of flows derived from live or fallback data
     const baseLinks = useMemo<Flow[]>(() => {
@@ -188,15 +191,15 @@ export default function InfluenceSankeyChart({ data: _data }: InfluenceSankeyCha
         setFocusNode(null);
     }, []);
 
-    const handleNodeOrLinkClick = useCallback((datum: any) => {
-        if (!datum) return;
-        if (datum.id !== undefined) {
+    const handleNodeOrLinkClick = useCallback((
+        datum: SankeyNodeDatum<FlowNode, Flow> | SankeyLinkDatum<FlowNode, Flow>,
+    ) => {
+        if ("id" in datum) {
             // Node click
             setFocusNode(prev => (prev === datum.id ? null : datum.id));
-        } else if (datum.target) {
+        } else {
             // Link click -> focus its recipient country
-            const tid = typeof datum.target === 'string' ? datum.target : datum.target.id;
-            if (tid) setFocusNode(prev => (prev === tid ? null : tid));
+            setFocusNode(prev => (prev === datum.target.id ? null : datum.target.id));
         }
     }, []);
 
@@ -214,9 +217,9 @@ export default function InfluenceSankeyChart({ data: _data }: InfluenceSankeyCha
                         <span className="w-2 h-2 rounded-full bg-orange-500" />
                         Negative Influence Flows
                     </h3>
-                    <span className={`text-[10px] font-mono px-2 py-1 rounded border flex items-center gap-1.5 ${showLive ? "text-green-500 border-green-500/30 bg-green-500/10" : "text-slate-light border-border bg-background/50"}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${showLive ? "bg-green-500 animate-pulse" : "bg-slate-400"}`} />
-                        {showLive ? `LIVE · ${alertCount} ALERTS` : "STATIC FALLBACK"}
+                    <span className={`text-[10px] font-mono px-2 py-1 rounded border flex items-center gap-1.5 ${showLive ? "text-amber-500 border-amber-500/30 bg-amber-500/10" : "text-slate-light border-border bg-background/50"}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${showLive ? "bg-amber-500" : "bg-slate-400"}`} />
+                        {getPublicTrustStateLabel(trustState)}{showLive ? ` · ${alertCount} ALERTS` : ""}
                     </span>
                 </div>
                 <p className="text-xs font-mono text-slate-light mt-1">
@@ -308,7 +311,7 @@ export default function InfluenceSankeyChart({ data: _data }: InfluenceSankeyCha
                         data={sankeyData}
                         margin={{ top: 10, right: 160, bottom: 10, left: 160 }}
                         align="justify"
-                        colors={(node: any) => node.nodeColor}
+                        colors={(node) => node.nodeColor}
                         nodeOpacity={1}
                         nodeHoverOthersOpacity={0.15}
                         nodeThickness={18}
@@ -324,7 +327,7 @@ export default function InfluenceSankeyChart({ data: _data }: InfluenceSankeyCha
                         labelPadding={16}
                         labelTextColor={textColor}
                         onClick={handleNodeOrLinkClick}
-                        label={(node: any) => {
+                        label={(node) => {
                             const id: string = node.id;
                             const srcMeta = SOURCE_META[id];
                             if (srcMeta) return `${srcMeta.flag} ${id}`;
