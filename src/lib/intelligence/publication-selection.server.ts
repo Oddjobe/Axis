@@ -1,3 +1,5 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+
 import { supabase } from "@/lib/supabase";
 import {
   COMMODITY_SOURCES,
@@ -131,27 +133,43 @@ export function selectLatestCurrentTrustedRecord(
   );
 }
 
-async function getLatestCurrentTrustedRecordByIdentity(
+export async function getLatestCurrentTrustedRecordByIdentity(
+  client: SupabaseClient,
   dataset: RolloutDataset,
   identity: string,
+  { signal }: { signal?: AbortSignal } = {},
 ): Promise<{ record: LegacyRecord | null; error: string | null }> {
   const pageSize = 100;
 
   for (let offset = 0; ; offset += pageSize) {
-    const result = await supabase
+    let query = client
       .from("trusted_published_records")
       .select("record,source_published_at,published_at")
       .eq("dataset", dataset)
       .eq("record->>id", identity)
       .order("source_published_at", { ascending: false })
-      .order("published_at", { ascending: false })
-      .range(offset, offset + pageSize - 1);
+      .order("published_at", { ascending: false });
+    if (signal) query = query.abortSignal(signal);
+    const result = await query.range(offset, offset + pageSize - 1);
 
     if (result.error) {
-      return { record: null, error: result.error.message };
+      const code =
+        typeof result.error.code === "string"
+          ? ` (${result.error.code})`
+          : "";
+      return {
+        record: null,
+        error: `trusted selection query failed${code}: ${result.error.message}`,
+      };
     }
 
-    const records = (result.data ?? []).map(trustedRecord);
+    const records = (result.data ?? [])
+      .map(trustedRecord)
+      .filter(
+        (record) =>
+          textAt(record, "commodityId", "countryCode", "iso3", "id")
+            .toLowerCase() === identity.toLowerCase(),
+      );
     const record = selectLatestCurrentTrustedRecord(dataset, records);
     if (record) {
       const rejectedCount = offset + records.indexOf(record);
@@ -210,7 +228,11 @@ export async function getLatestTrustedPublishedRecordsByIdentity(
   if (!trustedPublicationSelectionEnabled()) return null;
   const results = await Promise.all(
     identities.map((identity) =>
-      getLatestCurrentTrustedRecordByIdentity(dataset, identity),
+      getLatestCurrentTrustedRecordByIdentity(
+        supabase,
+        dataset,
+        identity,
+      ),
     ),
   );
   const failed = results.find((result) => result.error);
