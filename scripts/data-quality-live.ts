@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 
 import { AFRICAN_ISO3_CODES } from "../src/lib/intelligence/trust";
+import { COMMODITY_IDS } from "../src/lib/intelligence/ingestion/commodity-sources";
 
 type JsonRecord = Record<string, unknown>;
 type PublicationMode = "enforce" | "shadow";
@@ -129,8 +130,7 @@ function validateCommodities(
   const total = Number(coverage.total);
   const ratio = Number(coverage.ratio);
   if (
-    !Number.isInteger(total) ||
-    total < 1 ||
+    total !== COMMODITY_IDS.length ||
     commodityRows.length !== total ||
     !Number.isInteger(records) ||
     records < 0 ||
@@ -252,7 +252,7 @@ function fixturePayloads(tier: "trusted" | "legacy"): LivePayloads {
     publicationTier: tier,
     dataMode,
   }));
-  const commodityRows = ["gold", "copper", "cobalt"].map((id) => ({
+  const commodityRows = COMMODITY_IDS.map((id) => ({
     id,
     publicationTier: tier,
     dataMode,

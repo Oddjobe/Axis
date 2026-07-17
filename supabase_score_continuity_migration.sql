@@ -151,7 +151,7 @@ BEGIN
                 v_record ->> 'canonicalUrl',
                 v_record ->> 'source',
                 'multilateral',
-                (v_record ->> 'sourcePublishedAt')::timestamptz,
+                (v_record ->> 'observedAt')::timestamptz,
                 (v_record ->> 'retrievedAt')::timestamptz,
                 'application/json',
                 v_record ->> 'contentHash',

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { GET } from "../src/app/api/public/scores/route";
 import { ALL_SOVEREIGN_DATA } from "../src/lib/mock-data";
@@ -121,6 +122,18 @@ assert.equal(mergedFixture[0].publicationTier, "trusted");
 const eligibleScores = recomputed.map((score) => ({
   ...score,
   asOf: "2026-07-15T00:00:00.000Z",
+  indicators: score.indicators.map((indicator) => ({
+    ...indicator,
+    imputed: false,
+    year: 2026,
+    provenance: {
+      ...indicator.provenance,
+      observedAt: "2026-07-15T00:00:00.000Z",
+      sourcePublishedAt: "2026-07-15T00:00:00.000Z",
+      kind: "world-bank-api" as const,
+      imputation: null,
+    },
+  })),
   coverage: 1,
   confidence: {
     ...score.confidence,
@@ -132,6 +145,14 @@ const eligibleScores = recomputed.map((score) => ({
 const trustedRelease = buildTrustedScoreRelease(
   eligibleScores,
   "2026-07-16T00:00:00.000Z",
+);
+const scoreContinuityMigration = readFileSync(
+  "supabase_score_continuity_migration.sql",
+  "utf8",
+);
+assert.match(
+  scoreContinuityMigration,
+  /intelligence_raw_observations[\s\S]*?\(v_record ->> 'observedAt'\)::timestamptz/,
 );
 assert.equal(trustedRelease.records.length, 54);
 assert.equal(
@@ -149,6 +170,8 @@ for (const record of trustedRelease.records) {
     Number((record.confidence as { overall: number }).overall) >= 0.8,
   );
   assert.match(String(record.contentHash), /^[0-9a-f]{64}$/);
+  assert.equal(record.observedAt, "2026-07-15T00:00:00.000Z");
+  assert.equal(record.sourcePublishedAt, "2026-07-15T00:00:00.000Z");
 }
 assert.throws(
   () =>
@@ -157,34 +180,92 @@ assert.throws(
         index === 0
           ? {
               ...score,
-              confidence: { ...score.confidence, overall: 0.79 },
+              indicators: score.indicators.map((indicator) => ({
+                ...indicator,
+                provenance: {
+                  ...indicator.provenance,
+                  sourcePublishedAt: null,
+                },
+              })),
             }
           : score,
       ),
       "2026-07-16T00:00:00.000Z",
     ),
-  /confidence 0.79 is below 0.8/,
+  /explicit publisher timestamps are required/,
 );
 assert.throws(
   () =>
     buildTrustedScoreRelease(
       eligibleScores.map((score, index) =>
-        index === 0 ? { ...score, coverage: 0.79 } : score,
+        index === 0
+          ? {
+              ...score,
+              indicators: score.indicators.map(
+                (indicator, indicatorIndex) =>
+                  indicatorIndex === 0
+                    ? {
+                        ...indicator,
+                        provenance: {
+                          ...indicator.provenance,
+                          observedAt: "2024-12-31T00:00:00.000Z",
+                        },
+                      }
+                    : indicator,
+              ),
+              confidence: {
+                ...score.confidence,
+                sourceQuality: 0.9,
+              },
+            }
+          : score,
       ),
       "2026-07-16T00:00:00.000Z",
     ),
-  /coverage 0.79 is below 0.8/,
+  /confidence_below_threshold.*fresh coverage 0.88, fresh confidence 0.79/,
+);
+assert.throws(
+  () =>
+    buildTrustedScoreRelease(
+      eligibleScores.map((score, index) =>
+        index === 0
+          ? {
+              ...score,
+              indicators: score.indicators.map(
+                (indicator, indicatorIndex) =>
+                  indicatorIndex < 2
+                    ? {
+                        ...indicator,
+                        provenance: {
+                          ...indicator.provenance,
+                          observedAt: "2024-12-31T00:00:00.000Z",
+                        },
+                      }
+                    : indicator,
+              ),
+            }
+          : score,
+      ),
+      "2026-07-16T00:00:00.000Z",
+    ),
+  /coverage_below_threshold/,
 );
 assert.throws(
   () =>
     buildTrustedScoreRelease(
       eligibleScores.map((score) => ({
         ...score,
-        asOf: "2024-12-31T00:00:00.000Z",
+        indicators: score.indicators.map((indicator) => ({
+          ...indicator,
+          provenance: {
+            ...indicator.provenance,
+            observedAt: "2024-12-31T00:00:00.000Z",
+          },
+        })),
       })),
       "2026-07-16T00:00:00.000Z",
     ),
-  /stale_source/,
+  /stale_score/,
 );
 const missingConfidence = classifyLegacyRecord(
   "country-score",
@@ -271,8 +352,8 @@ async function checkPersistenceSemantics() {
   assert.equal(legacyWrites, 0, "atomic success must not perform a second legacy write");
   assert.equal(rpcArguments[0].p_minimum_confidence, 0.8);
   assert.equal(rpcArguments[0].p_minimum_coverage, MIN_TRUSTED_SCORE_COVERAGE);
-  assert.equal(
-    await persistScoreRelease(
+  await assert.rejects(
+    persistScoreRelease(
       client({
         code: "PGRST202",
         message: "Could not find publish_country_score_release in the schema cache",
@@ -280,20 +361,24 @@ async function checkPersistenceSemantics() {
       rows as never,
       trustedRelease.records,
     ),
-    "legacy",
+    /migration is unavailable; previous trusted release retained/,
   );
-  assert.equal(legacyWrites, 1, "missing migration must preserve the legacy fallback");
+  assert.equal(
+    legacyWrites,
+    0,
+    "trusted promotion must remain separate from the legacy refresh",
+  );
   await assert.rejects(
     persistScoreRelease(
       client({ code: "XX000", message: "transaction failed" }),
       rows as never,
       trustedRelease.records,
     ),
-    /previous release was retained/,
+    /publication failed; previous trusted release retained/,
   );
   assert.equal(
     legacyWrites,
-    1,
+    0,
     "trusted publication failures must retain the previous release instead of writing raw rows",
   );
   await assert.rejects(

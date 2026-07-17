@@ -1,15 +1,25 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import * as dotenv from "dotenv";
+import { mkdir, writeFile } from "node:fs/promises";
+import { dirname, resolve } from "node:path";
 import { ALL_SOVEREIGN_DATA } from "../src/lib/mock-data";
 import {
   computeCompositeScores,
-  getBundledBaselineObservations,
-  INDICATOR_DEFINITIONS,
-  type ScoreObservation,
 } from "../src/lib/intelligence/score-methodology";
 import {
+  loadWorldBankObservations,
+  type ObservationLoadResult,
+  type WorldBankLoadOptions,
+} from "../src/lib/intelligence/score-observations";
+import {
+  evaluateScoreReadiness,
+  MIN_TRUSTED_SCORE_CONFIDENCE,
+  MIN_TRUSTED_SCORE_COVERAGE,
+  serializeScoreReadinessReport,
+  type ScoreReadinessReport,
+} from "../src/lib/intelligence/score-readiness";
+import {
   AFRICAN_ISO3_CODES,
-  DATASET_TRUST_POLICIES,
   africanIso3Schema,
 } from "../src/lib/intelligence/trust";
 import {
@@ -26,16 +36,7 @@ const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const supabase = SUPABASE_URL && SUPABASE_SERVICE_KEY
   ? createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
   : null;
-const isoCodes = new Set<string>(AFRICAN_ISO3_CODES);
-
-interface WorldBankObservation {
-  countryiso3code?: string;
-  indicator?: { id?: string };
-  date?: string;
-  value?: number | null;
-}
-
-interface CountryRow {
+export interface CountryRow {
   id: string;
   name: string;
   axisScore: number;
@@ -50,9 +51,12 @@ interface CountryRow {
 }
 
 const SCORE_SOURCE_URL = "https://axis-mocha.vercel.app/methodology";
-const SCORE_TRUST_POLICY = DATASET_TRUST_POLICIES["country-score"];
-export const MIN_TRUSTED_SCORE_COVERAGE =
-  SCORE_TRUST_POLICY.minimumConfidence;
+const DEFAULT_READINESS_REPORT =
+  "quality-reports/score-readiness-report.json";
+export {
+  MIN_TRUSTED_SCORE_CONFIDENCE,
+  MIN_TRUSTED_SCORE_COVERAGE,
+};
 
 function missingScoreReleaseMigration(error: { code?: string; message?: string }): boolean {
   const message = (error.message ?? "").toLowerCase();
@@ -81,42 +85,72 @@ export function buildTrustedScoreRelease(
   ) {
     throw new Error("Trusted score releases require exactly 54 unique countries.");
   }
-  for (const score of scores) {
-    if (score.confidence.overall < SCORE_TRUST_POLICY.minimumConfidence) {
-      throw new Error(
-        `Trusted score release rejected for ${score.country}: confidence `
-        + `${score.confidence.overall} is below ${SCORE_TRUST_POLICY.minimumConfidence}.`,
-      );
-    }
-    if (score.coverage < MIN_TRUSTED_SCORE_COVERAGE) {
-      throw new Error(
-        `Trusted score release rejected for ${score.country}: coverage `
-        + `${score.coverage} is below ${MIN_TRUSTED_SCORE_COVERAGE}.`,
-      );
-    }
+  const readiness = evaluateScoreReadiness(scores, { generatedAt });
+  if (!readiness.summary.promotable) {
+    const blocked = readiness.countries.find((country) => !country.ready);
+    throw new Error(
+      blocked
+        ? `Trusted score release rejected for ${blocked.country}: `
+          + `${blocked.blockers.join(", ")} (fresh coverage ${blocked.coverage}, `
+          + `fresh confidence ${blocked.confidence}).`
+        : "Trusted score release rejected: readiness gates did not pass.",
+    );
   }
-  const releaseBody = scores.map((score) => ({
-    dataset: "country-score",
-    country: score.country,
-    id: score.country,
-    axisScore: score.axisScore,
-    status: score.status,
-    dimensions: score.dimensions,
-    indicators: score.indicators,
-    coverage: score.coverage,
-    confidence: score.confidence,
-    sources: score.sources,
-    methodologyVersion: score.methodologyVersion,
-    source: "World Bank",
-    sourceUrl: SCORE_SOURCE_URL,
-    canonicalUrl: SCORE_SOURCE_URL,
-    sourcePublishedAt: score.asOf,
-  }));
+  const readinessByCountry = new Map(
+    readiness.countries.map((country) => [country.country, country]),
+  );
+  const releaseBody = scores.map((score) => {
+    const countryReadiness = readinessByCountry.get(score.country)!;
+    const publisherTimestamps = score.indicators
+      .filter((indicator) => !indicator.imputed && indicator.year !== null)
+      .map((indicator) => indicator.provenance.sourcePublishedAt)
+      .filter((timestamp): timestamp is string =>
+        typeof timestamp === "string" && Number.isFinite(Date.parse(timestamp))
+      );
+    if (
+      publisherTimestamps.length
+        !== score.indicators.filter(
+          (indicator) => !indicator.imputed && indicator.year !== null,
+        ).length
+    ) {
+      throw new Error(
+        `Trusted score release rejected for ${score.country}: explicit publisher timestamps are required for every source observation.`,
+      );
+    }
+    const sourcePublishedAt = publisherTimestamps.sort(
+      (left, right) => Date.parse(right) - Date.parse(left),
+    )[0];
+    return {
+      dataset: "country-score",
+      country: score.country,
+      id: score.country,
+      axisScore: score.axisScore,
+      status: score.status,
+      dimensions: score.dimensions,
+      indicators: score.indicators,
+      coverage: countryReadiness.coverage,
+      confidence: {
+        ...score.confidence,
+        overall: countryReadiness.confidence,
+        completeness: countryReadiness.coverage,
+        recency: countryReadiness.recency,
+      },
+      sources: score.sources,
+      methodologyVersion: score.methodologyVersion,
+      source: "World Bank",
+      sourceUrl: SCORE_SOURCE_URL,
+      canonicalUrl: SCORE_SOURCE_URL,
+      observedAt: countryReadiness.asOf,
+      sourcePublishedAt,
+    };
+  });
   const releaseHash = stableRecordHash(releaseBody);
-  const latestAsOf = scores.reduce(
-    (latest, score) =>
-      Date.parse(score.asOf) > Date.parse(latest) ? score.asOf : latest,
-    scores[0]?.asOf ?? generatedAt,
+  const latestAsOf = releaseBody.reduce(
+    (latest, record) =>
+      Date.parse(record.observedAt) > Date.parse(latest)
+        ? record.observedAt
+        : latest,
+    releaseBody[0]?.observedAt ?? generatedAt,
   );
   const releaseId =
     `country-score:${latestAsOf.slice(0, 10)}:${releaseHash.slice(0, 16)}`;
@@ -158,7 +192,7 @@ export async function persistScoreRelease(
   client: SupabaseClient,
   rows: readonly CountryRow[],
   records: readonly LegacyRecord[],
-): Promise<"trusted" | "legacy"> {
+): Promise<"trusted"> {
   if (
     rows.length !== AFRICAN_ISO3_CODES.length
     || records.length !== AFRICAN_ISO3_CODES.length
@@ -174,7 +208,7 @@ export async function persistScoreRelease(
     if (
       record.classificationDisposition !== "clean"
       || !Number.isFinite(confidence)
-      || confidence < SCORE_TRUST_POLICY.minimumConfidence
+      || confidence < MIN_TRUSTED_SCORE_CONFIDENCE
       || !Number.isFinite(coverage)
       || coverage < MIN_TRUSTED_SCORE_COVERAGE
     ) {
@@ -186,26 +220,17 @@ export async function persistScoreRelease(
   const atomicWrite = await client.rpc("publish_country_score_release", {
     p_release_records: records,
     p_country_rows: rows,
-    p_minimum_confidence: SCORE_TRUST_POLICY.minimumConfidence,
+    p_minimum_confidence: MIN_TRUSTED_SCORE_CONFIDENCE,
     p_minimum_coverage: MIN_TRUSTED_SCORE_COVERAGE,
   });
   if (!atomicWrite.error) return "trusted";
-  if (!missingScoreReleaseMigration(atomicWrite.error)) {
-    throw new Error(
-      "Atomic trusted score publication failed; the previous release was retained: "
-      + atomicWrite.error.message,
-    );
-  }
-
-  console.warn(
-    "Score continuity migration unavailable; preserving legacy countries fallback "
-    + "without changing the previous trusted release.",
+  throw new Error(
+    missingScoreReleaseMigration(atomicWrite.error)
+      ? "Trusted score promotion migration is unavailable; previous trusted release retained: "
+        + atomicWrite.error.message
+      : "Atomic trusted score publication failed; previous trusted release retained: "
+        + atomicWrite.error.message,
   );
-  const legacyWrite = await client.from("countries").upsert(rows);
-  if (legacyWrite.error) {
-    throw new Error(`Supabase fallback upsert failed: ${legacyWrite.error.message}`);
-  }
-  return "legacy";
 }
 
 function parseMetricSafe(
@@ -231,100 +256,11 @@ function parseMetricSafe(
   );
 }
 
-async function fetchIndicator(
-  indicatorId: string,
-  startYear: number,
-  endYear: number,
-): Promise<ScoreObservation[]> {
-  const countries = AFRICAN_ISO3_CODES.join(";");
-  const url = new URL(
-    `https://api.worldbank.org/v2/country/${countries}/indicator/${indicatorId}`,
-  );
-  url.searchParams.set("format", "json");
-  url.searchParams.set("date", `${startYear}:${endYear}`);
-  url.searchParams.set("per_page", "2000");
-
-  const response = await fetch(url, {
-    headers: { Accept: "application/json" },
-    signal: AbortSignal.timeout(30_000),
-  });
-  if (!response.ok) {
-    throw new Error(`World Bank ${indicatorId} returned HTTP ${response.status}.`);
-  }
-
-  const payload: unknown = await response.json();
-  if (!Array.isArray(payload) || !Array.isArray(payload[1])) {
-    throw new Error(`World Bank ${indicatorId} returned an invalid payload.`);
-  }
-
-  const latest = new Map<string, ScoreObservation>();
-  for (const candidate of payload[1] as WorldBankObservation[]) {
-    const country = candidate.countryiso3code;
-    const year = Number(candidate.date);
-    const value = candidate.value;
-    if (
-      !country
-      || !isoCodes.has(country)
-      || candidate.indicator?.id !== indicatorId
-      || !Number.isInteger(year)
-      || year < startYear
-      || year > endYear
-      || typeof value !== "number"
-      || !Number.isFinite(value)
-      || latest.has(country)
-    ) {
-      continue;
-    }
-    latest.set(country, {
-      country: africanIso3Schema.parse(country),
-      indicatorId,
-      value,
-      year,
-    });
-  }
-  return [...latest.values()];
-}
-
-export async function loadValidatedObservations(): Promise<ScoreObservation[]> {
-  const endYear = new Date().getUTCFullYear();
-  const startYear = endYear - 6;
-  const bundled = getBundledBaselineObservations();
-  const observations: ScoreObservation[] = [];
-
-  for (const indicator of INDICATOR_DEFINITIONS) {
-    try {
-      const live = await fetchIndicator(indicator.id, startYear, endYear);
-      if (live.length < 20) {
-        throw new Error(`only ${live.length} valid country observations`);
-      }
-      observations.push(...live);
-      console.log(`World Bank ${indicator.id}: ${live.length} validated observations.`);
-    } catch (error) {
-      const fallback = bundled.filter(
-        (observation) => observation.indicatorId === indicator.id,
-      );
-      observations.push(...fallback);
-      console.warn(
-        `World Bank ${indicator.id} unavailable; using ${fallback.length} bundled observations:`,
-        error instanceof Error ? error.message : error,
-      );
-    }
-  }
-
-  return observations;
-}
-
-async function main() {
-  console.log("Computing AXIS country scores from cited indicator observations...");
-  if (!supabase) {
-    console.error("Supabase config missing; no rows written.");
-    return;
-  }
-
-  const observations = await loadValidatedObservations();
-  const scores = computeCompositeScores(observations);
+export function buildLegacyCountryRows(
+  scores: ReturnType<typeof computeCompositeScores>,
+): CountryRow[] {
   const scoreByIso = new Map(scores.map((score) => [score.country, score]));
-  const rows = ALL_SOVEREIGN_DATA.map((country) => {
+  return ALL_SOVEREIGN_DATA.map((country) => {
     const score = scoreByIso.get(africanIso3Schema.parse(country.country));
     if (!score) throw new Error(`No deterministic score for ${country.country}.`);
 
@@ -342,21 +278,276 @@ async function main() {
       updated_at: score.asOf,
     };
   });
+}
 
+export async function persistLegacyCountryRefresh(
+  client: SupabaseClient,
+  rows: readonly CountryRow[],
+): Promise<void> {
   if (
     rows.length !== AFRICAN_ISO3_CODES.length
     || new Set(rows.map((row) => row.id)).size !== AFRICAN_ISO3_CODES.length
   ) {
     throw new Error("Country score update must contain exactly 54 unique ISO-3 rows.");
   }
+  const legacyWrite = await client.from("countries").upsert(rows);
+  if (legacyWrite.error) {
+    throw new Error(`Legacy countries refresh failed: ${legacyWrite.error.message}`);
+  }
+}
 
-  const release = buildTrustedScoreRelease(scores);
-  const mode = await persistScoreRelease(supabase, rows, release.records);
-  console.log(
-    mode === "trusted"
-      ? `Atomically published trusted release ${release.releaseId} with ${rows.length} scored rows.`
-      : `Successfully upserted ${rows.length} deterministic scored rows in legacy fallback mode.`,
+export type ScoreRefreshFailurePhase =
+  | "configuration"
+  | "legacy_refresh"
+  | "trusted_promotion";
+
+export class ScoreRefreshOperationalError extends Error {
+  constructor(
+    readonly phase: ScoreRefreshFailurePhase,
+    message: string,
+    options?: ErrorOptions,
+  ) {
+    super(message, options);
+    this.name = "ScoreRefreshOperationalError";
+  }
+}
+
+export function withScoreOperationalFailure(
+  report: ScoreReadinessReport,
+  phase: ScoreRefreshFailurePhase,
+  error: unknown,
+): ScoreReadinessReport {
+  const detail = error instanceof Error ? error.message : String(error);
+  return {
+    ...report,
+    legacyRefresh:
+      phase === "configuration"
+        ? {
+            status: "not_attempted",
+            detail: "Supabase configuration is missing.",
+          }
+        : phase === "legacy_refresh"
+          ? { status: "failed", detail }
+          : {
+              status: "refreshed",
+              detail:
+                "Legacy countries were refreshed before trusted promotion failed.",
+            },
+    promotion: {
+      status: "retained",
+      previousTrustedReleaseRetained: true,
+      detail:
+        "An operational failure prevented trusted promotion; the previous trusted release remains authoritative.",
+    },
+    operation: {
+      status: "failed",
+      phase,
+      detail,
+    },
+  };
+}
+
+export async function publishCountryScoreRefresh(
+  client: SupabaseClient,
+  rows: readonly CountryRow[],
+  scores: ReturnType<typeof computeCompositeScores>,
+  readiness: ScoreReadinessReport,
+): Promise<{
+  legacy: "refreshed";
+  trusted: "published" | "retained";
+  releaseId: string | null;
+  readiness: ScoreReadinessReport;
+}> {
+  try {
+    await persistLegacyCountryRefresh(client, rows);
+  } catch (error) {
+    throw new ScoreRefreshOperationalError(
+      "legacy_refresh",
+      error instanceof Error ? error.message : String(error),
+      { cause: error },
+    );
+  }
+  if (!readiness.summary.promotable) {
+    return {
+      legacy: "refreshed",
+      trusted: "retained",
+      releaseId: null,
+      readiness: {
+        ...readiness,
+        legacyRefresh: {
+          status: "refreshed",
+          detail:
+            "Legacy countries were refreshed independently; trusted promotion remained blocked.",
+        },
+        operation: {
+          status: "success",
+          phase: "readiness",
+          detail:
+            "Non-promotable evidence was reported without attempting trusted promotion.",
+        },
+      },
+    };
+  }
+
+  let release: ReturnType<typeof buildTrustedScoreRelease>;
+  try {
+    release = buildTrustedScoreRelease(scores, readiness.generatedAt);
+    await persistScoreRelease(client, rows, release.records);
+  } catch (error) {
+    throw new ScoreRefreshOperationalError(
+      "trusted_promotion",
+      error instanceof Error ? error.message : String(error),
+      { cause: error },
+    );
+  }
+  return {
+    legacy: "refreshed",
+    trusted: "published",
+    releaseId: release.releaseId,
+    readiness: {
+      ...readiness,
+      legacyRefresh: {
+        status: "refreshed",
+        detail: "Legacy countries were refreshed before trusted promotion.",
+      },
+      promotion: {
+        status: "published",
+        previousTrustedReleaseRetained: false,
+        detail: `Trusted release ${release.releaseId} was atomically published.`,
+      },
+      operation: {
+        status: "success",
+        phase: "trusted_promotion",
+        detail: "Legacy refresh and trusted promotion completed.",
+      },
+    },
+  };
+}
+
+export async function loadValidatedObservations(
+  options: WorldBankLoadOptions = {},
+): Promise<ObservationLoadResult> {
+  return loadWorldBankObservations(options);
+}
+
+function readinessReportPath(): string {
+  const index = process.argv.indexOf("--readiness-output");
+  return resolve(
+    index >= 0 && process.argv[index + 1]
+      ? process.argv[index + 1]
+      : DEFAULT_READINESS_REPORT,
   );
+}
+
+async function writeReadinessReport(
+  report: ScoreReadinessReport,
+): Promise<string> {
+  const path = readinessReportPath();
+  await mkdir(dirname(path), { recursive: true });
+  await writeFile(path, serializeScoreReadinessReport(report), "utf8");
+  return path;
+}
+
+export async function reportScoreOperationalFailure(
+  report: ScoreReadinessReport,
+  phase: ScoreRefreshFailurePhase,
+  error: unknown,
+  writeReport: (failed: ScoreReadinessReport) => Promise<unknown> =
+    writeReadinessReport,
+): Promise<never> {
+  const operationalError = error instanceof ScoreRefreshOperationalError
+    ? error
+    : new ScoreRefreshOperationalError(
+        phase,
+        error instanceof Error ? error.message : String(error),
+        { cause: error },
+      );
+  const failed = withScoreOperationalFailure(
+    report,
+    operationalError.phase,
+    operationalError,
+  );
+  await writeReport(failed);
+  throw operationalError;
+}
+
+async function main() {
+  console.log("Computing AXIS country scores from cited indicator observations...");
+  const generatedAt = new Date().toISOString();
+  const loaded = await loadValidatedObservations({ retrievedAt: generatedAt });
+  for (const diagnostic of loaded.diagnostics) {
+    console.log(JSON.stringify({ type: "score-source", ...diagnostic }));
+  }
+  const scores = computeCompositeScores(loaded.observations);
+  const rows = buildLegacyCountryRows(scores);
+  let readiness = evaluateScoreReadiness(scores, {
+    generatedAt,
+    sourceDiagnostics: loaded.diagnostics,
+  });
+  await writeReadinessReport(readiness);
+
+  if (!supabase) {
+    const error = new ScoreRefreshOperationalError(
+      "configuration",
+      "NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required.",
+    );
+    console.error("Supabase config missing; no rows written.");
+    return await reportScoreOperationalFailure(
+      readiness,
+      "configuration",
+      error,
+    );
+  }
+
+  let result: Awaited<ReturnType<typeof publishCountryScoreRefresh>>;
+  try {
+    result = await publishCountryScoreRefresh(
+      supabase,
+      rows,
+      scores,
+      readiness,
+    );
+  } catch (error) {
+    const operationalError = error instanceof ScoreRefreshOperationalError
+      ? error
+      : new ScoreRefreshOperationalError(
+          "trusted_promotion",
+          error instanceof Error ? error.message : String(error),
+          { cause: error },
+        );
+    console.error(
+      `Score refresh failed: ${operationalError.message}`,
+    );
+    return await reportScoreOperationalFailure(
+      readiness,
+      operationalError.phase,
+      operationalError,
+    );
+  }
+  readiness = result.readiness;
+  const reportPath = await writeReadinessReport(readiness);
+  console.log(
+    JSON.stringify({
+      type: "score-readiness",
+      reportPath,
+      legacy: result.legacy,
+      trusted: result.trusted,
+      releaseId: result.releaseId,
+      ...readiness.summary,
+    }),
+  );
+  if (!readiness.summary.promotable) {
+    const blockers = readiness.countries
+      .filter((country) => !country.ready)
+      .map((country) => ({
+        country: country.country,
+        blockers: country.blockers,
+        indicatorGaps: country.indicatorGaps,
+      }));
+    console.warn(
+      `Trusted score promotion blocked; previous release retained: ${JSON.stringify(blockers)}`,
+    );
+  }
 }
 
 if (process.argv[1]?.endsWith("update-countries.ts")) {

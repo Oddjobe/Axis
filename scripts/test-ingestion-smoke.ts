@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
-import type { PublicationDecision } from "../src/lib/intelligence/publication-gate";
-import type { PublicationPersistenceResult } from "../src/lib/intelligence/publication-storage";
+import type {
+  AtomicPublicationDecision,
+  PublicationPersistenceResult,
+} from "../src/lib/intelligence/publication-storage";
 import { createSupabaseIngestionPersistence } from "../src/lib/intelligence/ingestion/persistence.server";
 import { runIntelligenceIngestion } from "../src/lib/intelligence/ingestion/orchestrator.server";
 import { withBoundedRetry } from "../src/lib/intelligence/ingestion/retry.server";
@@ -49,7 +51,7 @@ const adapter: IngestionAdapter = {
 
 async function persist(
   _dataset: IngestionDataset,
-  decisions: readonly PublicationDecision[],
+  decisions: readonly AtomicPublicationDecision[],
 ): Promise<PublicationPersistenceResult> {
   let published = 0;
   for (const decision of decisions) {
@@ -113,6 +115,36 @@ async function main(): Promise<void> {
   assert.match(
     atomicMigration,
     /intelligence_quarantine_items\s*\(\s*candidate_id,[\s\S]*?VALUES\s*\(\s*v_candidate_id,/,
+  );
+  assert.match(
+    atomicMigration,
+    /p_dataset NOT IN \('intelligence', 'blog', 'commodity'\)/,
+  );
+  assert.match(
+    atomicMigration,
+    /Commodity %s was atomically published to trust storage; no legacy commodity write was attempted/,
+  );
+  assert.match(atomicMigration, /pg_advisory_xact_lock/);
+  assert.match(
+    atomicMigration,
+    /source timestamp % is older than trusted baseline %/,
+  );
+  assert.match(
+    atomicMigration,
+    /price change exceeds atomic trusted baseline limit/,
+  );
+  assert.match(atomicMigration, /maximumChangeRatio/);
+  assert.match(
+    atomicMigration,
+    /c\.validation_state = CASE WHEN item->>'decision' = 'publish'/,
+  );
+  assert.match(
+    atomicMigration,
+    /WHEN intelligence_evidence_publications\.publication_state = 'published'/,
+  );
+  assert.match(
+    atomicMigration,
+    /FROM PUBLIC, anon, authenticated/,
   );
 
   const first = await runIntelligenceIngestion(options);
@@ -204,7 +236,7 @@ async function main(): Promise<void> {
   let writes = 0;
   const abortAwarePersist = async (
     dataset: IngestionDataset,
-    decisions: readonly PublicationDecision[],
+    decisions: readonly AtomicPublicationDecision[],
     signal: AbortSignal,
   ) => {
     persistenceStarts += 1;
@@ -265,10 +297,12 @@ async function main(): Promise<void> {
   );
   await atomicPersist("intelligence", [], new AbortController().signal);
   assert.equal(rpcCalls, 1);
+  await atomicPersist("commodity", [], new AbortController().signal);
+  assert.equal(rpcCalls, 2);
   const aborted = new AbortController();
   aborted.abort(new Error("deadline"));
   await assert.rejects(atomicPersist("intelligence", [], aborted.signal));
-  assert.equal(rpcCalls, 1);
+  assert.equal(rpcCalls, 2);
 
   console.log(
     "Ingestion smoke passed (abort settlement, atomic persistence, no post-deadline writes).",

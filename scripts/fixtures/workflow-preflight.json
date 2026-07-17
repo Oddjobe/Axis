@@ -1,0 +1,26 @@
+{
+  "complete": {
+    "NEXT_PUBLIC_SUPABASE_URL": "fixture-supabase-url-do-not-print",
+    "SUPABASE_SERVICE_ROLE_KEY": "fixture-service-key-do-not-print",
+    "FIRECRAWL_API_KEY": "fixture-firecrawl-key-do-not-print",
+    "FOUNDRY_API_KEY": "fixture-foundry-key-do-not-print",
+    "FOUNDRY_ENDPOINT": "fixture-foundry-endpoint-do-not-print",
+    "FOUNDRY_MODEL": "fixture-foundry-model-do-not-print"
+  },
+  "missingRequired": {
+    "NEXT_PUBLIC_SUPABASE_URL": "fixture-supabase-url-do-not-print",
+    "SUPABASE_SERVICE_ROLE_KEY": " ",
+    "FIRECRAWL_API_KEY": ""
+  },
+  "missingFoundry": {
+    "NEXT_PUBLIC_SUPABASE_URL": "fixture-supabase-url-do-not-print",
+    "SUPABASE_SERVICE_ROLE_KEY": "fixture-service-key-do-not-print",
+    "FIRECRAWL_API_KEY": "fixture-firecrawl-key-do-not-print"
+  },
+  "partialFoundry": {
+    "NEXT_PUBLIC_SUPABASE_URL": "fixture-supabase-url-do-not-print",
+    "SUPABASE_SERVICE_ROLE_KEY": "fixture-service-key-do-not-print",
+    "FIRECRAWL_API_KEY": "fixture-firecrawl-key-do-not-print",
+    "FOUNDRY_ENDPOINT": "fixture-foundry-endpoint-do-not-print"
+  }
+}

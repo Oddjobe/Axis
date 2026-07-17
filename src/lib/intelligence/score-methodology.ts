@@ -10,7 +10,7 @@ import {
   SCORE_BASELINE_RETRIEVED_AT,
 } from "./score-baseline";
 
-export const SCORE_METHODOLOGY_VERSION = "axis-sovereignty-1.0.0";
+export const SCORE_METHODOLOGY_VERSION = "axis-sovereignty-1.1.0";
 export const SCORE_BASELINE_AS_OF = STATIC_SCORE_BASELINE_AS_OF;
 
 export type DimensionId =
@@ -40,6 +40,23 @@ export interface ScoreObservation {
   indicatorId: string;
   value: number;
   year: number;
+  observedAt?: string;
+  sourcePublishedAt?: string | null;
+  retrievedAt?: string;
+  provenanceKind?: "world-bank-api" | "world-bank-bundled";
+}
+
+export interface IndicatorProvenance {
+  publisher: "World Bank";
+  sourceUrl: string;
+  observedAt: string | null;
+  sourcePublishedAt: string | null;
+  retrievedAt: string | null;
+  kind: "world-bank-api" | "world-bank-bundled" | "world-bank-indicator-median";
+  imputation: {
+    method: "world-bank-indicator-normalized-median";
+    donorCount: number;
+  } | null;
 }
 
 export interface ScoredIndicator {
@@ -50,6 +67,7 @@ export interface ScoredIndicator {
   normalizedScore: number;
   imputed: boolean;
   sourceUrl: string;
+  provenance: IndicatorProvenance;
 }
 
 export interface CountryCompositeScore {
@@ -72,6 +90,10 @@ export interface CountryCompositeScore {
     title: string;
     url: string;
     observationYear: number;
+    observationDate: string;
+    sourcePublishedAt: string | null;
+    retrievedAt: string | null;
+    provenanceKind: "world-bank-api" | "world-bank-bundled";
   }>;
   asOf: string;
   methodologyVersion: string;
@@ -208,7 +230,7 @@ export const SCORE_METHODOLOGY = {
   normalization:
     "Each indicator is clamped to published, versioned policy bounds and linearly scaled to 0–100. Lower-direction indicators are inverted.",
   missingDataPolicy:
-    "A missing observation receives that indicator's fixed bundled-baseline median normalized value. Imputed values affect the score but not coverage; every imputation is identified in the response.",
+    "A missing observation receives only that World Bank indicator's fixed bundled-baseline median normalized value. Imputed values affect the score but not coverage or source recency; every imputation includes its method and donor count.",
   coverage:
     "Coverage is the sum of non-imputed indicator weights divided by all indicator weights.",
   confidence:
@@ -254,6 +276,10 @@ export function getBundledBaselineObservations(): ScoreObservation[] {
             indicatorId: INDICATOR_DEFINITIONS[index].id,
             year: tuple[0],
             value: tuple[1],
+            observedAt: `${tuple[0]}-12-31T00:00:00.000Z`,
+            sourcePublishedAt: null,
+            retrievedAt: SCORE_BASELINE_RETRIEVED_AT,
+            provenanceKind: "world-bank-bundled" as const,
           }]
         : [],
     );
@@ -271,6 +297,14 @@ const baselineImputationScores = Object.fromEntries(
     )),
   ]),
 ) as Record<string, number>;
+const baselineImputationDonorCounts = Object.fromEntries(
+  INDICATOR_DEFINITIONS.map((indicator) => [
+    indicator.id,
+    baselineObservations.filter(
+      (observation) => observation.indicatorId === indicator.id,
+    ).length,
+  ]),
+) as Record<string, number>;
 
 export function computeCompositeScores(
   observations: readonly ScoreObservation[],
@@ -285,6 +319,9 @@ export function computeCompositeScores(
   return AFRICAN_ISO3_CODES.map((country) => {
     const indicators: ScoredIndicator[] = INDICATOR_DEFINITIONS.map((definition) => {
       const observation = observationMap.get(`${country}:${definition.id}`);
+      const observedAt = observation
+        ? observation.observedAt ?? `${observation.year}-12-31T00:00:00.000Z`
+        : null;
       return {
         id: definition.id,
         name: definition.name,
@@ -295,6 +332,28 @@ export function computeCompositeScores(
           : baselineImputationScores[definition.id],
         imputed: !observation,
         sourceUrl: definition.source.url,
+        provenance: observation
+          ? {
+              publisher: definition.source.publisher,
+              sourceUrl: definition.source.url,
+              observedAt,
+              sourcePublishedAt: observation.sourcePublishedAt ?? null,
+              retrievedAt: observation.retrievedAt ?? null,
+              kind: observation.provenanceKind ?? "world-bank-bundled",
+              imputation: null,
+            }
+          : {
+              publisher: definition.source.publisher,
+              sourceUrl: definition.source.url,
+              observedAt: null,
+              sourcePublishedAt: null,
+              retrievedAt: SCORE_BASELINE_RETRIEVED_AT,
+              kind: "world-bank-indicator-median",
+              imputation: {
+                method: "world-bank-indicator-normalized-median",
+                donorCount: baselineImputationDonorCounts[definition.id],
+              },
+            },
       };
     });
 
@@ -327,10 +386,6 @@ export function computeCompositeScores(
       : 0;
     const overall = round(coverage * 0.95 * recency);
     const axisScore = Math.round(composite);
-    const years = present
-      .map((indicator) => indicator.year)
-      .filter((year): year is number => year !== null);
-
     return {
       country,
       axisScore,
@@ -356,10 +411,23 @@ export function computeCompositeScores(
           indicatorId: definition.id,
           ...definition.source,
           observationYear: indicator.year,
+          observationDate:
+            indicator.provenance.observedAt
+            ?? `${indicator.year}-12-31T00:00:00.000Z`,
+          sourcePublishedAt: indicator.provenance.sourcePublishedAt,
+          retrievedAt: indicator.provenance.retrievedAt,
+          provenanceKind: indicator.provenance.kind === "world-bank-api"
+            ? "world-bank-api"
+            : "world-bank-bundled",
         };
       }),
-      asOf: years.length
-        ? `${Math.max(...years)}-12-31T00:00:00.000Z`
+      asOf: present.length
+        ? present
+            .map((indicator) =>
+              indicator.provenance.observedAt
+              ?? `${indicator.year}-12-31T00:00:00.000Z`
+            )
+            .sort((left, right) => Date.parse(right) - Date.parse(left))[0]
         : SCORE_BASELINE_AS_OF,
       methodologyVersion: SCORE_METHODOLOGY_VERSION,
     };

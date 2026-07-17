@@ -23,7 +23,10 @@ import {
   normalizedPublicationCandidateSchema,
   type PublicationDecision,
 } from "./publication-gate";
-import type { PublicationPersistenceResult } from "./publication-storage";
+import type {
+  AtomicPublicationDecision,
+  PublicationPersistenceResult,
+} from "./publication-storage";
 import { getPublicationCoverage } from "./publication-coverage";
 import {
   BASELINE_COUNTRY_SCORES,
@@ -133,16 +136,28 @@ async function runCheck(
 }
 
 function validIntelligenceFixture() {
+  const sourcePublishedAt = "2026-07-16T10:00:00.000Z";
+  const excerpt =
+    "Nigeria announced a cross-border digital trade programme supporting African exporters and AfCFTA market access.";
   return {
     title: "Nigeria expands regional digital trade infrastructure",
-    summary:
-      "Nigeria announced a cross-border digital trade programme supporting African exporters and AfCFTA market access.",
+    summary: excerpt,
     severity: "medium",
     category: "sovereignty",
     isoCode: "nga",
     timeAgo: "2 hours ago",
     source: "African Business Magazine",
     url: "https://www.african.business/news/item?utm_source=fixture",
+    sourcePublishedAt,
+    sourceEvidence: {
+      origin: "quality-fixture",
+      canonicalUrl: "https://www.african.business/news/item",
+      sourcePublishedAt,
+      excerpt,
+      timestampField: "sourcePublishedAt",
+      supported: true,
+      disagreements: [],
+    },
   };
 }
 
@@ -166,7 +181,7 @@ function reasonCodes(decision: PublicationDecision): Set<string> {
 function persistedFixture(): IngestionPersistence {
   return async (
     _dataset: IngestionDataset,
-    decisions: readonly PublicationDecision[],
+    decisions: readonly AtomicPublicationDecision[],
   ): Promise<PublicationPersistenceResult> => ({
     published: decisions.filter((decision) => decision.decision === "publish")
       .length,
