@@ -39,6 +39,35 @@ export default function DocsPage() {
         },
         {
             method: 'GET',
+            path: '/api/public/trust-health',
+            description: 'Aggregate, sanitized production trust-health snapshot across country scores, intelligence, blogs, and commodities. Reports the exact provenance/freshness state for each dataset — trusted-current, trusted-stale, legacy-live-ingested, cached, static-fallback, or unavailable — plus coverage and reason codes. No secrets or internal identifiers are exposed.',
+            curl: 'curl -s https://axis-mocha.vercel.app/api/public/trust-health | jq .',
+            response: `{
+  "version": "1",
+  "status": "stale",
+  "generatedAt": "2026-07-18T00:00:00.000Z",
+  "trustedPublicationsEnabled": false,
+  "datasets": {
+    "countryScores": {
+      "publicationTier": "legacy",
+      "status": "stale",
+      "displayState": "static-fallback",
+      "coverage": { "availableRecords": 54, "expectedRecords": 54, "trustedRecords": 0, "trustedExpectedRecords": 54, "missingIdentities": [], "missingTrustedIdentities": [], "missingPublicationTimeIdentities": [] },
+      "freshness": { "sourcePublishedAt": "2024-12-31T00:00:00.000Z", "sourceObservedAt": "2024-12-31T00:00:00.000Z" },
+      "fallback": { "used": true, "state": "static" },
+      "reasonCodes": ["legacy-publication", "source-stale"]
+    },
+    "commodities": {
+      "publicationTier": "legacy",
+      "displayState": "static-fallback",
+      "coverage": { "trustedRecords": 0, "trustedExpectedRecords": 5 },
+      "reasonCodes": ["legacy-publication", "trusted-coverage-zero"]
+    }
+  }
+}`,
+        },
+        {
+            method: 'GET',
             path: '/api/commodities',
             description: 'African-relevant commodity benchmark prices. Includes gold, copper, cobalt, lithium, and bauxite with source attribution and update frequency.',
             curl: 'curl -s https://axis-mocha.vercel.app/api/commodities | jq .',

@@ -4,6 +4,11 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown, ShieldCheck, Globe2, Clock } from 'lucide-react';
 import type { DataMode } from '@/lib/intelligence/trust';
+import {
+    getPresentationTone,
+    getPublicationPresentation,
+    type PublicationPresentation,
+} from '@/lib/intelligence/publication-health';
 
 interface Commodity {
     id: string;
@@ -23,6 +28,8 @@ interface Commodity {
     observedAt?: string | null;
 }
 
+const UNAVAILABLE_PRESENTATION = getPublicationPresentation({ success: false });
+
 function relativeTime(dateStr: string): string {
     const now = new Date();
     const then = new Date(dateStr);
@@ -38,7 +45,9 @@ function relativeTime(dateStr: string): string {
 export default function CommodityTicker() {
     const [commodities, setCommodities] = useState<Commodity[]>([]);
     const [loading, setLoading] = useState(true);
-    const [dataMode, setDataMode] = useState<DataMode>("stale");
+    const [presentation, setPresentation] = useState<PublicationPresentation>(
+        UNAVAILABLE_PRESENTATION,
+    );
 
     useEffect(() => {
         const fetchCommodities = async () => {
@@ -47,9 +56,20 @@ export default function CommodityTicker() {
                 const json = await res.json();
                 if (json.success) {
                     setCommodities(json.data);
-                    if (["live", "cached", "fallback", "stale"].includes(json.dataMode)) {
-                        setDataMode(json.dataMode);
-                    }
+                    setPresentation(
+                        getPublicationPresentation({
+                            success: json.success,
+                            source: json.source,
+                            publicationTier: json.publicationTier,
+                            dataMode: json.dataMode,
+                            fallbackUsed: json.fallbackUsed,
+                            sourceUpdatedAt: json.sourceUpdatedAt,
+                            observedAt: json.observedAt,
+                            generatedAt: json.generatedAt,
+                        }),
+                    );
+                } else {
+                    setPresentation(getPublicationPresentation(json));
                 }
             } catch (err) {
                 console.error("Ticker fetch failed", err);
@@ -68,13 +88,17 @@ export default function CommodityTicker() {
 
     // Duplicate items for seamless loop
     const displayItems = [...commodities, ...commodities];
+    const tone = getPresentationTone(presentation.state);
 
     return (
         <div className="h-8 lg:h-9 bg-black/60 dark:bg-black/40 border-b border-border flex items-center overflow-hidden relative group">
             {/* Vetted Source Badge */}
-            <div className="absolute left-0 top-0 bottom-0 px-3 bg-cobalt/20 backdrop-blur-md border-r border-cobalt/30 flex items-center gap-2 z-20 shadow-[8px_0_15px_rgba(0,0,0,0.5)]">
-                <ShieldCheck className="w-3.5 h-3.5 text-cobalt" />
-                <span className="text-[9px] font-bold font-mono text-cobalt tracking-widest uppercase">{dataMode} DATA</span>
+            <div
+                className={`absolute left-0 top-0 bottom-0 px-3 backdrop-blur-md border-r flex items-center gap-2 z-20 shadow-[8px_0_15px_rgba(0,0,0,0.5)] ${tone.bg} ${tone.border}`}
+                title={presentation.tooltip}
+            >
+                <ShieldCheck className={`w-3.5 h-3.5 ${tone.text}`} />
+                <span className={`text-[9px] font-bold font-mono tracking-widest uppercase ${tone.text}`}>{presentation.label}</span>
             </div>
 
             <motion.div

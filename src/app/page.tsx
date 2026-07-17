@@ -63,6 +63,10 @@ import {
 } from "@/lib/intelligence/trust";
 import { mergeAuthoritativeCountryScores } from "@/lib/intelligence/score-selection";
 import type { LegacyRecord } from "@/lib/intelligence/trust-rollout";
+import {
+  getPresentationTone,
+  getPublicationPresentation,
+} from "@/lib/intelligence/publication-health";
 const TOTAL_POPULATION = 1_444; // ~1.44 billion
 
 const STATIC_SCORE_FRESHNESS = getFreshnessMetadata({
@@ -126,6 +130,18 @@ export default function Home() {
   const [mounted, setMounted] = useState(false);
   const { newAlertCount, clearNewAlerts } = useRealtimeAlerts();
   const [searchOpen, setSearchOpen] = useState(false);
+  const scorePublication = getPublicationPresentation({
+    success: true,
+    source: scorePublicationTier === "trusted" ? "trusted" : "legacy/static",
+    publicationTier: scorePublicationTier,
+    dataMode: dataSourceMode,
+    fallbackUsed:
+      scorePublicationTier === "legacy" && dataSourceMode !== "cached",
+    sourceUpdatedAt: dashboardFreshness.sourceUpdatedAt,
+    observedAt: dashboardFreshness.observedAt,
+    generatedAt: dashboardFreshness.generatedAt,
+  });
+  const scorePublicationTone = getPresentationTone(scorePublication.state);
 
   const openTool = useCallback((action: string) => {
     switch (action) {
@@ -377,22 +393,13 @@ export default function Home() {
               </div>
 
               <div
-                className={`hidden min-w-[10rem] flex-col justify-center gap-1 rounded-2xl border px-3 py-2 font-mono text-[9px] font-bold tracking-wider lg:flex ${dataSourceMode === "live"
-                  ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-500"
-                  : dataSourceMode === "cached"
-                    ? "border-amber-500/30 bg-amber-500/10 text-amber-500"
-                    : "border-red-500/30 bg-red-500/10 text-red-500"
-                }`}
-                title={`Country scores: ${scorePublicationTier} publication, ${dataSourceMode}; as of ${dashboardFreshness.asOf ?? "unknown"}; requested ${dashboardFreshness.generatedAt ?? "during hydration"}`}
+                className={`hidden min-w-[10rem] flex-col justify-center gap-1 rounded-2xl border px-3 py-2 font-mono text-[9px] font-bold tracking-wider lg:flex ${scorePublicationTone.border} ${scorePublicationTone.bg} ${scorePublicationTone.text}`}
+                title={scorePublication.tooltip}
               >
                 <span className="uppercase tracking-[0.22em] opacity-70">Data Source</span>
                 <span className="flex items-center gap-2 text-xs">
-                  <span className={`h-1.5 w-1.5 rounded-full ${dataSourceMode === "live" ? "bg-emerald-500" : dataSourceMode === "cached" ? "bg-amber-500" : "bg-red-500"}`} />
-                  {dataSourceMode === "cached"
-                    ? `${scorePublicationTier.toUpperCase()} / CACHED`
-                    : scorePublicationTier === "trusted"
-                      ? "TRUSTED"
-                      : `LEGACY / ${dataSourceMode.toUpperCase()}`}
+                  <span className={`h-1.5 w-1.5 rounded-full ${scorePublicationTone.dot}`} />
+                  {scorePublication.label}
                 </span>
               </div>
 
