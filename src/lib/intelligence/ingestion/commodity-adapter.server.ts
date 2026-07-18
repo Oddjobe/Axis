@@ -88,6 +88,56 @@ function recordsAt(value: unknown): RawCommodityCandidate[] {
   return [];
 }
 
+const MONTH_NAMES = [
+  "january",
+  "february",
+  "march",
+  "april",
+  "may",
+  "june",
+  "july",
+  "august",
+  "september",
+  "october",
+  "november",
+  "december",
+];
+
+// Some governed sources (e.g. Trading Economics) state their publication date at
+// day granularity ("July 17, 2026") which the model may extract as a date-only
+// "YYYY-MM-DD" string. The governed validator requires a full ISO-8601 timestamp.
+// We normalize a date-only value to midnight UTC ONLY when the extracted excerpt
+// explicitly states that same calendar date (ISO or long form). This expresses
+// the source's own stated date at full-ISO granularity; it never infers a date,
+// never advances from retrieval time, and leaves absent/stale dates untouched so
+// they still fail the freshness/provenance gates honestly.
+export function normalizeCorroboratedDateOnly(
+  candidate: RawCommodityCandidate,
+): RawCommodityCandidate {
+  const raw = candidate.sourcePublishedAt;
+  if (typeof raw !== "string") return candidate;
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw.trim());
+  if (!match) return candidate;
+  const [, year, month, day] = match;
+  const excerpt =
+    typeof candidate.excerpt === "string"
+      ? candidate.excerpt.toLowerCase()
+      : "";
+  if (!excerpt) return candidate;
+  const monthName = MONTH_NAMES[Number(month) - 1];
+  const dayNum = String(Number(day));
+  const forms = [`${year}-${month}-${day}`];
+  if (monthName) {
+    forms.push(
+      `${monthName} ${dayNum}, ${year}`,
+      `${monthName} ${dayNum} ${year}`,
+      `${dayNum} ${monthName} ${year}`,
+    );
+  }
+  if (!forms.some((form) => excerpt.includes(form))) return candidate;
+  return { ...candidate, sourcePublishedAt: `${raw.trim()}T00:00:00.000Z` };
+}
+
 export function createCommodityFirecrawlAdapter(
   options: CommodityFirecrawlAdapterOptions,
 ): CommodityAdapter {
@@ -114,9 +164,16 @@ export function createCommodityFirecrawlAdapter(
           extract: {
             prompt:
               `Extract the newest explicitly dated ${source.id} benchmark quote ` +
-              `for ${source.market}. Return the publication's canonical URL and a ` +
-              "verbatim supporting excerpt. Never infer a timestamp or convert the " +
-              "source-native price or unit.",
+              `for ${source.market} from this page. ` +
+              `Set publisher to "${source.publisher}", sourceMarket to exactly ` +
+              `"${source.market}", and canonicalUrl to "${source.url}". ` +
+              `Report the price in its source-native unit "${source.unit}" as the ` +
+              `unit field WITHOUT the currency prefix (e.g. return "${source.unit}", ` +
+              `not "${source.currency}/${source.unit}"), and set currency to ` +
+              `"${source.currency}". Return a verbatim supporting excerpt. Only set ` +
+              "sourcePublishedAt when the page shows an explicit ISO-8601 date-time; " +
+              "never infer or fabricate a timestamp, URL, or price, and never convert " +
+              "the source-native price or unit.",
             schema: COMMODITY_EXTRACT_SCHEMA,
           },
         }),
@@ -146,7 +203,7 @@ export function createCommodityFirecrawlAdapter(
       ) {
         throw new Error(`Firecrawl ${source.id} returned success=false`);
       }
-      const candidates = recordsAt(payload);
+      const candidates = recordsAt(payload).map(normalizeCorroboratedDateOnly);
       if (candidates.length === 0) {
         throw new Error(`Firecrawl ${source.id} returned no commodity quotes`);
       }
