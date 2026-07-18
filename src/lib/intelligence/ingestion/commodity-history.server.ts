@@ -4,6 +4,10 @@ import {
   COMMODITY_IDS,
   type CommodityId,
 } from "./commodity-sources";
+import {
+  getLatestCurrentTrustedRecordByIdentity,
+} from "../publication-selection.server";
+import type { LegacyRecord } from "../trust-rollout";
 
 export type CommodityHistoryStatus = "loaded" | "bootstrap" | "failed";
 
@@ -52,8 +56,6 @@ interface TrustedCommodityRow {
   publishedAt: number;
 }
 
-const HISTORY_SELECT = "record,source_published_at,published_at";
-
 function normalizePrice(value: unknown): number {
   const normalized =
     typeof value === "number"
@@ -75,27 +77,31 @@ function requiredId(value: unknown): CommodityId {
   return id as CommodityId;
 }
 
-function parseRow(value: unknown): TrustedCommodityRow {
+function parseRow(value: LegacyRecord): TrustedCommodityRow {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     throw new Error("trusted commodity row must be an object");
   }
-  const row = value as Record<string, unknown>;
-  const record = row.record;
-  if (!record || typeof record !== "object" || Array.isArray(record)) {
-    throw new Error("trusted commodity row is missing its normalized record");
-  }
-  const normalized = record as Record<string, unknown>;
-  const sourcePublishedAt = Date.parse(String(row.source_published_at ?? ""));
+  const sourcePublishedAt = Date.parse(
+    String(value.sourcePublishedAt ?? value.source_published_at ?? ""),
+  );
   if (!Number.isFinite(sourcePublishedAt)) {
     throw new Error("trusted commodity row has an invalid source_published_at");
   }
-  const publishedAt = Date.parse(String(row.published_at ?? ""));
+  const publishedAt = Date.parse(
+    String(
+      value.trustedPublishedAt ??
+        value.trusted_published_at ??
+        value.publishedAt ??
+        value.published_at ??
+        "",
+    ),
+  );
   if (!Number.isFinite(publishedAt)) {
     throw new Error("trusted commodity row has an invalid published_at");
   }
   return {
-    id: requiredId(normalized.commodityId ?? normalized.id),
-    price: normalized.price,
+    id: requiredId(value.commodityId ?? value.id),
+    price: value.price,
     sourcePublishedAt,
     publishedAt,
   };
@@ -143,21 +149,18 @@ export async function loadPreviousCommodityPrices(
 ): Promise<CommodityHistoryLoad> {
   let results: Array<{
     id: CommodityId;
-    data: unknown;
-    error: unknown;
+    record: LegacyRecord | null;
+    error: string | null;
   }>;
   try {
     results = await Promise.all(
       COMMODITY_IDS.map(async (id) => {
-        let query = client
-          .from("trusted_published_records")
-          .select(HISTORY_SELECT)
-          .eq("dataset", "commodity")
-          .eq("record->>id", id)
-          .order("source_published_at", { ascending: false })
-          .order("published_at", { ascending: false });
-        if (signal) query = query.abortSignal(signal);
-        const result = await query.limit(1);
+        const result = await getLatestCurrentTrustedRecordByIdentity(
+          client,
+          "commodity",
+          id,
+          { signal },
+        );
         return { id, ...result };
       }),
     );
@@ -169,18 +172,12 @@ export async function loadPreviousCommodityPrices(
   if (failed?.error) {
     return failedHistory(queryError(failed.error), { viewAvailable: false });
   }
-  if (results.some((result) => !Array.isArray(result.data))) {
-    return failedHistory(
-      "trusted commodity history schema failed: query data must be an array",
-      { viewAvailable: true },
-    );
-  }
   let rows: TrustedCommodityRow[];
   try {
-    rows = results.flatMap(({ id, data }) =>
-      (data as unknown[])
-        .map(parseRow)
-        .filter((row) => row.id === id),
+    rows = results.flatMap(({ id, record }) =>
+      record
+        ? [parseRow(record)].filter((row) => row.id === id)
+        : [],
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

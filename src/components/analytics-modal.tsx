@@ -9,24 +9,25 @@ import InfluenceSankeyChart from "./influence-sankey-chart"
 import AiResourceGraph from "./ai-resource-graph"
 import type { CountryData } from "./country-dossier-modal"
 import {
-    getPublicTrustStateLabel,
-    type PublicTrustState,
-} from "@/lib/intelligence/trust-health"
+    getPresentationTone,
+    type PublicationPresentation,
+} from "@/lib/intelligence/publication-health"
 
 interface AnalyticsModalProps {
     isOpen: boolean;
     onClose: () => void;
     data: CountryData[];
     selectedResource?: string | null;
-    trustState: PublicTrustState;
+    publication: PublicationPresentation;
 }
 
 type TabType = "SCATTER" | "TRENDS" | "FLOWS" | "NEXUS";
 
-export default function AnalyticsModal({ isOpen, onClose, data, selectedResource, trustState }: AnalyticsModalProps) {
+export default function AnalyticsModal({ isOpen, onClose, data, selectedResource, publication }: AnalyticsModalProps) {
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [activeTab, setActiveTab] = useState<TabType>("SCATTER");
     const [contentReady, setContentReady] = useState(false);
+    const publicationTone = getPresentationTone(publication.state);
 
     const handleClose = () => {
         setContentReady(false);
@@ -75,8 +76,8 @@ export default function AnalyticsModal({ isOpen, onClose, data, selectedResource
                                 <div className="min-w-0">
                                     <h2 className="text-sm lg:text-base font-bold tracking-widest uppercase truncate">STRATEGIC ANALYTICS</h2>
                                     <div className="flex items-center gap-2 mt-0.5 whitespace-nowrap">
-                                        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${trustState === "trusted-current" ? "bg-green-500 animate-pulse" : trustState === "cached" || trustState === "legacy-live-ingested" ? "bg-amber-500" : "bg-red-500"}`} />
-                                        <span className="text-[10px] font-mono text-slate-light tracking-wider truncate">{getPublicTrustStateLabel(trustState)} PLATFORM DATA</span>
+                                        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${publicationTone.dot}`} />
+                                        <span className="text-[10px] font-mono text-slate-light tracking-wider truncate">{publication.label} PLATFORM DATA</span>
                                     </div>
                                 </div>
                             </div>

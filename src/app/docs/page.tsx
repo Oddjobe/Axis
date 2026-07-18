@@ -10,25 +10,6 @@ export default function DocsPage() {
     const endpoints = [
         {
             method: 'GET',
-            path: '/api/public/trust-health',
-            description: 'Sanitized aggregate trust and freshness state for public scores, intelligence, blogs, and commodities.',
-            curl: 'curl -s https://axis-mocha.vercel.app/api/public/trust-health | jq .',
-            response: `{
-  "status": "degraded",
-  "generatedAt": "2026-07-18T00:00:00.000Z",
-  "datasets": {
-    "countryScores": { "state": "static-fallback" },
-    "intelligence": { "state": "legacy-live-ingested" },
-    "blogs": { "state": "legacy-live-ingested" },
-    "commodities": {
-      "state": "static-fallback",
-      "trustedCoverage": { "records": 0, "total": 5 }
-    }
-  }
-}`,
-        },
-        {
-            method: 'GET',
             path: '/api/public/scores',
             description: 'Returns sovereignty scores for all 54 African nations. Includes axisScore, status, key resources, and sub-indices.',
             curl: 'curl -s https://axis-mocha.vercel.app/api/public/scores | jq .',
@@ -39,7 +20,6 @@ export default function DocsPage() {
   "sourceUpdatedAt": "2026-04-12T00:00:00.000Z",
   "asOf": "2026-04-12T00:00:00.000Z",
   "dataMode": "fallback",
-  "trustState": "static-fallback",
   "data": [
     {
       "country": "NGA",
@@ -52,10 +32,38 @@ export default function DocsPage() {
       "resourceWealth": 92,
       "keyResources": ["Oil", "Gas", "Tin"],
       "dataMode": "fallback",
-      "trustState": "static-fallback",
       "sourceUpdatedAt": "2026-04-12T00:00:00.000Z"
     }
   ]
+}`,
+        },
+        {
+            method: 'GET',
+            path: '/api/public/trust-health',
+            description: 'Aggregate, sanitized production trust-health snapshot across country scores, intelligence, blogs, and commodities. Reports the exact provenance/freshness state for each dataset — trusted-current, trusted-stale, legacy-live-ingested, cached, static-fallback, or unavailable — plus coverage and reason codes. No secrets or internal identifiers are exposed.',
+            curl: 'curl -s https://axis-mocha.vercel.app/api/public/trust-health | jq .',
+            response: `{
+  "version": "1",
+  "status": "stale",
+  "generatedAt": "2026-07-18T00:00:00.000Z",
+  "trustedPublicationsEnabled": false,
+  "datasets": {
+    "countryScores": {
+      "publicationTier": "legacy",
+      "status": "stale",
+      "displayState": "static-fallback",
+      "coverage": { "availableRecords": 54, "expectedRecords": 54, "trustedRecords": 0, "trustedExpectedRecords": 54, "missingIdentities": [], "missingTrustedIdentities": [], "missingPublicationTimeIdentities": [] },
+      "freshness": { "sourcePublishedAt": "2024-12-31T00:00:00.000Z", "sourceObservedAt": "2024-12-31T00:00:00.000Z" },
+      "fallback": { "used": true, "state": "static" },
+      "reasonCodes": ["legacy-publication", "source-stale"]
+    },
+    "commodities": {
+      "publicationTier": "legacy",
+      "displayState": "static-fallback",
+      "coverage": { "trustedRecords": 0, "trustedExpectedRecords": 5 },
+      "reasonCodes": ["legacy-publication", "trusted-coverage-zero"]
+    }
+  }
 }`,
         },
         {
@@ -68,7 +76,6 @@ export default function DocsPage() {
   "generatedAt": "2026-07-16T19:15:09.411Z",
   "sourceUpdatedAt": "2026-07-15T00:00:00.000Z",
   "dataMode": "fallback",
-  "trustState": "static-fallback",
   "data": [
     {
       "id": "gold",
@@ -81,7 +88,6 @@ export default function DocsPage() {
       "frequency": "daily",
       "lastUpdated": "2026-07-15",
       "dataMode": "fallback",
-      "trustState": "static-fallback",
       "sourceUpdatedAt": "2026-07-15T00:00:00.000Z"
     }
   ]

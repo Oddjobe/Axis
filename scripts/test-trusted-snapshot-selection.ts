@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 
 import {
+  recordRetrievalTimestamp,
+  selectLatestCurrentTrustedRecord,
   trustedPublicationSelectionEnabled,
   trustedRecordMatchesCurrentPolicy,
   trustedSnapshotUnavailable,
@@ -79,6 +81,56 @@ try {
       canonicalUrl: "https://www.spglobal.com/commodityinsights/",
     }),
     false,
+  );
+  assert.deepEqual(
+    selectLatestCurrentTrustedRecord("commodity", [
+      {
+        id: "bauxite",
+        publisher: "S&P Global Platts / IndexBox",
+        sourceMarket: "Guinea bauxite FOB",
+        canonicalUrl: "https://www.spglobal.com/commodityinsights/",
+        sourcePublishedAt: "2026-07-17T09:00:00.000Z",
+        price: 61,
+      },
+      {
+        id: "bauxite",
+        publisher: "AluHub",
+        sourceMarket: "Guinea bauxite FOB",
+        canonicalUrl: "https://www.alu-hub.com/market-data",
+        sourcePublishedAt: "2026-07-16T09:00:00.000Z",
+        price: 60,
+      },
+    ]),
+    {
+      id: "bauxite",
+      publisher: "AluHub",
+      sourceMarket: "Guinea bauxite FOB",
+      canonicalUrl: "https://www.alu-hub.com/market-data",
+      sourcePublishedAt: "2026-07-16T09:00:00.000Z",
+      price: 60,
+    },
+  );
+  assert.equal(
+    recordRetrievalTimestamp({
+      retrievedAt: "2026-07-17T10:00:00.000Z",
+      created_at: "2026-07-17T11:00:00.000Z",
+      sourcePublishedAt: "2026-07-17T09:00:00.000Z",
+    }),
+    "2026-07-17T10:00:00.000Z",
+  );
+  assert.equal(
+    recordRetrievalTimestamp({
+      created_at: "2026-07-17T11:00:00.000Z",
+      sourcePublishedAt: "2026-07-17T09:00:00.000Z",
+    }),
+    "2026-07-17T11:00:00.000Z",
+  );
+  assert.equal(
+    recordRetrievalTimestamp({
+      sourcePublishedAt: "2026-07-17T09:00:00.000Z",
+      trustedPublishedAt: "2026-07-17T12:00:00.000Z",
+    }),
+    null,
   );
 } finally {
   if (previous === undefined) {

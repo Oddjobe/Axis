@@ -10,9 +10,9 @@ import { supabase } from "@/lib/supabase";
 import SovereigntyTrendlineChart from "./sovereignty-trendline-chart";
 import type { DataMode, FreshnessMetadata } from "@/lib/intelligence/trust";
 import {
-    getPublicTrustStateLabel,
-    type PublicTrustState,
-} from "@/lib/intelligence/trust-health";
+    getPresentationTone,
+    getPublicationPresentation,
+} from "@/lib/intelligence/publication-health";
 
 export interface CountryData {
     country: string;
@@ -86,7 +86,7 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
     const [showScoreExplainer, setShowScoreExplainer] = useState(false);
     const [intelAlerts, setIntelAlerts] = useState<IntelligenceAlert[]>([]);
     const [intelLoading, setIntelLoading] = useState(false);
-    const [intelTrustState, setIntelTrustState] = useState<PublicTrustState>("unavailable");
+    const [intelRequestSucceeded, setIntelRequestSucceeded] = useState(false);
     const { watchlist, togglePin } = useWatchlist();
     const isPinned = countryData ? watchlist.includes(countryData.country) : false;
 
@@ -117,6 +117,26 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
         return { fdiRiskLevel, fdiColor, fdiDetail, diversityLevel, diversityColor, diversityDetail, heatLevel, heatColor, heatDetail };
     };
     const metrics = calculateSmartMetrics();
+    const scorePresentation = getPublicationPresentation({
+        success: true,
+        source: countryData?.publicationTier === "trusted" ? "trusted" : "legacy/static",
+        publicationTier: countryData?.publicationTier ?? "legacy",
+        dataMode: countryData?.dataMode ?? "fallback",
+        fallbackUsed: countryData?.publicationTier !== "trusted",
+        sourceUpdatedAt: countryData?.sourceUpdatedAt ?? countryData?.provenance?.sourcePublishedAt ?? null,
+        observedAt: countryData?.observedAt ?? countryData?.provenance?.observedAt ?? null,
+    });
+    const scorePresentationTone = getPresentationTone(scorePresentation.state);
+    const intelPresentation = getPublicationPresentation({
+        success: intelRequestSucceeded,
+        source: intelRequestSucceeded
+            ? "legacy/supabase"
+            : "upstream/unavailable",
+        publicationTier: "legacy",
+        dataMode: intelRequestSucceeded ? "live" : "stale",
+        fallbackUsed: false,
+    });
+    const intelPresentationTone = getPresentationTone(intelPresentation.state);
 
     useEffect(() => {
         setMounted(true);
@@ -126,7 +146,7 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
         if (!countryData?.country) return;
         setIntelAlerts([]);
         setIntelLoading(true);
-        setIntelTrustState("unavailable");
+        setIntelRequestSucceeded(false);
 
         supabase
             .from('intelligence_alerts')
@@ -137,9 +157,7 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
             .then(({ data, error }) => {
                 if (!error && data) {
                     setIntelAlerts(data);
-                    setIntelTrustState(data.length > 0
-                        ? "legacy-live-ingested"
-                        : "unavailable");
+                    setIntelRequestSucceeded(true);
                 }
                 setIntelLoading(false);
             });
@@ -467,7 +485,12 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
                                 <div className="space-y-6">
                                     <div className="bg-slate-100/50 dark:bg-white/5 border border-black/10 dark:border-white/10 p-6 rounded-2xl relative shadow-sm hover:shadow-md transition-shadow">
                                         <div className="absolute top-4 right-4">
-                                            <span className="text-[10px] font-bold px-2 py-1 bg-cobalt/10 text-cobalt rounded-full border border-cobalt/20">Live Sync</span>
+                                            <span
+                                                className={`text-[10px] font-bold px-2 py-1 rounded-full border ${scorePresentationTone.bg} ${scorePresentationTone.text} ${scorePresentationTone.border}`}
+                                                title={scorePresentation.tooltip}
+                                            >
+                                                {scorePresentation.label}
+                                            </span>
                                         </div>
                                         <h3 className="text-xs font-bold text-slate-light mb-2 flex items-center gap-2 font-mono uppercase tracking-wider">
                                             <Activity className="w-4 h-4 text-cobalt" /> Composite Capability
@@ -754,10 +777,10 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
                                                 <ShieldAlert className="w-4 h-4" /> Threat Matrix
                                             </h3>
                                             <div className="flex items-center gap-2">
-                                                {liveRisk.length > 0 && (
-                                                    <span className="text-[10px] font-mono px-2 py-1 bg-amber-500/10 text-amber-500 border border-amber-500/30 rounded flex items-center gap-1">
-                                                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                                                        {getPublicTrustStateLabel(intelTrustState)} · {liveRisk.length}
+                                                {!intelLoading && (
+                                                    <span className={`text-[10px] font-mono px-2 py-1 border rounded flex items-center gap-1 ${intelPresentationTone.bg} ${intelPresentationTone.text} ${intelPresentationTone.border}`}>
+                                                        <span className={`w-1.5 h-1.5 rounded-full ${intelPresentationTone.dot}`} />
+                                                        {intelPresentation.label} · {liveRisk.length}
                                                     </span>
                                                 )}
                                                 <span className={`text-[10px] font-black px-2 py-1 rounded border font-mono ${riskTextColor} bg-current/10 border-current/30`} style={{ backgroundColor: 'transparent', borderColor: riskScore >= 60 ? 'rgba(239,68,68,0.3)' : riskScore >= 35 ? 'rgba(249,115,22,0.3)' : riskScore >= 15 ? 'rgba(234,179,8,0.3)' : 'rgba(34,197,94,0.3)' }}>
@@ -813,10 +836,10 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
                                     <h3 className="text-xs font-bold text-amber-500 font-mono flex items-center gap-2 uppercase tracking-wider">
                                         <Newspaper className="w-4 h-4" /> Intelligence Feed
                                     </h3>
-                                    {intelAlerts.length > 0 && (
-                                        <span className="text-[10px] font-mono px-2 py-1 bg-amber-500/10 text-amber-500 border border-amber-500/30 rounded flex items-center gap-1">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                                            {getPublicTrustStateLabel(intelTrustState)} · {intelAlerts.length} RECORDS
+                                    {!intelLoading && (
+                                        <span className={`text-[10px] font-mono px-2 py-1 border rounded flex items-center gap-1 ${intelPresentationTone.bg} ${intelPresentationTone.text} ${intelPresentationTone.border}`}>
+                                            <span className={`w-1.5 h-1.5 rounded-full ${intelPresentationTone.dot}`} />
+                                            {intelPresentation.label} · {intelAlerts.length} RECORDS
                                         </span>
                                     )}
                                 </div>

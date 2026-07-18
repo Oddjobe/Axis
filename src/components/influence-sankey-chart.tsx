@@ -8,7 +8,10 @@ import {
 } from '@nivo/sankey';
 import { useTheme } from 'next-themes';
 import { supabase } from '@/lib/supabase';
-import { getPublicTrustStateLabel } from '@/lib/intelligence/trust-health';
+import {
+    getPresentationTone,
+    getPublicationPresentation,
+} from '@/lib/intelligence/publication-health';
 import type { IntelligenceAlert } from './country-dossier-modal';
 
 // Hardcoded stable fallback flows when Supabase has no data yet
@@ -60,6 +63,7 @@ export default function InfluenceSankeyChart() {
 
     const [liveAlerts, setLiveAlerts] = useState<IntelligenceAlert[]>([]);
     const [alertCount, setAlertCount] = useState(0);
+    const [fetchSucceeded, setFetchSucceeded] = useState(false);
 
     // Interaction state
     const [selectedActors, setSelectedActors] = useState<Set<string>>(new Set());
@@ -76,9 +80,12 @@ export default function InfluenceSankeyChart() {
                 .order('created_at', { ascending: false })
                 .limit(200);
 
-            if (!error && data && data.length > 0) {
-                setLiveAlerts(data);
-                setAlertCount(data.length);
+            if (!error && data) {
+                setFetchSucceeded(true);
+                if (data.length > 0) {
+                    setLiveAlerts(data);
+                    setAlertCount(data.length);
+                }
             }
         }
         fetchInfluenceAlerts();
@@ -90,9 +97,18 @@ export default function InfluenceSankeyChart() {
     }, [liveAlerts]);
 
     const showLive = liveAlerts.length > 0 && hasInfluenceActors;
-    const trustState = showLive
-        ? "legacy-live-ingested"
-        : "static-fallback";
+    const publication = getPublicationPresentation({
+        success: fetchSucceeded,
+        source: fetchSucceeded
+            ? showLive ? "legacy/supabase" : "legacy/static"
+            : "upstream/unavailable",
+        publicationTier: "legacy",
+        dataMode: fetchSucceeded
+            ? showLive ? "live" : "fallback"
+            : "stale",
+        fallbackUsed: fetchSucceeded && !showLive,
+    });
+    const publicationTone = getPresentationTone(publication.state);
 
     // The complete (unfiltered) set of flows derived from live or fallback data
     const baseLinks = useMemo<Flow[]>(() => {
@@ -217,9 +233,9 @@ export default function InfluenceSankeyChart() {
                         <span className="w-2 h-2 rounded-full bg-orange-500" />
                         Negative Influence Flows
                     </h3>
-                    <span className={`text-[10px] font-mono px-2 py-1 rounded border flex items-center gap-1.5 ${showLive ? "text-amber-500 border-amber-500/30 bg-amber-500/10" : "text-slate-light border-border bg-background/50"}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${showLive ? "bg-amber-500" : "bg-slate-400"}`} />
-                        {getPublicTrustStateLabel(trustState)}{showLive ? ` · ${alertCount} ALERTS` : ""}
+                    <span className={`text-[10px] font-mono px-2 py-1 rounded border flex items-center gap-1.5 ${publicationTone.text} ${publicationTone.border} ${publicationTone.bg}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${publicationTone.dot}`} />
+                        {publication.label}{showLive ? ` · ${alertCount} ALERTS` : ""}
                     </span>
                 </div>
                 <p className="text-xs font-mono text-slate-light mt-1">

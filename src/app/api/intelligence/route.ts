@@ -5,10 +5,10 @@ import {
     type DataMode,
 } from "@/lib/intelligence/trust";
 import {
+    recordRetrievalTimestamp,
     selectIntelligencePublications,
     trustedSnapshotUnavailable,
 } from "@/lib/intelligence/publication-selection.server";
-import { derivePublicTrustState } from "@/lib/intelligence/trust-health";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 60; // Cache for 1 minute at the edge
@@ -156,7 +156,12 @@ function decorateItems(items: IntelligenceRow[], requestedMode: "live" | "fallba
             item.source_published_at ??
             item.published_at ??
             fallbackUpdatedAt;
-        const observedAt = item.observedAt ?? item.observed_at ?? item.created_at ?? FALLBACK_OBSERVED_AT;
+        const retrievedAt = recordRetrievalTimestamp(item);
+        const observedAt =
+            item.observedAt ??
+            item.observed_at ??
+            retrievedAt ??
+            FALLBACK_OBSERVED_AT;
         const freshness = getFreshnessMetadata({
             sourceUpdatedAt,
             observedAt,
@@ -178,7 +183,7 @@ function decorateItems(items: IntelligenceRow[], requestedMode: "live" | "fallba
                 sourceUrl,
                 sourcePublishedAt: freshness.sourceUpdatedAt,
                 observedAt: freshness.observedAt,
-                retrievedAt: generatedAt,
+                retrievedAt,
             },
         };
     });
@@ -203,7 +208,6 @@ export async function GET() {
                 publicationTier: "trusted",
                 fallbackUsed: false,
                 dataMode: "stale",
-                trustState: "unavailable",
                 generatedAt,
                 data: [],
                 error: "No trusted intelligence snapshot is available.",
@@ -219,25 +223,18 @@ export async function GET() {
         rows = selection.records;
     }
 
-    const decoratedData = decorateItems(rows, requestedMode, generatedAt).map((item) => ({
+    const data = decorateItems(rows, requestedMode, generatedAt).map((item) => ({
         ...item,
         publicationTier,
     }));
-    const sourceUpdatedAt = getLatestTimestamp(decoratedData.map((record) => record.sourceUpdatedAt));
-    const observedAt = getLatestTimestamp(decoratedData.map((record) => record.observedAt));
+    const sourceUpdatedAt = getLatestTimestamp(data.map((record) => record.sourceUpdatedAt));
+    const observedAt = getLatestTimestamp(data.map((record) => record.observedAt));
     const dataMode: DataMode = getFreshnessMetadata({
         sourceUpdatedAt,
         observedAt,
         dataset: "intelligence",
         requestedMode,
     }).dataMode;
-    const trustState = derivePublicTrustState({
-        publicationTier,
-        dataMode,
-        fallbackUsed,
-        source,
-    });
-    const data = decoratedData.map((record) => ({ ...record, trustState }));
     const asOf = sourceUpdatedAt ?? observedAt;
     const freshness = { dataMode, sourceUpdatedAt, observedAt, asOf };
 
@@ -247,7 +244,6 @@ export async function GET() {
         publicationTier,
         fallbackUsed,
         dataMode,
-        trustState,
         generatedAt,
         sourceUpdatedAt,
         observedAt,

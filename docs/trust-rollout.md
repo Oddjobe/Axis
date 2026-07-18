@@ -3,6 +3,48 @@
 The trust rollout is non-destructive and defaults to dry-run. Reports and
 shadow state are written below `quality-reports/`, which is gitignored.
 
+## Aggregate production trust-health endpoint
+
+`GET /api/public/trust-health` is a sanitized, read-only aggregate of the four
+public data surfaces (country scores, intelligence, blogs, commodities). It
+fetches each surface's own JSON response and classifies it into exactly one of
+six provenance/freshness display states:
+
+- `trusted-current` — a trusted publication that is within its dataset's
+  freshness window.
+- `trusted-stale` — a trusted publication that has aged past its freshness
+  window but is still the latest trusted snapshot (served with its original
+  timestamps, never substituted with legacy data).
+- `legacy-live-ingested` — non-trusted content actively ingested from the
+  legacy pipeline (e.g. `legacy/supabase`), whether current or aged.
+- `cached` — data served from the browser's offline cache after a live fetch
+  failed.
+- `static-fallback` — the hardcoded static baseline/benchmark snapshot (e.g.
+  the five-commodity benchmark table or the static country-score baseline).
+- `unavailable` — the upstream surface could not be reached or returned a
+  failure.
+
+Legacy content without a source publication timestamp, stale legacy scores,
+and static commodities with 0/5 trusted coverage always resolve to a
+non-trusted state (`legacy-live-ingested` or `static-fallback`) — they can
+never be reported as `trusted-current` or `trusted-stale`. The endpoint never
+reads privileged credentials directly; it only aggregates the already-public
+JSON responses, and its output contains no secrets, connection strings, or raw
+error internals.
+
+The same classification (`src/lib/intelligence/publication-health.ts`,
+`getPublicationPresentation`) drives the freshness badges shown on the
+dashboard, commodity ticker, country dossier, and friction engine feed, so the
+label a user sees always matches the aggregate health signal.
+
+Validate the classification with deterministic fixtures (54-country stale
+metadata, missing publisher times, 0/5 trusted commodity coverage, and a full
+trusted-current release) via:
+
+```powershell
+npm run test:trust-health
+```
+
 ## Read-only readiness preflight
 
 Before migration or promotion work, inspect the currently configured Supabase

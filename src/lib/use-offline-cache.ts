@@ -4,7 +4,7 @@ const DB_NAME = 'axis-africa-cache';
 const DB_VERSION = 1;
 const STORE_NAME = 'data-cache';
 const CACHE_VERSION_KEY = '__cache_version__';
-const CURRENT_CACHE_VERSION = '3.4'; // Country cache now maps to the public trust-state contract
+const CURRENT_CACHE_VERSION = '3.3'; // Country cache now includes authoritative publication-tier metadata
 
 function openDB(): Promise<IDBDatabase> {
     return new Promise((resolve, reject) => {
