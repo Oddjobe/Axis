@@ -226,6 +226,7 @@ export async function GET() {
     const data = decorateItems(rows, requestedMode, generatedAt).map((item) => ({
         ...item,
         publicationTier,
+        fallbackUsed,
     }));
     const sourceUpdatedAt = getLatestTimestamp(data.map((record) => record.sourceUpdatedAt));
     const observedAt = getLatestTimestamp(data.map((record) => record.observedAt));

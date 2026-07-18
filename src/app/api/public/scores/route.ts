@@ -102,6 +102,7 @@ export async function GET() {
           ? trusted.confidence
           : score.confidence,
       publicationTier: trusted ? "trusted" : "legacy",
+      fallbackUsed: !trusted,
       sources: Array.isArray(trusted?.sources) ? trusted.sources : score.sources,
       methodologyVersion:
         typeof trusted?.methodologyVersion === "string"

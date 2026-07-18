@@ -19,6 +19,11 @@ const ALL_DISPLAY_STATES: readonly PublicationDisplayState[] = [
 ];
 
 const generatedAt = "2026-07-18T00:00:00.000Z";
+
+function clone<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value)) as T;
+}
+
 const staleScoreRows = AFRICAN_ISO3_CODES.map((country, index) => ({
   country,
   publicationTier: "legacy",
@@ -99,7 +104,7 @@ assert.equal(payload.datasets.intelligence.freshness.sourcePublishedAt, null);
 assert.equal(payload.datasets.intelligence.freshness.sourceObservedAt, null);
 assert.deepEqual(
   payload.datasets.intelligence.coverage.missingPublicationTimeIdentities,
-  ["legacy-row"],
+  ["record-1"],
 );
 assert.equal(payload.datasets.blogs.displayState, "legacy-live-ingested");
 assert.equal(payload.datasets.commodities.coverage.trustedRecords, 0);
@@ -147,8 +152,13 @@ const trustedScoreRows = AFRICAN_ISO3_CODES.map((country) => ({
   country,
   publicationTier: "trusted",
   dataMode: "live",
+  fallbackUsed: false,
   sourceUpdatedAt: generatedAt,
   observedAt: generatedAt,
+  provenance: {
+    publisher: "AXIS fixture publisher",
+    sourcePublishedAt: generatedAt,
+  },
 }));
 const trustedFeed = {
   success: true,
@@ -162,13 +172,21 @@ const trustedFeed = {
   data: [
     {
       id: "trusted-row",
+      isoCode: "NGA",
+      canonicalUrl: "https://publisher.example/trusted-row",
+      source: "Fixture publisher",
       publicationTier: "trusted",
+      dataMode: "live",
+      fallbackUsed: false,
       sourcePublishedAt: generatedAt,
+      provenance: {
+        publisher: "Fixture publisher",
+        sourcePublishedAt: generatedAt,
+      },
     },
   ],
 };
-const trustedPayload = buildTrustHealthPayload(
-  {
+const trustedInputs = {
     scores: {
       success: true,
       publicationTier: "trusted",
@@ -179,6 +197,7 @@ const trustedPayload = buildTrustHealthPayload(
       observedAt: generatedAt,
       generatedAt,
       count: 54,
+      total: 54,
       countries: trustedScoreRows,
     },
     intelligence: trustedFeed,
@@ -192,6 +211,7 @@ const trustedPayload = buildTrustHealthPayload(
       sourceUpdatedAt: generatedAt,
       observedAt: generatedAt,
       generatedAt,
+      coverageMode: "trusted",
       trustedCoverage: {
         records: COMMODITY_IDS.length,
         total: COMMODITY_IDS.length,
@@ -201,10 +221,18 @@ const trustedPayload = buildTrustHealthPayload(
       data: COMMODITY_IDS.map((id) => ({
         id,
         publicationTier: "trusted",
+        dataMode: "live",
+        fallbackUsed: false,
         sourceUpdatedAt: generatedAt,
+        provenance: {
+          publisher: "Fixture publisher",
+          sourcePublishedAt: generatedAt,
+        },
       })),
     },
-  },
+  };
+const trustedPayload = buildTrustHealthPayload(
+  trustedInputs,
   generatedAt,
   true,
 );
@@ -222,6 +250,275 @@ assert.equal(trustedPayload.datasets.commodities.coverage.trustedRecords, 5);
 assert.equal(
   trustedPayload.datasets.commodities.coverage.trustedExpectedRecords,
   5,
+);
+
+const missingPublisherInputs = clone(trustedInputs);
+missingPublisherInputs.intelligence.data[0].provenance.publisher = "";
+const missingPublisherPayload = buildTrustHealthPayload(
+  missingPublisherInputs,
+  generatedAt,
+  true,
+);
+assert.equal(
+  missingPublisherPayload.datasets.intelligence.displayState,
+  "legacy-live-ingested",
+);
+assert.notEqual(
+  missingPublisherPayload.datasets.intelligence.publicationTier,
+  "trusted",
+);
+assert(
+  missingPublisherPayload.datasets.intelligence.reasonCodes.includes(
+    "publisher-missing",
+  ),
+);
+
+const placeholderPublisherInputs = clone(trustedInputs);
+placeholderPublisherInputs.intelligence.data[0].provenance.publisher =
+  "AXIS fallback snapshot";
+const placeholderPublisherPayload = buildTrustHealthPayload(
+  placeholderPublisherInputs,
+  generatedAt,
+  true,
+);
+assert.notEqual(
+  placeholderPublisherPayload.datasets.intelligence.displayState,
+  "trusted-current",
+);
+assert(
+  placeholderPublisherPayload.datasets.intelligence.reasonCodes.includes(
+    "publisher-missing",
+  ),
+);
+
+const rowSourceOnlyInputs = clone(trustedInputs);
+rowSourceOnlyInputs.intelligence.data[0] = {
+  ...rowSourceOnlyInputs.intelligence.data[0],
+  source: "Reuters",
+  provenance: {
+    publisher: "",
+    sourcePublishedAt: generatedAt,
+  },
+};
+const rowSourceOnlyPayload = buildTrustHealthPayload(
+  rowSourceOnlyInputs,
+  generatedAt,
+  true,
+);
+assert.notEqual(
+  rowSourceOnlyPayload.datasets.intelligence.displayState,
+  "trusted-current",
+);
+assert(
+  !JSON.stringify(rowSourceOnlyPayload).includes("publisher.example"),
+);
+
+const unknownPublisherInputs = clone(trustedInputs);
+unknownPublisherInputs.intelligence.data[0].provenance.publisher = "Unknown";
+const unknownPublisherPayload = buildTrustHealthPayload(
+  unknownPublisherInputs,
+  generatedAt,
+  true,
+);
+assert(
+  unknownPublisherPayload.datasets.intelligence.reasonCodes.includes(
+    "publisher-missing",
+  ),
+);
+
+const tbdPublisherInputs = clone(trustedInputs);
+tbdPublisherInputs.intelligence.data[0].provenance.publisher = "TBD";
+const tbdPublisherPayload = buildTrustHealthPayload(
+  tbdPublisherInputs,
+  generatedAt,
+  true,
+);
+assert.notEqual(
+  tbdPublisherPayload.datasets.intelligence.displayState,
+  "trusted-current",
+);
+
+const duplicateFeedInputs = clone(trustedInputs);
+duplicateFeedInputs.intelligence.data.push(
+  {
+    ...clone(duplicateFeedInputs.intelligence.data[0]),
+    id: "duplicate-cross-country-row",
+    isoCode: "KEN",
+  },
+);
+const duplicateFeedPayload = buildTrustHealthPayload(
+  duplicateFeedInputs,
+  generatedAt,
+  true,
+);
+assert.notEqual(
+  duplicateFeedPayload.datasets.intelligence.displayState,
+  "trusted-current",
+);
+assert(
+  duplicateFeedPayload.datasets.intelligence.reasonCodes.includes(
+    "incomplete-identity-coverage",
+  ),
+);
+
+const sameCountryInputs = clone(trustedInputs);
+sameCountryInputs.intelligence.data[0].isoCode = "KEN";
+sameCountryInputs.intelligence.data.push({
+  ...clone(sameCountryInputs.intelligence.data[0]),
+  id: "second-kenya-row",
+  canonicalUrl: "https://publisher.example/second-kenya-row",
+});
+const sameCountryPayload = buildTrustHealthPayload(
+  sameCountryInputs,
+  generatedAt,
+  true,
+);
+assert.equal(
+  sameCountryPayload.datasets.intelligence.displayState,
+  "trusted-current",
+);
+
+const collisionInputs = clone(trustedInputs);
+collisionInputs.intelligence.data[0].canonicalUrl =
+  "https://publisher.example/oqvecv-eap";
+collisionInputs.intelligence.data.push({
+  ...clone(collisionInputs.intelligence.data[0]),
+  id: "fnv-collision-peer",
+  canonicalUrl: "https://publisher.example/tw4w9g-f04",
+});
+const collisionPayload = buildTrustHealthPayload(
+  collisionInputs,
+  generatedAt,
+  true,
+);
+assert.equal(
+  collisionPayload.datasets.intelligence.displayState,
+  "trusted-current",
+);
+
+const caseSensitiveUrlInputs = clone(trustedInputs);
+caseSensitiveUrlInputs.intelligence.data[0].canonicalUrl =
+  "https://publisher.example/Story";
+caseSensitiveUrlInputs.intelligence.data.push({
+  ...clone(caseSensitiveUrlInputs.intelligence.data[0]),
+  id: "case-sensitive-peer",
+  canonicalUrl: "https://publisher.example/story",
+});
+const caseSensitiveUrlPayload = buildTrustHealthPayload(
+  caseSensitiveUrlInputs,
+  generatedAt,
+  true,
+);
+assert.equal(
+  caseSensitiveUrlPayload.datasets.intelligence.displayState,
+  "trusted-current",
+);
+
+const anonymousFeedInputs = clone(trustedInputs);
+anonymousFeedInputs.intelligence.data[0].canonicalUrl = "";
+const anonymousFeedPayload = buildTrustHealthPayload(
+  anonymousFeedInputs,
+  generatedAt,
+  true,
+);
+assert.notEqual(
+  anonymousFeedPayload.datasets.intelligence.displayState,
+  "trusted-current",
+);
+
+const missingFallbackMarkerInputs = clone(trustedInputs);
+delete (
+  missingFallbackMarkerInputs.intelligence.data[0] as Record<string, unknown>
+).fallbackUsed;
+const missingFallbackMarkerPayload = buildTrustHealthPayload(
+  missingFallbackMarkerInputs,
+  generatedAt,
+  true,
+);
+assert.notEqual(
+  missingFallbackMarkerPayload.datasets.intelligence.displayState,
+  "trusted-current",
+);
+
+const mixedAgeInputs = clone(trustedInputs);
+mixedAgeInputs.intelligence.data.push({
+  ...clone(mixedAgeInputs.intelligence.data[0]),
+  id: "stale-trusted-row",
+  canonicalUrl: "https://publisher.example/stale-trusted-row",
+  provenance: {
+    publisher: "Fixture publisher",
+    sourcePublishedAt: "2025-01-01T00:00:00.000Z",
+  },
+});
+const mixedAgePayload = buildTrustHealthPayload(
+  mixedAgeInputs,
+  generatedAt,
+  true,
+);
+assert.equal(
+  mixedAgePayload.datasets.intelligence.displayState,
+  "trusted-stale",
+);
+
+const duplicateCommodityInputs = clone(trustedInputs);
+duplicateCommodityInputs.commodities.data[1].id =
+  duplicateCommodityInputs.commodities.data[0].id;
+const duplicateCommodityPayload = buildTrustHealthPayload(
+  duplicateCommodityInputs,
+  generatedAt,
+  true,
+);
+assert.notEqual(
+  duplicateCommodityPayload.datasets.commodities.displayState,
+  "trusted-current",
+);
+assert.equal(
+  duplicateCommodityPayload.datasets.commodities.coverage.trustedRecords,
+  COMMODITY_IDS.length - 1,
+);
+assert(
+  duplicateCommodityPayload.datasets.commodities.reasonCodes.includes(
+    "incomplete-identity-coverage",
+  ),
+);
+
+const recordFallbackInputs = clone(trustedInputs);
+recordFallbackInputs.blogs.data[0].dataMode = "fallback";
+recordFallbackInputs.blogs.data[0].fallbackUsed = true;
+const recordFallbackPayload = buildTrustHealthPayload(
+  recordFallbackInputs,
+  generatedAt,
+  true,
+);
+assert.notEqual(
+  recordFallbackPayload.datasets.blogs.displayState,
+  "trusted-current",
+);
+assert(
+  recordFallbackPayload.datasets.blogs.reasonCodes.includes("record-fallback"),
+);
+
+const trustedUnavailableInputs = clone(trustedInputs);
+trustedUnavailableInputs.intelligence = {
+  ...trustedUnavailableInputs.intelligence,
+  success: false,
+  source: "trusted/unavailable",
+  dataMode: "stale",
+  data: [],
+};
+const trustedUnavailablePayload = buildTrustHealthPayload(
+  trustedUnavailableInputs,
+  generatedAt,
+  true,
+);
+assert.equal(
+  trustedUnavailablePayload.datasets.intelligence.displayState,
+  "unavailable",
+);
+assert(
+  trustedUnavailablePayload.datasets.intelligence.reasonCodes.includes(
+    "trusted-publication-unavailable",
+  ),
 );
 
 assert.equal(

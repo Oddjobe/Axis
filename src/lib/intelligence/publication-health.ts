@@ -1,5 +1,11 @@
 import { COMMODITY_IDS } from "@/lib/intelligence/ingestion/commodity-sources";
-import { AFRICAN_ISO3_CODES, toIsoTimestamp, type DataMode } from "@/lib/intelligence/trust";
+import {
+  AFRICAN_ISO3_CODES,
+  getDataMode,
+  toIsoTimestamp,
+  type DataMode,
+  type Dataset,
+} from "@/lib/intelligence/trust";
 
 export type PublicationTier = "trusted" | "mixed" | "legacy";
 export type PublicationStatus = "current" | "stale" | "unavailable";
@@ -159,6 +165,8 @@ export type TrustHealthReasonCode =
   | "incomplete-identity-coverage"
   | "legacy-live-ingested"
   | "legacy-publication"
+  | "publisher-missing"
+  | "record-fallback"
   | "source-observation-time-missing"
   | "source-publication-time-missing"
   | "source-stale"
@@ -178,6 +186,7 @@ export interface TrustHealthDataset {
     trustedRecords: number;
     trustedExpectedRecords: number | null;
     missingIdentities: string[];
+    missingPublisherIdentities: string[];
     missingTrustedIdentities: string[];
     missingPublicationTimeIdentities: string[];
   };
@@ -237,12 +246,87 @@ function identity(row: JsonRecord, index: number): string {
   );
 }
 
+function fingerprint(value: string): string {
+  let primary = 0x811c9dc5;
+  let secondary = 0x9e3779b9;
+  for (let position = 0; position < value.length; position += 1) {
+    const code = value.charCodeAt(position);
+    primary = Math.imul(
+      primary ^ code,
+      0x01000193,
+    );
+    secondary = Math.imul(secondary ^ code, 0x85ebca6b);
+  }
+  return `record-${(primary >>> 0).toString(16).padStart(8, "0")}${(secondary >>> 0).toString(16).padStart(8, "0")}`;
+}
+
+function feedIdentity(row: JsonRecord): string | null {
+  const fingerprintSource =
+    text(row.canonicalUrl) ??
+    text(row.sourceUrl) ??
+    text(row.url) ??
+    text(row.contentHash);
+  return fingerprintSource;
+}
+
+function feedReportIdentity(row: JsonRecord, index: number): string {
+  const value = feedIdentity(row);
+  return value ? fingerprint(value) : `record-${index + 1}`;
+}
+
+function placeholderPublisher(value: string): boolean {
+  const normalized = value.toLowerCase().replace(/\s+/g, " ").trim();
+  return (
+    PLACEHOLDER_PUBLISHERS.has(normalized) ||
+    /^(?:tba|tbd|unknown(?: publisher| source)?|not (?:available|applicable|provided)|pending|placeholder(?: publisher)?|[-–—]+)$/.test(
+      normalized,
+    )
+  );
+}
+
+function provenance(row: JsonRecord): JsonRecord {
+  return record(row.provenance);
+}
+
+const PLACEHOLDER_PUBLISHERS = new Set([
+  "axis africa",
+  "axis editorial fallback",
+  "axis fallback snapshot",
+  "n/a",
+  "none",
+  "null",
+  "unknown",
+  "undefined",
+  "unavailable",
+]);
+
+function publisher(row: JsonRecord): string | null {
+  const recordProvenance = provenance(row);
+  const value = text(recordProvenance.publisher);
+  return value && !placeholderPublisher(value)
+    ? value
+    : null;
+}
+
 function publicationTime(row: JsonRecord): string | null {
+  const recordProvenance = provenance(row);
   return toIsoTimestamp(
-    row.sourcePublishedAt ??
+    recordProvenance.sourcePublishedAt ??
+      row.sourcePublishedAt ??
       row.source_published_at ??
       row.sourceUpdatedAt ??
       row.source_updated_at,
+  );
+}
+
+function hasTrustedRecordMode(row: JsonRecord): boolean {
+  const rowMode = mode(row.dataMode);
+  const source = text(row.source)?.toLowerCase() ?? "";
+  return (
+    (rowMode === "live" || rowMode === "stale") &&
+    row.fallbackUsed === false &&
+    !source.includes("static") &&
+    !source.includes("cache")
   );
 }
 
@@ -261,56 +345,175 @@ function buildDataset({
   field,
   expectedIdentities,
   trustedCoverage,
+  trustDataset,
+  generatedAt,
 }: {
   payload: JsonRecord;
   field: "countries" | "data";
   expectedIdentities?: readonly string[];
   trustedCoverage?: JsonRecord;
+  trustDataset: Dataset;
+  generatedAt: string;
 }): TrustHealthDataset {
   const availableRows = rows(payload, field);
-  const availableIdentities = new Set(
-    availableRows.map((row, index) => identity(row, index)),
+  const expected = expectedIdentities ? [...expectedIdentities] : null;
+  const feedDataset = expected === null;
+  const availableIdentityValues = availableRows.map((row, index) =>
+    feedDataset ? feedIdentity(row) : identity(row, index)
   );
-  const publicationTier = tier(payload.publicationTier);
+  const availableIdentities = new Set(
+    availableIdentityValues
+      .filter((value): value is string => value !== null)
+      .map((value) => feedDataset ? value : value.toUpperCase()),
+  );
+  const claimedPublicationTier = tier(payload.publicationTier);
   const trustedRows = availableRows.filter(
-    (row) =>
-      row.publicationTier === "trusted" ||
-      (publicationTier === "trusted" && row.publicationTier !== "legacy"),
+    (row) => row.publicationTier === "trusted",
+  );
+  const trustedIdentityValues = trustedRows.map((row, index) =>
+    feedDataset ? feedIdentity(row) : identity(row, index)
   );
   const trustedIdentities = new Set(
-    trustedRows.map((row, index) => identity(row, index)),
+    trustedIdentityValues
+      .filter((value): value is string => value !== null)
+      .map((value) => feedDataset ? value : value.toUpperCase()),
   );
-  const expected = expectedIdentities ? [...expectedIdentities] : null;
-  const coverageTrustedRecords =
+  const computedMissingTrusted =
+    expected?.filter((id) => !trustedIdentities.has(id.toUpperCase())) ?? [];
+  const reportedTrustedRecords =
     typeof trustedCoverage?.records === "number"
       ? trustedCoverage.records
       : trustedIdentities.size;
-  const coverageMissing = Array.isArray(trustedCoverage?.missingIds)
+  const coverageTrustedRecords = Math.min(
+    reportedTrustedRecords,
+    trustedIdentities.size,
+  );
+  const reportedCoverageMissing = Array.isArray(trustedCoverage?.missingIds)
     ? trustedCoverage.missingIds.map(String)
-    : expected?.filter((id) => !trustedIdentities.has(id)) ?? [];
+    : [];
+  const coverageMissing = [
+    ...new Set([...computedMissingTrusted, ...reportedCoverageMissing]),
+  ];
+  const expectedCoverageComplete = expected === null
+    ? availableRows.length > 0 &&
+      availableIdentityValues.every((value) => value !== null) &&
+      availableIdentities.size === availableRows.length
+    : (
+        availableRows.length === expected.length &&
+        availableIdentities.size === expected.length &&
+        expected.every((id) => availableIdentities.has(id.toUpperCase()))
+      );
+  const trustedIdentityCoverageComplete = expected === null
+    ? (
+        trustedRows.length === availableRows.length &&
+        trustedRows.length > 0 &&
+        trustedIdentityValues.every((value) => value !== null) &&
+        trustedIdentities.size === trustedRows.length
+      )
+    : (
+        trustedRows.length === expected.length &&
+        trustedIdentities.size === expected.length &&
+        expected.every((id) => trustedIdentities.has(id.toUpperCase()))
+      );
+  const reportedCoverageComplete = trustedCoverage
+    ? (
+        trustedCoverage.records === expected?.length &&
+        trustedCoverage.total === expected?.length &&
+        trustedCoverage.ratio === 1 &&
+        Array.isArray(trustedCoverage.missingIds) &&
+        trustedCoverage.missingIds.length === 0 &&
+        payload.coverageMode === "trusted"
+      )
+    : expected === null || (
+        payload.count === expected.length &&
+        payload.total === expected.length
+      );
+  const missingPublicationTimeIdentities = availableRows
+    .map((row, index) => ({
+      id: feedDataset
+        ? feedReportIdentity(row, index)
+        : identity(row, index),
+      time: publicationTime(row),
+    }))
+    .filter((item) => !item.time)
+    .map((item) => item.id);
+  const missingPublisherIdentities = availableRows
+    .map((row, index) => ({
+      id: feedDataset
+        ? feedReportIdentity(row, index)
+        : identity(row, index),
+      value: publisher(row),
+    }))
+    .filter((item) => !item.value)
+    .map((item) => item.id);
+  const invalidRecordModeIdentities = availableRows
+    .map((row, index) => ({
+      id: feedDataset
+        ? feedReportIdentity(row, index)
+        : identity(row, index),
+      valid: hasTrustedRecordMode(row),
+    }))
+    .filter((item) => !item.valid)
+    .map((item) => item.id);
+  const source = text(payload.source);
+  const payloadMode = mode(payload.dataMode);
+  const trustedEvidence = (
+    claimedPublicationTier === "trusted" &&
+    source === "trusted" &&
+    payload.success !== false &&
+    payload.fallbackUsed === false &&
+    (payload.coverageMode === undefined || payload.coverageMode === "trusted") &&
+    (payloadMode === "live" || payloadMode === "stale") &&
+    availableRows.length > 0 &&
+    expectedCoverageComplete &&
+    trustedIdentityCoverageComplete &&
+    reportedCoverageComplete &&
+    missingPublicationTimeIdentities.length === 0 &&
+    missingPublisherIdentities.length === 0 &&
+    invalidRecordModeIdentities.length === 0
+  );
+  const publicationTier: PublicationTier = trustedEvidence
+    ? "trusted"
+    : claimedPublicationTier === "mixed" || trustedRows.length > 0
+      ? "mixed"
+      : "legacy";
+  const generatedAtMs = Date.parse(generatedAt);
+  const trustedRecordStale = trustedEvidence && availableRows.some((row) =>
+    row.dataMode === "stale" ||
+    getDataMode(
+      publicationTime(row),
+      trustDataset,
+      "live",
+      Number.isFinite(generatedAtMs) ? generatedAtMs : Date.now(),
+    ) === "stale"
+  );
   const presentation = getPublicationPresentation({
     success: payload.success !== false,
-    source: text(payload.source),
+    source: trustedEvidence || publicationTier === "legacy"
+      ? source
+      : "legacy/supabase",
     publicationTier,
-    dataMode: mode(payload.dataMode),
+    dataMode: trustedRecordStale ? "stale" : payloadMode,
     fallbackUsed: payload.fallbackUsed === true,
     sourceUpdatedAt: text(payload.sourceUpdatedAt),
     observedAt: text(payload.observedAt),
     generatedAt: text(payload.generatedAt),
   });
-  const missingPublicationTimeIdentities = availableRows
-    .map((row, index) => ({ id: identity(row, index), time: publicationTime(row) }))
-    .filter((item) => !item.time)
-    .map((item) => item.id);
   const reasonCodes = new Set<TrustHealthReasonCode>();
   if (presentation.status === "unavailable") reasonCodes.add("upstream-unavailable");
   if (
-    publicationTier === "trusted" &&
+    claimedPublicationTier === "trusted" &&
     presentation.status === "unavailable"
   ) {
     reasonCodes.add("trusted-publication-unavailable");
   }
   if (publicationTier !== "trusted") reasonCodes.add("legacy-publication");
+  if (missingPublisherIdentities.length > 0) {
+    reasonCodes.add("publisher-missing");
+  }
+  if (invalidRecordModeIdentities.length > 0) {
+    reasonCodes.add("record-fallback");
+  }
   if (!presentation.sourcePublishedAt) {
     reasonCodes.add("source-publication-time-missing");
   }
@@ -323,7 +526,7 @@ function buildDataset({
   if (presentation.state === "legacy-live-ingested") {
     reasonCodes.add("legacy-live-ingested");
   }
-  if (expected && expected.some((id) => !availableIdentities.has(id))) {
+  if (!expectedCoverageComplete) {
     reasonCodes.add("incomplete-identity-coverage");
   }
   if (expected && coverageTrustedRecords === 0) {
@@ -342,7 +545,8 @@ function buildDataset({
       trustedRecords: coverageTrustedRecords,
       trustedExpectedRecords: expected?.length ?? null,
       missingIdentities:
-        expected?.filter((id) => !availableIdentities.has(id)) ?? [],
+        expected?.filter((id) => !availableIdentities.has(id.toUpperCase())) ?? [],
+      missingPublisherIdentities,
       missingTrustedIdentities: coverageMissing,
       missingPublicationTimeIdentities,
     },
@@ -379,20 +583,28 @@ export function buildTrustHealthPayload(
       payload: scores,
       field: "countries",
       expectedIdentities: AFRICAN_ISO3_CODES,
+      trustDataset: "country-score",
+      generatedAt,
     }),
     intelligence: buildDataset({
       payload: intelligence,
       field: "data",
+      trustDataset: "intelligence",
+      generatedAt,
     }),
     blogs: buildDataset({
       payload: blogs,
       field: "data",
+      trustDataset: "blog",
+      generatedAt,
     }),
     commodities: buildDataset({
       payload: commodities,
       field: "data",
       expectedIdentities: COMMODITY_IDS,
       trustedCoverage: record(commodities.trustedCoverage),
+      trustDataset: "commodity",
+      generatedAt,
     }),
   };
   const statuses = Object.values(datasets).map((dataset) => dataset.status);
