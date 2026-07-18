@@ -50,6 +50,7 @@
     "@supabase/supabase-js": "^2.98.0",
     "@types/react-simple-maps": "^3.0.6",
     "@types/topojson-client": "^3.1.5",
+    "@vercel/speed-insights": "^2.0.0",
     "d3-fetch": "^3.0.1",
     "d3-force": "^3.0.0",
     "d3-geo": "^3.1.1",
