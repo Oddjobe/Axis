@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { X, ExternalLink, BarChart3, Maximize2, LineChart, Network } from "lucide-react"
 import WealthVsSovereigntyChart from "./wealth-vs-sovereignty-chart"
@@ -8,26 +8,31 @@ import SovereigntyTrendlineChart from "./sovereignty-trendline-chart"
 import InfluenceSankeyChart from "./influence-sankey-chart"
 import AiResourceGraph from "./ai-resource-graph"
 import type { CountryData } from "./country-dossier-modal"
+import {
+    getPresentationTone,
+    type PublicationPresentation,
+} from "@/lib/intelligence/publication-health"
 
 interface AnalyticsModalProps {
     isOpen: boolean;
     onClose: () => void;
     data: CountryData[];
     selectedResource?: string | null;
+    publication: PublicationPresentation;
 }
 
 type TabType = "SCATTER" | "TRENDS" | "FLOWS" | "NEXUS";
 
-export default function AnalyticsModal({ isOpen, onClose, data, selectedResource }: AnalyticsModalProps) {
+export default function AnalyticsModal({ isOpen, onClose, data, selectedResource, publication }: AnalyticsModalProps) {
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [activeTab, setActiveTab] = useState<TabType>("SCATTER");
     const [contentReady, setContentReady] = useState(false);
+    const publicationTone = getPresentationTone(publication.state);
 
-    // Reset contentReady when modal closes; it will be set to true
-    // by onAnimationComplete on the modal container.
-    useEffect(() => {
-        if (!isOpen) setContentReady(false);
-    }, [isOpen]);
+    const handleClose = () => {
+        setContentReady(false);
+        onClose();
+    };
 
     return (
         <AnimatePresence>
@@ -38,7 +43,7 @@ export default function AnalyticsModal({ isOpen, onClose, data, selectedResource
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        onClick={onClose}
+                        onClick={handleClose}
                         className="fixed inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-xl z-[90]"
                     />
 
@@ -71,8 +76,8 @@ export default function AnalyticsModal({ isOpen, onClose, data, selectedResource
                                 <div className="min-w-0">
                                     <h2 className="text-sm lg:text-base font-bold tracking-widest uppercase truncate">STRATEGIC ANALYTICS</h2>
                                     <div className="flex items-center gap-2 mt-0.5 whitespace-nowrap">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse shrink-0" />
-                                        <span className="text-[10px] font-mono text-slate-light tracking-wider truncate">LIVE PLATFORM DATA</span>
+                                        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${publicationTone.dot}`} />
+                                        <span className="text-[10px] font-mono text-slate-light tracking-wider truncate">{publication.label} PLATFORM DATA</span>
                                     </div>
                                 </div>
                             </div>
@@ -115,7 +120,7 @@ export default function AnalyticsModal({ isOpen, onClose, data, selectedResource
                                 </button>
                                 <div className="w-px h-4 bg-border hidden sm:block mx-1" />
                                 <button
-                                    onClick={onClose}
+                                    onClick={handleClose}
                                     className="p-2 hover:bg-background rounded-full transition-colors group"
                                 >
                                     <X className="w-5 h-5 text-slate-light group-hover:text-foreground" />
@@ -150,7 +155,7 @@ export default function AnalyticsModal({ isOpen, onClose, data, selectedResource
                                                         <span className="text-orange-500">▶</span> THE DATA STORY
                                                     </h3>
                                                     <p className="text-xs text-slate-light leading-relaxed mb-4">
-                                                        This scatter plot visualizes the core thesis of AXIS: The gap between Africa's natural endowment and its sovereign value capture.
+                                                        This scatter plot visualizes the core thesis of AXIS: The gap between Africa&apos;s natural endowment and its sovereign value capture.
                                                     </p>
 
                                                     <div className="space-y-3">
@@ -208,7 +213,7 @@ export default function AnalyticsModal({ isOpen, onClose, data, selectedResource
                                                         <span className="text-orange-500">▶</span> INFLUENCE MAPPING
                                                     </h3>
                                                     <p className="text-xs text-slate-light leading-relaxed mb-4">
-                                                        Visualizing extractive structural influence from external actors into Africa's most vulnerable states. Use the actor chips or click any node to isolate a single flow.
+                                                        Visualizing extractive structural influence from external actors into Africa&apos;s most vulnerable states. Use the actor chips or click any node to isolate a single flow.
                                                     </p>
 
                                                     <div className="space-y-3">
@@ -226,7 +231,7 @@ export default function AnalyticsModal({ isOpen, onClose, data, selectedResource
                                             </div>
 
                                             <div className="lg:col-span-3 bg-background border border-border rounded-xl p-4 flex flex-col min-h-[400px]">
-                                                <InfluenceSankeyChart data={data} />
+                                                <InfluenceSankeyChart />
                                             </div>
                                         </motion.div>
                                     )}
