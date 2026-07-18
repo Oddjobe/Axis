@@ -105,14 +105,22 @@ export const COMMODITY_SOURCES: readonly CommoditySource[] = [
   },
 ] as const;
 
+// Firecrawl enforces the OpenAI strict JSON-schema subset for structured
+// extraction: every object must set `additionalProperties: false` with all
+// properties listed in `required`, and validation keywords such as `format`,
+// `minItems`, `minimum`, and `maximum` are rejected with a 400 "Invalid JSON
+// schema" error. Descriptions and `enum` remain supported and carry the
+// source-native unit / date-time guidance that those keywords previously
+// encoded.
 export const COMMODITY_EXTRACT_SCHEMA = {
   type: "object",
+  additionalProperties: false,
   properties: {
     quotes: {
       type: "array",
-      minItems: 1,
       items: {
         type: "object",
+        additionalProperties: false,
         properties: {
           commodityId: { type: "string", enum: COMMODITY_IDS },
           price: { type: "number" },
@@ -123,11 +131,22 @@ export const COMMODITY_EXTRACT_SCHEMA = {
           },
           currency: { type: "string" },
           sourceMarket: { type: "string" },
-          sourcePublishedAt: { type: "string", format: "date-time" },
+          sourcePublishedAt: {
+            type: "string",
+            description:
+              "The publication's explicit source date-time in ISO 8601 format. Never infer or convert a timestamp.",
+          },
           publisher: { type: "string" },
-          canonicalUrl: { type: "string", format: "uri" },
+          canonicalUrl: {
+            type: "string",
+            description: "The publication's canonical absolute URL.",
+          },
           excerpt: { type: "string" },
-          confidence: { type: "number", minimum: 0, maximum: 1 },
+          confidence: {
+            type: "number",
+            description:
+              "Extraction confidence between 0 and 1 inclusive.",
+          },
         },
         required: [
           "commodityId",

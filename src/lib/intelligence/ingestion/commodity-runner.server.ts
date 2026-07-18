@@ -208,6 +208,7 @@ const UNIT_ALIASES: Readonly<Record<string, CommodityUnit>> = {
   OZ: "OZ",
   OUNCE: "OZ",
   "TROY OUNCE": "OZ",
+  MT: "T",
 };
 
 function canonicalQuote(
@@ -219,7 +220,10 @@ function canonicalQuote(
   unit: CommodityUnit | undefined;
   conversion: CommodityConversion;
 } {
-  const normalizedUnit = rawUnit.toUpperCase();
+  const normalizedUnit = rawUnit
+    .toUpperCase()
+    .replace(/^[A-Z]{3}\s*\/\s*/, "")
+    .trim();
   if (
     source.id === "copper" &&
     (normalizedUnit === "LB" || normalizedUnit === "LBS")
