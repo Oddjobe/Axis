@@ -714,8 +714,8 @@ export default function FrictionEngine({ mode, filterCountries, onSelectCountry,
 
                 {activeTab === "BLOGS" && (
                     <div className="space-y-4">
-                        <div className="text-[10px] font-mono text-green-500 flex items-center gap-2 mb-2">
-                            <span className={`w-2 h-2 rounded-full ${blogTrustState === "trusted-current" ? "bg-green-500 animate-pulse" : "bg-amber-500"}`} />
+                        <div className={`text-[10px] font-mono flex items-center gap-2 mb-2 ${blogTrustState === "trusted-current" ? "text-green-500" : blogTrustState === "cached" || blogTrustState === "legacy-live-ingested" ? "text-amber-500" : "text-red-500"}`}>
+                            <span className={`w-2 h-2 rounded-full ${blogTrustState === "trusted-current" ? "bg-green-500 animate-pulse" : blogTrustState === "cached" || blogTrustState === "legacy-live-ingested" ? "bg-amber-500" : "bg-red-500"}`} />
                             {getPublicTrustStateLabel(blogTrustState)} GEOPOLITICAL ANALYSIS
                         </div>
                         {blogsLoading && blogs.length === 0 ? (
