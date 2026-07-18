@@ -30,12 +30,18 @@ non-trusted state (`legacy-live-ingested` or `static-fallback`) — they can
 never be reported as `trusted-current` or `trusted-stale`. The endpoint never
 reads privileged credentials directly; it only aggregates the already-public
 JSON responses, and its output contains no secrets, connection strings, or raw
-error internals.
+error internals. Coverage reports an aggregate
+`missingPublicationTimeRecords` count for every dataset. Missing publication
+time identities are populated only for stable public keys (ISO-3 country codes
+and commodity IDs); intelligence and blog row identities are internal and are
+never included.
 
 The same classification (`src/lib/intelligence/publication-health.ts`,
 `getPublicationPresentation`) drives the freshness badges shown on the
 dashboard, commodity ticker, country dossier, and friction engine feed, so the
-label a user sees always matches the aggregate health signal.
+label a user sees always matches the aggregate health signal. If a dashboard
+refresh fails after usable rows have loaded, those retained rows are labeled
+`CACHED`; an initial failure without usable rows is labeled `UNAVAILABLE`.
 
 Validate the classification with deterministic fixtures (54-country stale
 metadata, missing publisher times, 0/5 trusted commodity coverage, and a full
