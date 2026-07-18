@@ -56,6 +56,26 @@ export const TRUST_STATE_FIXTURES: Array<{
     expected: "static-fallback",
   },
   {
+    name: "partial trusted coverage with static fill",
+    input: {
+      publicationTier: "mixed",
+      dataMode: "fallback",
+      fallbackUsed: true,
+      source: "trusted/partial",
+    },
+    expected: "static-fallback",
+  },
+  {
+    name: "partial trusted coverage with live legacy fill",
+    input: {
+      publicationTier: "mixed",
+      dataMode: "live",
+      fallbackUsed: false,
+      source: "trusted/partial",
+    },
+    expected: "legacy-live-ingested",
+  },
+  {
     name: "unavailable route",
     input: {
       available: false,

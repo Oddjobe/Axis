@@ -319,20 +319,6 @@ export default function FrictionEngine({ mode, filterCountries, onSelectCountry,
         try {
             const res = await fetch("/api/intelligence");
             const payload = await res.json();
-            if (isMounted) {
-                setIntelligencePresentation(
-                    getPublicationPresentation({
-                        success: payload?.success !== false,
-                        source: payload?.source,
-                        publicationTier: payload?.publicationTier,
-                        dataMode: payload?.dataMode,
-                        fallbackUsed: payload?.fallbackUsed,
-                        sourceUpdatedAt: payload?.sourceUpdatedAt,
-                        observedAt: payload?.observedAt,
-                        generatedAt: payload?.generatedAt,
-                    }),
-                );
-            }
             const data = Array.isArray(payload) ? payload : payload?.data;
             if (!Array.isArray(data) || data.length === 0) {
                 if (isMounted) setIntelligenceTrustState("unavailable");

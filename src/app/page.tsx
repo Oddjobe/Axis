@@ -68,10 +68,6 @@ import {
 } from "@/lib/intelligence/trust-health";
 import { mergeAuthoritativeCountryScores } from "@/lib/intelligence/score-selection";
 import type { LegacyRecord } from "@/lib/intelligence/trust-rollout";
-import {
-  getPresentationTone,
-  getPublicationPresentation,
-} from "@/lib/intelligence/publication-health";
 const TOTAL_POPULATION = 1_444; // ~1.44 billion
 
 const STATIC_SCORE_FRESHNESS = getFreshnessMetadata({
@@ -135,19 +131,6 @@ export default function Home() {
   const [mounted, setMounted] = useState(false);
   const { newAlertCount, clearNewAlerts } = useRealtimeAlerts();
   const [searchOpen, setSearchOpen] = useState(false);
-  const scorePublication = getPublicationPresentation({
-    success: true,
-    source: scorePublicationTier === "trusted" ? "trusted" : "legacy/static",
-    publicationTier: scorePublicationTier,
-    dataMode: dataSourceMode,
-    fallbackUsed:
-      scorePublicationTier === "legacy" && dataSourceMode !== "cached",
-    sourceUpdatedAt: dashboardFreshness.sourceUpdatedAt,
-    observedAt: dashboardFreshness.observedAt,
-    generatedAt: dashboardFreshness.generatedAt,
-  });
-  const scorePublicationTone = getPresentationTone(scorePublication.state);
-
   const openTool = useCallback((action: string) => {
     switch (action) {
       case "mission": setMissionOpen(true); break;

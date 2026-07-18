@@ -27,8 +27,6 @@ interface Commodity {
     observedAt?: string | null;
 }
 
-const UNAVAILABLE_PRESENTATION = getPublicationPresentation({ success: false });
-
 function relativeTime(dateStr: string): string {
     const now = new Date();
     const then = new Date(dateStr);
@@ -77,8 +75,6 @@ export default function CommodityTicker() {
 
     // Duplicate items for seamless loop
     const displayItems = [...commodities, ...commodities];
-    const tone = getPresentationTone(presentation.state);
-
     return (
         <div className="h-8 lg:h-9 bg-black/60 dark:bg-black/40 border-b border-border flex items-center overflow-hidden relative group">
             {/* Aggregate provenance and freshness badge */}

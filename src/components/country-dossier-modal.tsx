@@ -13,6 +13,10 @@ import {
     getPublicTrustStateLabel,
     type PublicTrustState,
 } from "@/lib/intelligence/trust-health";
+import {
+    getPresentationTone,
+    getPublicationPresentation,
+} from "@/lib/intelligence/publication-health";
 
 export interface CountryData {
     country: string;

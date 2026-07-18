@@ -81,6 +81,12 @@ export function derivePublicTrustState({
     return dataMode === "stale" ? "trusted-stale" : "unavailable";
   }
 
+  if (publicationTier === "mixed") {
+    return fallbackUsed === true || dataMode === "fallback"
+      ? "static-fallback"
+      : "legacy-live-ingested";
+  }
+
   if (
     publicationTier === "legacy" &&
     fallbackUsed === false &&

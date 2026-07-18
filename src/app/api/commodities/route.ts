@@ -217,6 +217,7 @@ export function buildRecord(
                 : typeof fresh?.source_url === "string"
                     ? fresh.source_url
                     : fallback.sourceUrl;
+    const retrievedAt = fresh ? recordRetrievalTimestamp(fresh) : null;
     const fallbackUsed =
         !fresh || (!trusted && typeof fresh.trend !== "number");
     const publicationTier = fresh && trusted ? "trusted" : "legacy";

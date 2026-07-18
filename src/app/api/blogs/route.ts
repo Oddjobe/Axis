@@ -164,7 +164,7 @@ export async function GET() {
         }
     }
 
-    const decoratedData = decorateItems(rows, requestedMode, generatedAt).map((item) => ({
+    const decoratedData = decorateItems(rows, requestedMode).map((item) => ({
         ...item,
         publicationTier,
     }));

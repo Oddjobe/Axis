@@ -34,6 +34,7 @@ async function inspect(
 
   try {
     const response = await fetch(new URL(path, origin), {
+      cache: "no-store",
       headers: { Accept: "application/json" },
       signal: AbortSignal.timeout(15_000),
     });
