@@ -10,6 +10,7 @@ import {
     recordRetrievalTimestamp,
     trustedSnapshotUnavailable,
 } from "@/lib/intelligence/publication-selection.server";
+import { getPublicationPresentation } from "@/lib/intelligence/publication-health";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 300; // Cache for 5 minutes
@@ -127,6 +128,7 @@ export async function GET() {
                 publicationTier: "trusted",
                 fallbackUsed: false,
                 dataMode: "stale",
+                displayState: getPublicationPresentation({ success: false }).state,
                 generatedAt,
                 data: [],
                 error: "No trusted blog snapshot is available.",
@@ -176,6 +178,16 @@ export async function GET() {
     }).dataMode;
     const asOf = sourceUpdatedAt ?? observedAt;
     const freshness = { dataMode, sourceUpdatedAt, observedAt, asOf };
+    const displayState = getPublicationPresentation({
+        success: true,
+        source,
+        publicationTier,
+        fallbackUsed,
+        dataMode,
+        generatedAt,
+        sourceUpdatedAt,
+        observedAt,
+    }).state;
 
     return NextResponse.json({
         success: true,
@@ -183,6 +195,7 @@ export async function GET() {
         publicationTier,
         fallbackUsed,
         dataMode,
+        displayState,
         generatedAt,
         sourceUpdatedAt,
         observedAt,

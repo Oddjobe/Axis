@@ -28,9 +28,11 @@ Legacy content without a source publication timestamp, stale legacy scores,
 and static commodities with 0/5 trusted coverage always resolve to a
 non-trusted state (`legacy-live-ingested` or `static-fallback`) — they can
 never be reported as `trusted-current` or `trusted-stale`. The endpoint never
-reads privileged credentials directly; it only aggregates the already-public
-JSON responses, and its output contains no secrets, connection strings, or raw
-error internals. Coverage reports an aggregate
+reads privileged credentials directly; it invokes the same read-only handlers
+that serve the public JSON responses and validates the final allowlisted shape
+against a strict runtime contract. Its output contains no secrets, connection
+strings, source URLs or excerpts, storage details, or raw error internals.
+Coverage reports an aggregate
 `missingPublicationTimeRecords` count for every dataset. Missing publication
 time identities are populated only for stable public keys (ISO-3 country codes
 and commodity IDs); intelligence and blog row identities are internal and are
@@ -39,7 +41,10 @@ never included.
 The same classification (`src/lib/intelligence/publication-health.ts`,
 `getPublicationPresentation`) drives the freshness badges shown on the
 dashboard, commodity ticker, country dossier, and friction engine feed, so the
-label a user sees always matches the aggregate health signal. If a dashboard
+label a user sees always matches the aggregate health signal. Each underlying
+JSON response also includes the classifier-produced `displayState`, while
+retaining the existing `publicationTier`, `dataMode`, and `fallbackUsed`
+fields. If a dashboard
 refresh fails after usable rows have loaded, those retained rows are labeled
 `CACHED`; an initial failure without usable rows is labeled `UNAVAILABLE`.
 
