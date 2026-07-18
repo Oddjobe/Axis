@@ -8,6 +8,7 @@ import {
   AFRICAN_ISO3_CODES,
   africanIso3Schema,
 } from "./trust";
+import { withBoundedRetry } from "./ingestion/retry.server";
 
 const WORLD_BANK_API_ROOT = "https://api.worldbank.org/v2";
 const isoCodes = new Set<string>(AFRICAN_ISO3_CODES);
@@ -46,6 +47,14 @@ export interface WorldBankLoadOptions {
   endYear?: number;
   retrievedAt?: string;
   timeoutMs?: number;
+  /** Bounded retry attempts per indicator request (default 4). */
+  attempts?: number;
+  /** Base backoff between retries; scales linearly per attempt (default 500ms). */
+  retryDelayMs?: number;
+  /** Maximum indicator requests in flight at once (default 2) to avoid throttling. */
+  maxConcurrency?: number;
+  /** Optional abort signal to cancel in-flight and pending requests. */
+  signal?: AbortSignal;
 }
 
 function toSourceTimestamp(value: unknown): string | null {
@@ -69,6 +78,9 @@ export async function fetchWorldBankIndicator(
     endYear,
     retrievedAt = new Date().toISOString(),
     timeoutMs = 8_000,
+    attempts = 4,
+    retryDelayMs = 500,
+    signal,
   }: Omit<WorldBankLoadOptions, "indicators"> = {},
 ): Promise<{
   observations: ScoreObservation[];
@@ -84,37 +96,43 @@ export async function fetchWorldBankIndicator(
   url.searchParams.set("date", `${resolvedStartYear}:${resolvedEndYear}`);
   url.searchParams.set("per_page", "2000");
 
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  let payload: unknown;
-  try {
-    const response = await fetchImpl(url, {
-      headers: { Accept: "application/json" },
-      signal: controller.signal,
-    });
-    if (!response.ok) {
-      throw new Error(
-        `World Bank ${indicator.id} returned HTTP ${response.status}.`,
-      );
-    }
-    payload = await response.json();
-  } finally {
-    clearTimeout(timer);
-  }
-  if (
-    !Array.isArray(payload)
-    || typeof payload[0] !== "object"
-    || payload[0] === null
-    || !Array.isArray(payload[1])
-  ) {
-    throw new Error(`World Bank ${indicator.id} returned an invalid payload.`);
-  }
-
-  const sourcePublishedAt = toSourceTimestamp(
-    (payload[0] as WorldBankMetadata).lastupdated,
+  // The World Bank API intermittently throttles bursts with HTTP 400/429/5xx;
+  // retry with bounded backoff so a transient rejection does not silently fall
+  // back to bundled/static observations. Malformed 200 bodies are retried too.
+  const { metadata, rows } = await withBoundedRetry(
+    `World Bank ${indicator.id}`,
+    async (_attempt, _attemptTimeoutMs, attemptSignal) => {
+      const response = await fetchImpl(url, {
+        headers: { Accept: "application/json" },
+        signal: attemptSignal,
+      });
+      if (!response.ok) {
+        throw new Error(
+          `World Bank ${indicator.id} returned HTTP ${response.status}.`,
+        );
+      }
+      const payload: unknown = await response.json();
+      if (
+        !Array.isArray(payload)
+        || typeof payload[0] !== "object"
+        || payload[0] === null
+        || !Array.isArray(payload[1])
+      ) {
+        throw new Error(
+          `World Bank ${indicator.id} returned an invalid payload.`,
+        );
+      }
+      return {
+        metadata: payload[0] as WorldBankMetadata,
+        rows: payload[1] as WorldBankObservation[],
+      };
+    },
+    { attempts, timeoutMs, delayMs: retryDelayMs, signal },
   );
+
+  const sourcePublishedAt = toSourceTimestamp(metadata.lastupdated);
   const latest = new Map<string, ScoreObservation>();
-  for (const candidate of payload[1] as WorldBankObservation[]) {
+  for (const candidate of rows) {
     const country = candidate.countryiso3code?.toUpperCase();
     const year = Number(candidate.date);
     const value = candidate.value;
@@ -176,6 +194,26 @@ function mergeObservations(
   );
 }
 
+async function mapWithConcurrency<T, R>(
+  items: readonly T[],
+  limit: number,
+  worker: (item: T, index: number) => Promise<R>,
+): Promise<R[]> {
+  const results = new Array<R>(items.length);
+  let cursor = 0;
+  const runnerCount = Math.max(1, Math.min(limit, items.length));
+  const runners = Array.from({ length: runnerCount }, async () => {
+    while (true) {
+      const index = cursor;
+      cursor += 1;
+      if (index >= items.length) break;
+      results[index] = await worker(items[index], index);
+    }
+  });
+  await Promise.all(runners);
+  return results;
+}
+
 export async function loadWorldBankObservations(
   options: WorldBankLoadOptions = {},
 ): Promise<ObservationLoadResult> {
@@ -184,8 +222,11 @@ export async function loadWorldBankObservations(
     indicators.some((indicator) => indicator.id === observation.indicatorId)
   );
   const requestedAt = options.retrievedAt ?? new Date().toISOString();
-  const results = await Promise.all(
-    indicators.map(async (indicator) => {
+  const maxConcurrency = Math.max(1, options.maxConcurrency ?? 2);
+  const results = await mapWithConcurrency(
+    indicators,
+    maxConcurrency,
+    async (indicator) => {
       const fallback = bundled.filter(
         (observation) => observation.indicatorId === indicator.id,
       );
@@ -222,7 +263,7 @@ export async function loadWorldBankObservations(
           } satisfies ScoreSourceDiagnostic,
         };
       }
-    }),
+    },
   );
 
   return {
