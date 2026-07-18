@@ -1,12 +1,13 @@
 "use client"
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown, ShieldCheck, Globe2, Clock } from 'lucide-react';
 import type { DataMode } from '@/lib/intelligence/trust';
 import {
     getPresentationTone,
     getPublicationPresentation,
+    getRefreshFailurePresentation,
     type PublicationPresentation,
 } from '@/lib/intelligence/publication-health';
 
@@ -48,31 +49,35 @@ export default function CommodityTicker() {
     const [presentation, setPresentation] = useState<PublicationPresentation>(
         UNAVAILABLE_PRESENTATION,
     );
+    const hasUsableDataRef = useRef(false);
 
     useEffect(() => {
         const fetchCommodities = async () => {
             try {
                 const res = await fetch('/api/commodities');
                 const json = await res.json();
-                if (json.success) {
-                    setCommodities(json.data);
-                    setPresentation(
-                        getPublicationPresentation({
-                            success: json.success,
-                            source: json.source,
-                            publicationTier: json.publicationTier,
-                            dataMode: json.dataMode,
-                            fallbackUsed: json.fallbackUsed,
-                            sourceUpdatedAt: json.sourceUpdatedAt,
-                            observedAt: json.observedAt,
-                            generatedAt: json.generatedAt,
-                        }),
-                    );
-                } else {
-                    setPresentation(getPublicationPresentation(json));
+                if (!res.ok || json?.success !== true || !Array.isArray(json.data) || json.data.length === 0) {
+                    throw new Error("Commodity refresh returned no usable data");
                 }
+                setCommodities(json.data);
+                hasUsableDataRef.current = true;
+                setPresentation(
+                    getPublicationPresentation({
+                        success: json.success,
+                        source: json.source,
+                        publicationTier: json.publicationTier,
+                        dataMode: json.dataMode,
+                        fallbackUsed: json.fallbackUsed,
+                        sourceUpdatedAt: json.sourceUpdatedAt,
+                        observedAt: json.observedAt,
+                        generatedAt: json.generatedAt,
+                    }),
+                );
             } catch (err) {
                 console.error("Ticker fetch failed", err);
+                setPresentation((previous) =>
+                    getRefreshFailurePresentation(hasUsableDataRef.current, previous),
+                );
             } finally {
                 setLoading(false);
             }

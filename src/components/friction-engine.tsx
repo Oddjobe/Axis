@@ -10,6 +10,7 @@ import type { DataMode } from "@/lib/intelligence/trust"
 import {
     getPresentationTone,
     getPublicationPresentation,
+    getRefreshFailurePresentation,
     type PublicationPresentation,
 } from "@/lib/intelligence/publication-health"
 
@@ -301,6 +302,8 @@ export default function FrictionEngine({ mode, filterCountries, onSelectCountry,
     const [blogPresentation, setBlogPresentation] = useState<PublicationPresentation>(
         UNAVAILABLE_PRESENTATION,
     )
+    const hasIntelligenceDataRef = useRef(false)
+    const hasBlogDataRef = useRef(false)
     const [activeTab, setActiveTab] = useState<"ALERTS" | "NEWS" | "MEDIA" | "BLOGS">("ALERTS")
     const [isPlayingAudio, setIsPlayingAudio] = useState(false);
     const [audioPaused, setAudioPaused] = useState(false);
@@ -326,6 +329,15 @@ export default function FrictionEngine({ mode, filterCountries, onSelectCountry,
         try {
             const res = await fetch("/api/intelligence");
             const payload = await res.json();
+            const data = Array.isArray(payload) ? payload : payload?.data;
+            if (
+                !res.ok ||
+                payload?.success === false ||
+                !Array.isArray(data) ||
+                data.length === 0
+            ) {
+                throw new Error("Intelligence refresh returned no usable data");
+            }
             if (isMounted) {
                 setIntelligencePresentation(
                     getPublicationPresentation({
@@ -340,8 +352,6 @@ export default function FrictionEngine({ mode, filterCountries, onSelectCountry,
                     }),
                 );
             }
-            const data = Array.isArray(payload) ? payload : payload?.data;
-            if (!Array.isArray(data) || data.length === 0) return;
 
             const enhancedData = data.map((alert: IntelligenceAlert, index: number) => {
                 const exactDate = alert.sourceUpdatedAt ?? alert.observedAt ?? alert.created_at;
@@ -353,6 +363,7 @@ export default function FrictionEngine({ mode, filterCountries, onSelectCountry,
                 } as Article;
             });
 
+            hasIntelligenceDataRef.current = true;
             setAlerts((prev) => {
                 if (prev.length === 0) return enhancedData;
                 const merged = [...prev];
@@ -366,6 +377,14 @@ export default function FrictionEngine({ mode, filterCountries, onSelectCountry,
             });
         } catch (e) {
             console.error("Intelligence load failed", e);
+            if (isMounted) {
+                setIntelligencePresentation((previous) =>
+                    getRefreshFailurePresentation(
+                        hasIntelligenceDataRef.current,
+                        previous,
+                    ),
+                );
+            }
         } finally {
             if (isMounted) setLoading(false);
         }
@@ -376,6 +395,14 @@ export default function FrictionEngine({ mode, filterCountries, onSelectCountry,
             const res = await fetch("/api/blogs");
             const payload = await res.json();
             const data = Array.isArray(payload) ? payload : payload?.data;
+            if (
+                !res.ok ||
+                payload?.success === false ||
+                !Array.isArray(data) ||
+                data.length === 0
+            ) {
+                throw new Error("Blog refresh returned no usable data");
+            }
             if (isMounted) {
                 setBlogPresentation(
                     getPublicationPresentation({
@@ -389,13 +416,19 @@ export default function FrictionEngine({ mode, filterCountries, onSelectCountry,
                         generatedAt: payload?.generatedAt,
                     }),
                 );
-                setBlogs(Array.isArray(data) ? data.map((post: BlogPost, index: number) => ({
+                setBlogs(data.map((post: BlogPost, index: number) => ({
                     ...post,
                     imageUrl: post.imageUrl || BLOG_IMAGE_FALLBACKS[index % BLOG_IMAGE_FALLBACKS.length]
-                })) : []);
+                })));
+                hasBlogDataRef.current = true;
             }
         } catch (e) {
             console.error("Blog load failed", e);
+            if (isMounted) {
+                setBlogPresentation((previous) =>
+                    getRefreshFailurePresentation(hasBlogDataRef.current, previous),
+                );
+            }
         } finally {
             if (isMounted) setBlogsLoading(false);
         }
