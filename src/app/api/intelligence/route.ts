@@ -10,6 +10,7 @@ import {
     trustedSnapshotUnavailable,
 } from "@/lib/intelligence/publication-selection.server";
 import { getPublicationPresentation } from "@/lib/intelligence/publication-health";
+import { derivePublicTrustState } from "@/lib/intelligence/trust-health";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 60; // Cache for 1 minute at the edge
@@ -210,6 +211,7 @@ export async function GET() {
                 fallbackUsed: false,
                 dataMode: "stale",
                 displayState: getPublicationPresentation({ success: false }).state,
+                trustState: "unavailable",
                 generatedAt,
                 data: [],
                 error: "No trusted intelligence snapshot is available.",
@@ -264,6 +266,7 @@ export async function GET() {
         fallbackUsed,
         dataMode,
         displayState,
+        trustState,
         generatedAt,
         sourceUpdatedAt,
         observedAt,

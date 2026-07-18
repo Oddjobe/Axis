@@ -21,6 +21,7 @@ import {
   selectLatestCompleteTrustedScoreRelease,
 } from "@/lib/intelligence/score-selection";
 import { getPublicationPresentation } from "@/lib/intelligence/publication-health";
+import { derivePublicTrustState } from "@/lib/intelligence/trust-health";
 
 export const dynamic = "force-dynamic";
 
@@ -41,6 +42,7 @@ export async function GET() {
         fallbackUsed: false,
         dataMode: "stale",
         displayState: getPublicationPresentation({ success: false }).state,
+        trustState: "unavailable",
         generatedAt,
         countries: [],
         data: [],
@@ -162,6 +164,12 @@ export async function GET() {
     observedAt: freshness.observedAt,
     generatedAt,
   }).state;
+  const trustState = derivePublicTrustState({
+    publicationTier,
+    dataMode: freshness.dataMode,
+    fallbackUsed,
+    source,
+  });
 
   return NextResponse.json(
     {
@@ -180,6 +188,7 @@ export async function GET() {
       releaseId: trustedRelease?.releaseId ?? null,
       fallbackUsed,
       displayState,
+      trustState,
       methodology: SCORE_METHODOLOGY,
     },
     {

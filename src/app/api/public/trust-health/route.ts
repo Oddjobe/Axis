@@ -1,4 +1,4 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
 import { GET as getBlogs } from "@/app/api/blogs/route";
 import { GET as getCommodities } from "@/app/api/commodities/route";
@@ -78,15 +78,8 @@ export async function GET() {
   return NextResponse.json(
     payload,
     {
-      status,
-      generatedAt,
-      datasets,
-    },
-    {
-      status: status === "unavailable" ? 503 : 200,
       headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+        "Cache-Control": "no-store, max-age=0",
         "X-Content-Type-Options": "nosniff",
       },
     },

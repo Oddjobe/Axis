@@ -21,6 +21,7 @@ import {
     type CommodityId,
 } from '@/lib/intelligence/ingestion/commodity-sources';
 import { getPublicationPresentation } from '@/lib/intelligence/publication-health';
+import { derivePublicTrustState } from '@/lib/intelligence/trust-health';
 
 export const revalidate = 3600; // Revalidate every hour
 
@@ -291,6 +292,7 @@ export async function GET() {
                 fallbackUsed: false,
                 dataMode: "stale",
                 displayState: getPublicationPresentation({ success: false }).state,
+                trustState: "unavailable",
                 generatedAt,
                 data: [],
                 error: "No trusted commodity snapshot is available.",
@@ -320,6 +322,7 @@ export async function GET() {
                     fallbackUsed: false,
                     dataMode: "stale",
                     displayState: getPublicationPresentation({ success: false }).state,
+                    trustState: "unavailable",
                     generatedAt,
                     data: [],
                     error: "The trusted commodity snapshot is incomplete.",
@@ -407,6 +410,7 @@ export async function GET() {
         fallbackUsed,
         dataMode,
         displayState,
+        trustState,
         generatedAt,
         sourceUpdatedAt,
         observedAt,

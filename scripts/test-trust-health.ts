@@ -10,6 +10,16 @@ import {
 import { COMMODITY_IDS } from "../src/lib/intelligence/ingestion/commodity-sources";
 import { AFRICAN_ISO3_CODES } from "../src/lib/intelligence/trust";
 import { trustHealthContractSchema } from "../src/lib/intelligence/trust-health-contract.server";
+import {
+  CURRENT_PRODUCTION_CONTRACT,
+  TRUST_STATE_FIXTURES,
+} from "./fixtures/trust-health";
+import {
+  PUBLIC_TRUST_STATES,
+  derivePublicTrustState,
+  getPublicTrustStateLabel,
+  sanitizeDatasetHealth,
+} from "../src/lib/intelligence/trust-health";
 
 const ALL_DISPLAY_STATES: readonly PublicationDisplayState[] = [
   "trusted-current",
