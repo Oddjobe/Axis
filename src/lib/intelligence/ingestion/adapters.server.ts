@@ -32,6 +32,29 @@ interface ProductionAdapterOptions {
   deadlineAt?: number;
 }
 
+// Firecrawl's schema validator (Zod-backed) rejects JSON Schema annotation
+// keywords such as `format`. Those keywords are descriptive only here — the
+// canonical extract schemas keep them for other consumers, and timestamp
+// correctness is enforced deterministically downstream by the candidate
+// validators. Strip the unsupported keywords at the Firecrawl boundary so the
+// request passes schema validation instead of failing with HTTP 400.
+const FIRECRAWL_UNSUPPORTED_SCHEMA_KEYWORDS = new Set(["format"]);
+
+function firecrawlSafeSchema(schema: unknown): unknown {
+  if (Array.isArray(schema)) {
+    return schema.map((entry) => firecrawlSafeSchema(entry));
+  }
+  if (schema && typeof schema === "object") {
+    const result: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(schema)) {
+      if (FIRECRAWL_UNSUPPORTED_SCHEMA_KEYWORDS.has(key)) continue;
+      result[key] = firecrawlSafeSchema(value);
+    }
+    return result;
+  }
+  return schema;
+}
+
 interface FeedCandidate extends RawCandidate {
   title?: string;
   summary?: string;
@@ -672,7 +695,7 @@ export function createProductionIngestionAdapter(
         body: JSON.stringify({
           url,
           formats: ["extract", "markdown"],
-          extract: { prompt, schema: schema as never },
+          extract: { prompt, schema: firecrawlSafeSchema(schema) as never },
         }),
       },
       async (response, attemptSignal) => {
