@@ -40,7 +40,7 @@ export default function DocsPage() {
         {
             method: 'GET',
             path: '/api/public/trust-health',
-            description: 'Aggregate, sanitized production trust-health snapshot across country scores, intelligence, blogs, and commodities. Reports the exact provenance/freshness state for each dataset — trusted-current, trusted-stale, legacy-live-ingested, cached, static-fallback, or unavailable — plus coverage and reason codes. No secrets or internal identifiers are exposed.',
+            description: 'Aggregate, sanitized production trust-health snapshot across country scores, intelligence, blogs, and commodities. Reports the exact provenance/freshness state for each dataset — trusted-current, trusted-stale, legacy-live-ingested, cached, static-fallback, or unavailable — plus coverage and reason codes. Missing publication times include counts for every dataset, but identities only for stable public ISO-3 country and commodity keys; no internal feed identifiers are exposed.',
             curl: 'curl -s https://axis-mocha.vercel.app/api/public/trust-health | jq .',
             response: `{
   "version": "1",
@@ -52,7 +52,7 @@ export default function DocsPage() {
       "publicationTier": "legacy",
       "status": "stale",
       "displayState": "static-fallback",
-      "coverage": { "availableRecords": 54, "expectedRecords": 54, "trustedRecords": 0, "trustedExpectedRecords": 54, "missingIdentities": [], "missingTrustedIdentities": [], "missingPublicationTimeIdentities": [] },
+      "coverage": { "availableRecords": 54, "expectedRecords": 54, "trustedRecords": 0, "trustedExpectedRecords": 54, "missingIdentities": [], "missingTrustedIdentities": [], "missingPublicationTimeRecords": 0, "missingPublicationTimeIdentities": [] },
       "freshness": { "sourcePublishedAt": "2024-12-31T00:00:00.000Z", "sourceObservedAt": "2024-12-31T00:00:00.000Z" },
       "fallback": { "used": true, "state": "static" },
       "reasonCodes": ["legacy-publication", "source-stale"]

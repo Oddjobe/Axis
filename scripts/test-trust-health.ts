@@ -4,6 +4,7 @@ import {
   buildTrustHealthPayload,
   getPresentationTone,
   getPublicationPresentation,
+  getRefreshFailurePresentation,
   type PublicationDisplayState,
 } from "../src/lib/intelligence/publication-health";
 import { COMMODITY_IDS } from "../src/lib/intelligence/ingestion/commodity-sources";
@@ -25,11 +26,13 @@ const staleScoreRows = AFRICAN_ISO3_CODES.map((country, index) => ({
   dataMode: "stale",
   sourceUpdatedAt:
     index === 0
-      ? "2025-01-15T00:00:00.000Z"
+      ? null
       : `2024-${String((index % 12) + 1).padStart(2, "0")}-01T00:00:00.000Z`,
   observedAt: "2024-12-31T00:00:00.000Z",
 }));
-const missingPublisherTime = {
+const intelligenceInternalId = "d0ddfd5f-9ca7-42e6-b1f7-45d5414bf4df";
+const blogInternalId = "40eb950c-bf65-4b83-a500-0aafdc3aad95";
+const missingPublisherTime = (id: string) => ({
   publicationTier: "legacy",
   source: "legacy/supabase",
   dataMode: "stale",
@@ -39,13 +42,13 @@ const missingPublisherTime = {
   generatedAt,
   data: [
     {
-      id: "legacy-row",
+      id,
       publicationTier: "legacy",
       sourcePublishedAt: null,
       retrievedAt: "2026-07-17T23:00:00.000Z",
     },
   ],
-};
+});
 const payload = buildTrustHealthPayload(
   {
     scores: {
@@ -60,8 +63,8 @@ const payload = buildTrustHealthPayload(
       count: 54,
       countries: staleScoreRows,
     },
-    intelligence: missingPublisherTime,
-    blogs: missingPublisherTime,
+    intelligence: missingPublisherTime(intelligenceInternalId),
+    blogs: missingPublisherTime(blogInternalId),
     commodities: {
       success: true,
       publicationTier: "legacy",
@@ -77,10 +80,11 @@ const payload = buildTrustHealthPayload(
         ratio: 0,
         missingIds: [...COMMODITY_IDS],
       },
-      data: COMMODITY_IDS.map((id) => ({
+      data: COMMODITY_IDS.map((id, index) => ({
         id,
         publicationTier: "legacy",
-        sourceUpdatedAt: "2026-07-16T00:00:00.000Z",
+        sourceUpdatedAt:
+          index === 0 ? null : "2026-07-16T00:00:00.000Z",
       })),
     },
   },
@@ -94,16 +98,44 @@ assert.equal(payload.datasets.countryScores.coverage.availableRecords, 54);
 assert.equal(payload.datasets.countryScores.coverage.expectedRecords, 54);
 assert.equal(payload.datasets.countryScores.status, "stale");
 assert(payload.datasets.countryScores.reasonCodes.includes("source-stale"));
+assert.equal(
+  payload.datasets.countryScores.coverage.missingPublicationTimeRecords,
+  1,
+);
+assert.deepEqual(
+  payload.datasets.countryScores.coverage.missingPublicationTimeIdentities,
+  [AFRICAN_ISO3_CODES[0]],
+);
 assert.equal(payload.datasets.intelligence.displayState, "legacy-live-ingested");
 assert.equal(payload.datasets.intelligence.freshness.sourcePublishedAt, null);
 assert.equal(payload.datasets.intelligence.freshness.sourceObservedAt, null);
+assert.equal(
+  payload.datasets.intelligence.coverage.missingPublicationTimeRecords,
+  1,
+);
 assert.deepEqual(
   payload.datasets.intelligence.coverage.missingPublicationTimeIdentities,
-  ["legacy-row"],
+  [],
 );
 assert.equal(payload.datasets.blogs.displayState, "legacy-live-ingested");
+assert.equal(payload.datasets.blogs.coverage.missingPublicationTimeRecords, 1);
+assert.deepEqual(
+  payload.datasets.blogs.coverage.missingPublicationTimeIdentities,
+  [],
+);
+const serializedPayload = JSON.stringify(payload);
+assert(!serializedPayload.includes(intelligenceInternalId));
+assert(!serializedPayload.includes(blogInternalId));
 assert.equal(payload.datasets.commodities.coverage.trustedRecords, 0);
 assert.equal(payload.datasets.commodities.coverage.trustedExpectedRecords, 5);
+assert.equal(
+  payload.datasets.commodities.coverage.missingPublicationTimeRecords,
+  1,
+);
+assert.deepEqual(
+  payload.datasets.commodities.coverage.missingPublicationTimeIdentities,
+  [COMMODITY_IDS[0]],
+);
 assert.deepEqual(
   payload.datasets.commodities.coverage.missingTrustedIdentities,
   COMMODITY_IDS,
@@ -276,6 +308,28 @@ assert.equal(
   "unavailable",
 );
 
+const trustedBeforeRefreshFailure = getPublicationPresentation({
+  publicationTier: "trusted",
+  dataMode: "live",
+  sourceUpdatedAt: generatedAt,
+  observedAt: generatedAt,
+  generatedAt,
+});
+const retainedAfterRefreshFailure = getRefreshFailurePresentation(
+  true,
+  trustedBeforeRefreshFailure,
+);
+assert.equal(retainedAfterRefreshFailure.state, "cached");
+assert.equal(retainedAfterRefreshFailure.label, "CACHED");
+assert.equal(retainedAfterRefreshFailure.sourcePublishedAt, generatedAt);
+assert.equal(retainedAfterRefreshFailure.sourceObservedAt, generatedAt);
+const emptyAfterRefreshFailure = getRefreshFailurePresentation(
+  false,
+  trustedBeforeRefreshFailure,
+);
+assert.equal(emptyAfterRefreshFailure.state, "unavailable");
+assert.equal(emptyAfterRefreshFailure.label, "UNAVAILABLE");
+
 // Every one of the exact six provenance/freshness states must resolve to a
 // deterministic, distinct display tone shared across dashboard surfaces.
 const tones = ALL_DISPLAY_STATES.map((state) => getPresentationTone(state));
@@ -291,7 +345,8 @@ assert.equal(getPresentationTone("unavailable").text, "text-red-500");
 
 console.log(
   "Trust health fixtures passed: all-legacy 54-country stale metadata, missing publisher times, " +
-    "0/5 trusted commodity coverage, a full trusted-current release, and every one of the six " +
+    "sanitized feed identities, cached/unavailable refresh failures, 0/5 trusted commodity coverage, " +
+    "a full trusted-current release, and every one of the six " +
     "provenance/freshness display states (trusted-current, trusted-stale, legacy-live-ingested, " +
     "cached, static-fallback, unavailable) resolved as expected.",
 );
