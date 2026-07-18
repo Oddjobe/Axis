@@ -59,18 +59,7 @@ export default function CommodityTicker() {
                 }
                 setCommodities(json.data);
                 hasUsableDataRef.current = true;
-                setPresentation(
-                    getPublicationPresentation({
-                        success: json.success,
-                        source: json.source,
-                        publicationTier: json.publicationTier,
-                        dataMode: json.dataMode,
-                        fallbackUsed: json.fallbackUsed,
-                        sourceUpdatedAt: json.sourceUpdatedAt,
-                        observedAt: json.observedAt,
-                        generatedAt: json.generatedAt,
-                    }),
-                );
+                setPresentation(getPublicationPresentation(json));
             } catch (err) {
                 console.error("Ticker fetch failed", err);
                 setPresentation((previous) =>

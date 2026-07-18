@@ -1,73 +1,82 @@
 import { type NextRequest, NextResponse } from "next/server";
 
-import {
-  sanitizeDatasetHealth,
-  type SanitizedDatasetHealth,
-} from "@/lib/intelligence/trust-health";
+import { GET as getBlogs } from "@/app/api/blogs/route";
+import { GET as getCommodities } from "@/app/api/commodities/route";
+import { GET as getIntelligence } from "@/app/api/intelligence/route";
+import { GET as getScores } from "@/app/api/public/scores/route";
+import { buildTrustHealthPayload } from "@/lib/intelligence/publication-health";
+import { trustedPublicationSelectionEnabled } from "@/lib/intelligence/publication-selection.server";
+import { trustHealthContractSchema } from "@/lib/intelligence/trust-health-contract.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-function deploymentOrigin(request: NextRequest): string | null {
-  const vercelUrl = process.env.VERCEL_URL?.trim();
-  if (vercelUrl) {
-    try {
-      return new URL(`https://${vercelUrl}`).origin;
-    } catch {
-      return null;
-    }
-  }
+const ENDPOINTS = {
+  scores: getScores,
+  intelligence: getIntelligence,
+  blogs: getBlogs,
+  commodities: getCommodities,
+} as const;
 
-  const requestUrl = new URL(request.url);
-  return requestUrl.hostname === "localhost" ||
-    requestUrl.hostname === "127.0.0.1" ||
-    requestUrl.hostname === "::1"
-    ? requestUrl.origin
-    : null;
-}
-
-async function inspect(
-  origin: string | null,
-  path: string,
-): Promise<SanitizedDatasetHealth> {
-  if (!origin) return sanitizeDatasetHealth(null, 503);
-
+async function safePayload(handler: () => Promise<Response>): Promise<unknown> {
+  let timeout: ReturnType<typeof setTimeout> | undefined;
   try {
-    const response = await fetch(new URL(path, origin), {
-      cache: "no-store",
-      headers: { Accept: "application/json" },
-      signal: AbortSignal.timeout(15_000),
-    });
-    const payload = (await response.json()) as Record<string, unknown>;
-    return sanitizeDatasetHealth(payload, response.status);
+    const response = await Promise.race([
+      handler(),
+      new Promise<Response>((_, reject) => {
+        timeout = setTimeout(
+          () => reject(new Error("Trust-health source timed out.")),
+          10_000,
+        );
+      }),
+    ]);
+    const payload = await response.json();
+    if (response.ok) return payload;
+    return {
+      success: false,
+      source:
+        payload && typeof payload === "object" && "source" in payload
+          ? payload.source
+          : "upstream/unavailable",
+      publicationTier:
+        payload && typeof payload === "object" && "publicationTier" in payload
+          ? payload.publicationTier
+          : "legacy",
+      dataMode: "stale",
+      fallbackUsed: false,
+      data: [],
+      countries: [],
+    };
   } catch {
-    return sanitizeDatasetHealth(null, 503);
+    return {
+      success: false,
+      source: "upstream/unavailable",
+      publicationTier: "legacy",
+      dataMode: "stale",
+      fallbackUsed: false,
+      data: [],
+      countries: [],
+    };
+  } finally {
+    if (timeout) clearTimeout(timeout);
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   const generatedAt = new Date().toISOString();
-  const origin = deploymentOrigin(request);
-  const [countryScores, intelligence, blogs, commodities] = await Promise.all([
-    inspect(origin, "/api/public/scores"),
-    inspect(origin, "/api/intelligence"),
-    inspect(origin, "/api/blogs"),
-    inspect(origin, "/api/commodities"),
-  ]);
-  const datasets = {
-    countryScores,
-    intelligence,
-    blogs,
-    commodities,
-  };
-  const states = Object.values(datasets).map((dataset) => dataset.state);
-  const status = states.every((state) => state === "trusted-current")
-    ? "healthy"
-    : states.every((state) => state === "unavailable")
-      ? "unavailable"
-      : "degraded";
+  const [scores, intelligence, blogs, commodities] = await Promise.all(
+    Object.values(ENDPOINTS).map((handler) => safePayload(handler)),
+  );
+  const payload = trustHealthContractSchema.parse(
+    buildTrustHealthPayload(
+      { scores, intelligence, blogs, commodities },
+      generatedAt,
+      trustedPublicationSelectionEnabled(),
+    ),
+  );
 
   return NextResponse.json(
+    payload,
     {
       status,
       generatedAt,

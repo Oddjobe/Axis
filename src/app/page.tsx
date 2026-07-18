@@ -69,6 +69,12 @@ import {
 import { getPublicationPresentation } from "@/lib/intelligence/publication-health";
 import { mergeAuthoritativeCountryScores } from "@/lib/intelligence/score-selection";
 import type { LegacyRecord } from "@/lib/intelligence/trust-rollout";
+import {
+  getPresentationTone,
+  getPublicationPresentation,
+  isPublicationDisplayState,
+  type PublicationDisplayState,
+} from "@/lib/intelligence/publication-health";
 const TOTAL_POPULATION = 1_444; // ~1.44 billion
 
 const STATIC_SCORE_FRESHNESS = getFreshnessMetadata({
@@ -123,7 +129,8 @@ export default function Home() {
   const [language, setLanguage] = useState<Language>("en");
   const [countryDataMaster, setCountryDataMaster] = useState<CountryData[]>(STATIC_COUNTRY_DATA);
   const [scorePublicationTier, setScorePublicationTier] = useState<"trusted" | "legacy">("legacy");
-  const [scoreTrustState, setScoreTrustState] = useState<PublicTrustState>("static-fallback");
+  const [scoreDisplayState, setScoreDisplayState] =
+    useState<PublicationDisplayState>("static-fallback");
   const [dashboardFreshness, setDashboardFreshness] = useState<DashboardFreshness>({
     ...STATIC_SCORE_FRESHNESS,
     generatedAt: null,
@@ -133,7 +140,8 @@ export default function Home() {
   const { newAlertCount, clearNewAlerts } = useRealtimeAlerts();
   const [searchOpen, setSearchOpen] = useState(false);
   const scorePublication = getPublicationPresentation({
-    success: true,
+    success: scoreDisplayState !== "unavailable",
+    displayState: scoreDisplayState,
     source: scorePublicationTier === "trusted" ? "trusted" : "legacy/static",
     publicationTier: scorePublicationTier,
     dataMode: dashboardFreshness.dataMode,
@@ -174,11 +182,11 @@ export default function Home() {
     // Fetch the authoritative public score selection, then cache it for offline use.
     void (async () => {
       const generatedAt = new Date().toISOString();
+      let trustedSelectionUnavailable = false;
       try {
         const response = await fetch("/api/public/scores", {
           headers: { Accept: "application/json" },
         });
-        if (!response.ok) throw new Error("Public score fetch failed");
         const payload = await response.json() as {
           countries: LegacyRecord[];
           count: number;
@@ -186,8 +194,16 @@ export default function Home() {
           sourceUpdatedAt: string | null;
           observedAt: string | null;
           publicationTier: "trusted" | "legacy";
-          trustState?: unknown;
+          displayState?: PublicationDisplayState;
         };
+        if (!response.ok) {
+          trustedSelectionUnavailable =
+            payload.displayState === "unavailable";
+          if (trustedSelectionUnavailable) {
+            setScoreDisplayState("unavailable");
+          }
+          throw new Error("Public score fetch failed");
+        }
         if (payload.count !== ALL_SOVEREIGN_DATA.length) {
           throw new Error("Public score release is incomplete");
         }
@@ -204,14 +220,23 @@ export default function Home() {
         });
         setCountryDataMaster(merged);
         setScorePublicationTier(payload.publicationTier);
-        setScoreTrustState(isPublicTrustState(payload.trustState)
-          ? payload.trustState
-          : derivePublicTrustState({
-            publicationTier: payload.publicationTier,
-            dataMode: responseFreshness.dataMode,
-            fallbackUsed: payload.publicationTier !== "trusted",
-            source: payload.publicationTier === "trusted" ? "trusted" : "legacy/static",
-          }));
+        setScoreDisplayState(
+          isPublicationDisplayState(payload.displayState)
+            ? payload.displayState
+            : getPublicationPresentation({
+                success: true,
+                source:
+                  payload.publicationTier === "trusted"
+                    ? "trusted"
+                    : "legacy/static",
+                publicationTier: payload.publicationTier,
+                dataMode: responseFreshness.dataMode,
+                fallbackUsed: payload.publicationTier !== "trusted",
+                sourceUpdatedAt: payload.sourceUpdatedAt,
+                observedAt: payload.observedAt,
+                generatedAt: payload.generatedAt ?? generatedAt,
+              }).state,
+        );
         setDashboardFreshness({
           ...responseFreshness,
           generatedAt: payload.generatedAt ?? generatedAt,
@@ -245,18 +270,24 @@ export default function Home() {
             });
             setCountryDataMaster(cachedData);
             setScorePublicationTier(cached.publicationTier);
-            setScoreTrustState("cached");
+            if (!trustedSelectionUnavailable) {
+              setScoreDisplayState("cached");
+            }
             setDashboardFreshness({ ...freshness, generatedAt });
           } else {
             setCountryDataMaster(STATIC_COUNTRY_DATA);
             setScorePublicationTier("legacy");
-            setScoreTrustState("static-fallback");
+            if (!trustedSelectionUnavailable) {
+              setScoreDisplayState("static-fallback");
+            }
             setDashboardFreshness({ ...STATIC_SCORE_FRESHNESS, generatedAt });
           }
         } catch {
           setCountryDataMaster(STATIC_COUNTRY_DATA);
           setScorePublicationTier("legacy");
-          setScoreTrustState("static-fallback");
+          if (!trustedSelectionUnavailable) {
+            setScoreDisplayState("static-fallback");
+          }
           setDashboardFreshness({ ...STATIC_SCORE_FRESHNESS, generatedAt });
         }
       }

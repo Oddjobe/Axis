@@ -9,16 +9,7 @@ import {
 } from "../src/lib/intelligence/publication-health";
 import { COMMODITY_IDS } from "../src/lib/intelligence/ingestion/commodity-sources";
 import { AFRICAN_ISO3_CODES } from "../src/lib/intelligence/trust";
-import {
-  CURRENT_PRODUCTION_CONTRACT,
-  TRUST_STATE_FIXTURES,
-} from "./fixtures/trust-health";
-import {
-  PUBLIC_TRUST_STATES,
-  derivePublicTrustState,
-  getPublicTrustStateLabel,
-  sanitizeDatasetHealth,
-} from "../src/lib/intelligence/trust-health";
+import { trustHealthContractSchema } from "../src/lib/intelligence/trust-health-contract.server";
 
 const ALL_DISPLAY_STATES: readonly PublicationDisplayState[] = [
   "trusted-current",
@@ -170,6 +161,61 @@ for (const [name, dataset] of Object.entries(payload.datasets)) {
 }
 assert.equal(payload.datasets.countryScores.displayState, "static-fallback");
 assert.equal(payload.datasets.commodities.displayState, "static-fallback");
+assert.deepEqual(trustHealthContractSchema.parse(payload), payload);
+assert.equal(
+  getPublicationPresentation({
+    displayState: "trusted-current",
+    publicationTier: "legacy",
+    source: "legacy/static",
+    dataMode: "fallback",
+    fallbackUsed: true,
+  }).state,
+  "static-fallback",
+);
+const contradictoryPayload = structuredClone(payload);
+contradictoryPayload.datasets.countryScores.displayState = "trusted-current";
+assert.equal(
+  trustHealthContractSchema.safeParse(contradictoryPayload).success,
+  false,
+);
+
+// Aggregate output is an allowlisted health contract, never a passthrough of
+// upstream errors, source material, storage details, or credentials.
+const sanitizedPayload = buildTrustHealthPayload(
+  {
+    scores: {
+      ...missingPublisherTime("score-internal"),
+      error: "database timeout with internal host",
+      storageBucket: "private-bucket",
+      sourceUrl: "https://private.example/source",
+      excerpt: "unpublished source text",
+      apiKey: "secret-value",
+      countries: [],
+    },
+    intelligence: missingPublisherTime("intelligence-internal"),
+    blogs: missingPublisherTime("blog-internal"),
+    commodities: {
+      ...missingPublisherTime("commodity-internal"),
+      trustedCoverage: {
+        records: 0,
+        total: COMMODITY_IDS.length,
+        missingIds: [...COMMODITY_IDS],
+      },
+    },
+  },
+  generatedAt,
+  false,
+);
+const serializedSanitizedPayload = JSON.stringify(sanitizedPayload);
+for (const forbidden of [
+  "database timeout",
+  "private-bucket",
+  "private.example",
+  "unpublished source text",
+  "secret-value",
+]) {
+  assert.equal(serializedSanitizedPayload.includes(forbidden), false);
+}
 
 // A genuinely live-ingested-but-aged legacy score (not a static fallback) must
 // still resolve to the legacy state, never trusted-stale.

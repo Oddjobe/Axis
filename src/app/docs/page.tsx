@@ -61,7 +61,7 @@ export default function DocsPage() {
         {
             method: 'GET',
             path: '/api/public/trust-health',
-            description: 'Aggregate, sanitized production trust-health snapshot across country scores, intelligence, blogs, and commodities. Reports the exact provenance/freshness state for each dataset — trusted-current, trusted-stale, legacy-live-ingested, cached, static-fallback, or unavailable — plus coverage and reason codes. Missing publication times include counts for every dataset, but identities only for stable public ISO-3 country and commodity keys; no internal feed identifiers are exposed.',
+            description: 'Aggregate, sanitized production trust-health snapshot across country scores, intelligence, blogs, and commodities. Reports the exact shared displayState for each dataset — trusted-current, trusted-stale, legacy-live-ingested, cached, static-fallback, or unavailable — plus coverage and reason codes. Missing publication times include counts for every dataset, but identities only for stable public ISO-3 country and commodity keys. The strict allowlisted contract excludes internal feed identifiers, secrets, raw errors, source URLs or excerpts, storage details, and internal diagnostics.',
             curl: 'curl -s https://axis-mocha.vercel.app/api/public/trust-health | jq .',
             response: `{
   "version": "1",

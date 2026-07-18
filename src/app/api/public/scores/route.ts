@@ -20,7 +20,7 @@ import {
   resolveAuthoritativeScore,
   selectLatestCompleteTrustedScoreRelease,
 } from "@/lib/intelligence/score-selection";
-import { derivePublicTrustState } from "@/lib/intelligence/trust-health";
+import { getPublicationPresentation } from "@/lib/intelligence/publication-health";
 
 export const dynamic = "force-dynamic";
 
@@ -40,7 +40,7 @@ export async function GET() {
         publicationTier: "trusted",
         fallbackUsed: false,
         dataMode: "stale",
-        trustState: "unavailable",
+        displayState: getPublicationPresentation({ success: false }).state,
         generatedAt,
         countries: [],
         data: [],
@@ -149,12 +149,19 @@ export async function GET() {
     dataset: "country-score",
     requestedMode: trustedByCountry ? "live" : "fallback",
   });
-  const trustState = derivePublicTrustState({
-    publicationTier: trustedByCountry ? "trusted" : "legacy",
+  const source = trustedByCountry ? "trusted" : "legacy/static";
+  const publicationTier = trustedByCountry ? "trusted" : "legacy";
+  const fallbackUsed = !trustedByCountry;
+  const displayState = getPublicationPresentation({
+    success: true,
+    source,
+    publicationTier,
     dataMode: freshness.dataMode,
-    fallbackUsed: !trustedByCountry,
-    source: trustedByCountry ? "trusted" : "legacy/static",
-  });
+    fallbackUsed,
+    sourceUpdatedAt: freshness.sourceUpdatedAt,
+    observedAt: freshness.observedAt,
+    generatedAt,
+  }).state;
 
   return NextResponse.json(
     {
@@ -168,11 +175,11 @@ export async function GET() {
       updatedAt: freshness.asOf,
       ...freshness,
       freshness,
-      trustState,
-      source: trustedByCountry ? "trusted" : "legacy/static",
-      publicationTier: trustedByCountry ? "trusted" : "legacy",
+      source,
+      publicationTier,
       releaseId: trustedRelease?.releaseId ?? null,
-      fallbackUsed: !trustedByCountry,
+      fallbackUsed,
+      displayState,
       methodology: SCORE_METHODOLOGY,
     },
     {

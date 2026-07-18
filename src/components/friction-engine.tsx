@@ -338,18 +338,7 @@ export default function FrictionEngine({ mode, filterCountries, onSelectCountry,
                 throw new Error("Intelligence refresh returned no usable data");
             }
             if (isMounted) {
-                setIntelligencePresentation(
-                    getPublicationPresentation({
-                        success: payload?.success !== false,
-                        source: payload?.source,
-                        publicationTier: payload?.publicationTier,
-                        dataMode: payload?.dataMode,
-                        fallbackUsed: payload?.fallbackUsed,
-                        sourceUpdatedAt: payload?.sourceUpdatedAt,
-                        observedAt: payload?.observedAt,
-                        generatedAt: payload?.generatedAt,
-                    }),
-                );
+                setIntelligencePresentation(getPublicationPresentation(payload));
             }
 
             const enhancedData = data.map((alert: IntelligenceAlert, index: number) => {
@@ -403,18 +392,7 @@ export default function FrictionEngine({ mode, filterCountries, onSelectCountry,
                 throw new Error("Blog refresh returned no usable data");
             }
             if (isMounted) {
-                setBlogPresentation(
-                    getPublicationPresentation({
-                        success: payload?.success !== false,
-                        source: payload?.source,
-                        publicationTier: payload?.publicationTier,
-                        dataMode: payload?.dataMode,
-                        fallbackUsed: payload?.fallbackUsed,
-                        sourceUpdatedAt: payload?.sourceUpdatedAt,
-                        observedAt: payload?.observedAt,
-                        generatedAt: payload?.generatedAt,
-                    }),
-                );
+                setBlogPresentation(getPublicationPresentation(payload));
                 setBlogs(data.map((post: BlogPost, index: number) => ({
                     ...post,
                     imageUrl: post.imageUrl || BLOG_IMAGE_FALLBACKS[index % BLOG_IMAGE_FALLBACKS.length]
