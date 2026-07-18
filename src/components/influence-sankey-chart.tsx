@@ -64,6 +64,7 @@ export default function InfluenceSankeyChart() {
     const [liveAlerts, setLiveAlerts] = useState<IntelligenceAlert[]>([]);
     const [alertCount, setAlertCount] = useState(0);
     const [fetchSucceeded, setFetchSucceeded] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
 
     // Interaction state
     const [selectedActors, setSelectedActors] = useState<Set<string>>(new Set());
@@ -87,6 +88,7 @@ export default function InfluenceSankeyChart() {
                     setAlertCount(data.length);
                 }
             }
+            setIsLoading(false);
         }
         fetchInfluenceAlerts();
     }, []);
@@ -233,10 +235,12 @@ export default function InfluenceSankeyChart() {
                         <span className="w-2 h-2 rounded-full bg-orange-500" />
                         Negative Influence Flows
                     </h3>
-                    <span className={`text-[10px] font-mono px-2 py-1 rounded border flex items-center gap-1.5 ${publicationTone.text} ${publicationTone.border} ${publicationTone.bg}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${publicationTone.dot}`} />
-                        {publication.label}{showLive ? ` · ${alertCount} ALERTS` : ""}
-                    </span>
+                    {!isLoading && (
+                        <span className={`text-[10px] font-mono px-2 py-1 rounded border flex items-center gap-1.5 ${publicationTone.text} ${publicationTone.border} ${publicationTone.bg}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${publicationTone.dot}`} />
+                            {publication.label}{showLive ? ` · ${alertCount} ALERTS` : ""}
+                        </span>
+                    )}
                 </div>
                 <p className="text-xs font-mono text-slate-light mt-1">
                     Volume of debt-traps, extractive trade deals, and structural adjustment pressure on Africa&apos;s most vulnerable states.

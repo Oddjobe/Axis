@@ -85,7 +85,7 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
     const [showEmbed, setShowEmbed] = useState(false);
     const [showScoreExplainer, setShowScoreExplainer] = useState(false);
     const [intelAlerts, setIntelAlerts] = useState<IntelligenceAlert[]>([]);
-    const [intelLoading, setIntelLoading] = useState(false);
+    const [intelLoading, setIntelLoading] = useState(true);
     const [intelRequestSucceeded, setIntelRequestSucceeded] = useState(false);
     const { watchlist, togglePin } = useWatchlist();
     const isPinned = countryData ? watchlist.includes(countryData.country) : false;
