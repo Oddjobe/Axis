@@ -28,7 +28,15 @@ export function createSupabaseIngestionPersistence(
           : null,
       })
       .abortSignal(signal);
-    if (response.error) throw response.error;
+    if (response.error) {
+      const err = response.error;
+      const detail = [err.message, err.details, err.hint, err.code]
+        .filter(Boolean)
+        .join(" | ");
+      throw new Error(
+        `Atomic persistence RPC failed for ${dataset}: ${detail || JSON.stringify(err)}`,
+      );
+    }
     signal.throwIfAborted();
     if (!response.data || typeof response.data !== "object") {
       throw new Error("Atomic persistence returned an invalid result.");

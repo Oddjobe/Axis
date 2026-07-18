@@ -28,7 +28,9 @@ CREATE TABLE IF NOT EXISTS public.intelligence_alerts (
     actor TEXT,  -- Primary foreign actor, e.g. 'China', 'IMF / World Bank', 'EU / CBAM', etc.
     url TEXT,
     "imageUrl" TEXT,
-    "created_at" TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+    "created_at" TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    -- Required by persist_publication_batch_atomic's ON CONFLICT (title) dedup.
+    CONSTRAINT intelligence_alerts_title_key UNIQUE (title)
 );
 
 -- Run this ALTER if upgrading an existing database:
@@ -44,7 +46,9 @@ CREATE TABLE IF NOT EXISTS public.blog_posts (
     author TEXT NOT NULL,
     tag TEXT NOT NULL,
     url TEXT NOT NULL,
-    "created_at" TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+    "created_at" TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    -- Required by persist_publication_batch_atomic's ON CONFLICT (url) dedup.
+    CONSTRAINT blog_posts_url_key UNIQUE (url)
 );
 
 -- 4. Enable Row Level Security (RLS) on all tables
