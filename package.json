@@ -27,6 +27,7 @@
     "test:trust-promotion": "tsx scripts/test-trust-promotion.ts",
     "test:trust-shadow-identities": "tsx scripts/test-trust-shadow-identities.ts",
     "test:trust-health": "tsx scripts/test-trust-health.ts",
+    "test:trust-activation-report": "tsx scripts/test-trust-activation-report.ts",
     "quality": "npm run data-quality",
     "quality:live": "npm run data-quality:live",
     "workflow:preflight": "tsx scripts/workflow-preflight.ts",
@@ -37,6 +38,7 @@
     "trust:shadow": "tsx scripts/trust-shadow.ts",
     "trust:shadow:fixtures": "tsx scripts/trust-shadow.ts --fixtures",
     "trust:promotion-check": "tsx scripts/trust-promotion-check.ts",
+    "trust:activation-report": "tsx scripts/trust-activation-report.ts",
     "trust:gate-fixtures": "tsx scripts/validate-publication-gate.ts"
   },
   "dependencies": {

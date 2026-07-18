@@ -151,6 +151,22 @@ export function getPublicationPresentation(
   };
 }
 
+export function getRefreshFailurePresentation(
+  hasRetainedData: boolean,
+  previous?: PublicationPresentation,
+): PublicationPresentation {
+  if (!hasRetainedData) {
+    return getPublicationPresentation({ success: false });
+  }
+
+  return getPublicationPresentation({
+    dataMode: "cached",
+    sourceUpdatedAt: previous?.sourcePublishedAt,
+    observedAt: previous?.sourceObservedAt,
+    generatedAt: previous?.requestGeneratedAt,
+  });
+}
+
 type JsonRecord = Record<string, unknown>;
 type TrustDataset = "countryScores" | "intelligence" | "blogs" | "commodities";
 
@@ -179,6 +195,7 @@ export interface TrustHealthDataset {
     trustedExpectedRecords: number | null;
     missingIdentities: string[];
     missingTrustedIdentities: string[];
+    missingPublicationTimeRecords: number;
     missingPublicationTimeIdentities: string[];
   };
   freshness: {
@@ -260,11 +277,13 @@ function buildDataset({
   payload,
   field,
   expectedIdentities,
+  exposePublicIdentities = false,
   trustedCoverage,
 }: {
   payload: JsonRecord;
   field: "countries" | "data";
   expectedIdentities?: readonly string[];
+  exposePublicIdentities?: boolean;
   trustedCoverage?: JsonRecord;
 }): TrustHealthDataset {
   const availableRows = rows(payload, field);
@@ -298,10 +317,9 @@ function buildDataset({
     observedAt: text(payload.observedAt),
     generatedAt: text(payload.generatedAt),
   });
-  const missingPublicationTimeIdentities = availableRows
+  const missingPublicationTimeRows = availableRows
     .map((row, index) => ({ id: identity(row, index), time: publicationTime(row) }))
-    .filter((item) => !item.time)
-    .map((item) => item.id);
+    .filter((item) => !item.time);
   const reasonCodes = new Set<TrustHealthReasonCode>();
   if (presentation.status === "unavailable") reasonCodes.add("upstream-unavailable");
   if (
@@ -344,7 +362,10 @@ function buildDataset({
       missingIdentities:
         expected?.filter((id) => !availableIdentities.has(id)) ?? [],
       missingTrustedIdentities: coverageMissing,
-      missingPublicationTimeIdentities,
+      missingPublicationTimeRecords: missingPublicationTimeRows.length,
+      missingPublicationTimeIdentities: exposePublicIdentities
+        ? missingPublicationTimeRows.map((item) => item.id)
+        : [],
     },
     freshness: {
       sourcePublishedAt: presentation.sourcePublishedAt,
@@ -379,6 +400,7 @@ export function buildTrustHealthPayload(
       payload: scores,
       field: "countries",
       expectedIdentities: AFRICAN_ISO3_CODES,
+      exposePublicIdentities: true,
     }),
     intelligence: buildDataset({
       payload: intelligence,
@@ -392,6 +414,7 @@ export function buildTrustHealthPayload(
       payload: commodities,
       field: "data",
       expectedIdentities: COMMODITY_IDS,
+      exposePublicIdentities: true,
       trustedCoverage: record(commodities.trustedCoverage),
     }),
   };

@@ -928,7 +928,7 @@ export default function Home() {
         onClose={() => setAnalyticsOpen(false)}
         data={countryDataMaster}
         selectedResource={selectedResource}
-        trustState={scoreTrustState}
+        publication={scorePublication}
       />
       <AiNexusModal
         isOpen={aiNexusOpen}

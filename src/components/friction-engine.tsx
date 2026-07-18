@@ -8,10 +8,11 @@ import { useWatchlist } from "@/lib/use-watchlist"
 import type { IntelligenceAlert } from "./country-dossier-modal"
 import type { DataMode } from "@/lib/intelligence/trust"
 import {
-    getPublicTrustStateLabel,
-    isPublicTrustState,
-    type PublicTrustState,
-} from "@/lib/intelligence/trust-health";
+    getPresentationTone,
+    getPublicationPresentation,
+    getRefreshFailurePresentation,
+    type PublicationPresentation,
+} from "@/lib/intelligence/publication-health"
 
 export interface BlogPost {
     id: string;
@@ -292,8 +293,14 @@ export default function FrictionEngine({ mode, filterCountries, onSelectCountry,
     const [blogs, setBlogs] = useState<BlogPost[]>([])
     const [loading, setLoading] = useState(true)
     const [blogsLoading, setBlogsLoading] = useState(true)
-    const [intelligenceTrustState, setIntelligenceTrustState] = useState<PublicTrustState>("unavailable")
-    const [blogTrustState, setBlogTrustState] = useState<PublicTrustState>("unavailable")
+    const [intelligencePresentation, setIntelligencePresentation] = useState<PublicationPresentation>(
+        UNAVAILABLE_PRESENTATION,
+    )
+    const [blogPresentation, setBlogPresentation] = useState<PublicationPresentation>(
+        UNAVAILABLE_PRESENTATION,
+    )
+    const hasIntelligenceDataRef = useRef(false)
+    const hasBlogDataRef = useRef(false)
     const [activeTab, setActiveTab] = useState<"ALERTS" | "NEWS" | "MEDIA" | "BLOGS">("ALERTS")
     const [isPlayingAudio, setIsPlayingAudio] = useState(false);
     const [audioPaused, setAudioPaused] = useState(false);
@@ -320,9 +327,27 @@ export default function FrictionEngine({ mode, filterCountries, onSelectCountry,
             const res = await fetch("/api/intelligence");
             const payload = await res.json();
             const data = Array.isArray(payload) ? payload : payload?.data;
-            if (!Array.isArray(data) || data.length === 0) {
-                if (isMounted) setIntelligenceTrustState("unavailable");
-                return;
+            if (
+                !res.ok ||
+                payload?.success === false ||
+                !Array.isArray(data) ||
+                data.length === 0
+            ) {
+                throw new Error("Intelligence refresh returned no usable data");
+            }
+            if (isMounted) {
+                setIntelligencePresentation(
+                    getPublicationPresentation({
+                        success: payload?.success !== false,
+                        source: payload?.source,
+                        publicationTier: payload?.publicationTier,
+                        dataMode: payload?.dataMode,
+                        fallbackUsed: payload?.fallbackUsed,
+                        sourceUpdatedAt: payload?.sourceUpdatedAt,
+                        observedAt: payload?.observedAt,
+                        generatedAt: payload?.generatedAt,
+                    }),
+                );
             }
 
             const enhancedData = data.map((alert: IntelligenceAlert, index: number) => {
@@ -335,11 +360,7 @@ export default function FrictionEngine({ mode, filterCountries, onSelectCountry,
                 } as Article;
             });
 
-            if (isMounted) {
-                setIntelligenceTrustState(isPublicTrustState(payload?.trustState)
-                    ? payload.trustState
-                    : "unavailable");
-            }
+            hasIntelligenceDataRef.current = true;
             setAlerts((prev) => {
                 if (prev.length === 0) return enhancedData;
                 const merged = [...prev];
@@ -353,7 +374,14 @@ export default function FrictionEngine({ mode, filterCountries, onSelectCountry,
             });
         } catch (e) {
             console.error("Intelligence load failed", e);
-            if (isMounted) setIntelligenceTrustState("unavailable");
+            if (isMounted) {
+                setIntelligencePresentation((previous) =>
+                    getRefreshFailurePresentation(
+                        hasIntelligenceDataRef.current,
+                        previous,
+                    ),
+                );
+            }
         } finally {
             if (isMounted) setLoading(false);
         }
@@ -364,18 +392,40 @@ export default function FrictionEngine({ mode, filterCountries, onSelectCountry,
             const res = await fetch("/api/blogs");
             const payload = await res.json();
             const data = Array.isArray(payload) ? payload : payload?.data;
+            if (
+                !res.ok ||
+                payload?.success === false ||
+                !Array.isArray(data) ||
+                data.length === 0
+            ) {
+                throw new Error("Blog refresh returned no usable data");
+            }
             if (isMounted) {
-                setBlogTrustState(isPublicTrustState(payload?.trustState)
-                    ? payload.trustState
-                    : "unavailable");
-                setBlogs(Array.isArray(data) ? data.map((post: BlogPost, index: number) => ({
+                setBlogPresentation(
+                    getPublicationPresentation({
+                        success: payload?.success !== false,
+                        source: payload?.source,
+                        publicationTier: payload?.publicationTier,
+                        dataMode: payload?.dataMode,
+                        fallbackUsed: payload?.fallbackUsed,
+                        sourceUpdatedAt: payload?.sourceUpdatedAt,
+                        observedAt: payload?.observedAt,
+                        generatedAt: payload?.generatedAt,
+                    }),
+                );
+                setBlogs(data.map((post: BlogPost, index: number) => ({
                     ...post,
                     imageUrl: post.imageUrl || BLOG_IMAGE_FALLBACKS[index % BLOG_IMAGE_FALLBACKS.length]
-                })) : []);
+                })));
+                hasBlogDataRef.current = true;
             }
         } catch (e) {
             console.error("Blog load failed", e);
-            if (isMounted) setBlogTrustState("unavailable");
+            if (isMounted) {
+                setBlogPresentation((previous) =>
+                    getRefreshFailurePresentation(hasBlogDataRef.current, previous),
+                );
+            }
         } finally {
             if (isMounted) setBlogsLoading(false);
         }

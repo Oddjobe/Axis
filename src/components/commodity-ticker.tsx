@@ -1,13 +1,14 @@
 "use client"
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown, Shield, Globe2, Clock } from 'lucide-react';
 import {
-    getPublicTrustStateLabel,
-    isPublicTrustState,
-    type PublicTrustState,
-} from '@/lib/intelligence/trust-health';
+    getPresentationTone,
+    getPublicationPresentation,
+    getRefreshFailurePresentation,
+    type PublicationPresentation,
+} from '@/lib/intelligence/publication-health';
 
 interface Commodity {
     id: string;
@@ -42,24 +43,38 @@ function relativeTime(dateStr: string): string {
 export default function CommodityTicker() {
     const [commodities, setCommodities] = useState<Commodity[]>([]);
     const [loading, setLoading] = useState(true);
-    const [trustState, setTrustState] = useState<PublicTrustState>("unavailable");
+    const [presentation, setPresentation] = useState<PublicationPresentation>(
+        UNAVAILABLE_PRESENTATION,
+    );
+    const hasUsableDataRef = useRef(false);
 
     useEffect(() => {
         const fetchCommodities = async () => {
             try {
                 const res = await fetch('/api/commodities');
                 const json = await res.json();
-                if (json.success) {
-                    setCommodities(json.data);
-                    setTrustState(isPublicTrustState(json.trustState)
-                        ? json.trustState
-                        : "unavailable");
-                } else {
-                    setTrustState("unavailable");
+                if (!res.ok || json?.success !== true || !Array.isArray(json.data) || json.data.length === 0) {
+                    throw new Error("Commodity refresh returned no usable data");
                 }
+                setCommodities(json.data);
+                hasUsableDataRef.current = true;
+                setPresentation(
+                    getPublicationPresentation({
+                        success: json.success,
+                        source: json.source,
+                        publicationTier: json.publicationTier,
+                        dataMode: json.dataMode,
+                        fallbackUsed: json.fallbackUsed,
+                        sourceUpdatedAt: json.sourceUpdatedAt,
+                        observedAt: json.observedAt,
+                        generatedAt: json.generatedAt,
+                    }),
+                );
             } catch (err) {
                 console.error("Ticker fetch failed", err);
-                setTrustState("unavailable");
+                setPresentation((previous) =>
+                    getRefreshFailurePresentation(hasUsableDataRef.current, previous),
+                );
             } finally {
                 setLoading(false);
             }
@@ -71,7 +86,30 @@ export default function CommodityTicker() {
         return () => clearInterval(interval);
     }, []);
 
-    if (loading || commodities.length === 0) return null;
+    const tone = getPresentationTone(presentation.state);
+    if (loading) return null;
+    if (commodities.length === 0) {
+        return (
+            <div
+                className="h-8 lg:h-9 bg-black/60 dark:bg-black/40 border-b border-border flex items-center overflow-hidden relative"
+                role="status"
+                aria-live="polite"
+            >
+                <div
+                    className={`h-full px-3 border-r flex items-center gap-2 ${tone.bg} ${tone.border}`}
+                    title={presentation.tooltip}
+                >
+                    <ShieldCheck className={`w-3.5 h-3.5 ${tone.text}`} />
+                    <span className={`text-[9px] font-bold font-mono tracking-widest ${tone.text}`}>
+                        {presentation.label}
+                    </span>
+                </div>
+                <span className="px-3 text-[9px] font-mono text-slate-light">
+                    COMMODITY DATA UNAVAILABLE
+                </span>
+            </div>
+        );
+    }
 
     // Duplicate items for seamless loop
     const displayItems = [...commodities, ...commodities];
