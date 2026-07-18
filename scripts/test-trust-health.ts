@@ -10,6 +10,16 @@ import {
 import { COMMODITY_IDS } from "../src/lib/intelligence/ingestion/commodity-sources";
 import { AFRICAN_ISO3_CODES } from "../src/lib/intelligence/trust";
 import { trustHealthContractSchema } from "../src/lib/intelligence/trust-health-contract.server";
+import {
+  CURRENT_PRODUCTION_CONTRACT,
+  TRUST_STATE_FIXTURES,
+} from "./fixtures/trust-health";
+import {
+  PUBLIC_TRUST_STATES,
+  derivePublicTrustState,
+  getPublicTrustStateLabel,
+  sanitizeDatasetHealth,
+} from "../src/lib/intelligence/trust-health";
 
 const ALL_DISPLAY_STATES: readonly PublicationDisplayState[] = [
   "trusted-current",
@@ -312,31 +322,64 @@ assert.equal(
   5,
 );
 
-assert.equal(
-  getPublicationPresentation({
-    publicationTier: "legacy",
-    source: "legacy/supabase",
-    dataMode: "live",
-    sourceUpdatedAt: generatedAt,
-  }).label,
-  "LEGACY LIVE-INGESTED",
+assert.equal(PUBLIC_TRUST_STATES.length, 6);
+assert.equal(new Set(PUBLIC_TRUST_STATES).size, 6);
+
+for (const fixture of TRUST_STATE_FIXTURES) {
+  assert.equal(
+    derivePublicTrustState(fixture.input),
+    fixture.expected,
+    fixture.name,
+  );
+}
+
+assert.deepEqual(
+  PUBLIC_TRUST_STATES.map(getPublicTrustStateLabel),
+  [
+    "TRUSTED-CURRENT",
+    "TRUSTED-STALE",
+    "LEGACY LIVE-INGESTED",
+    "CACHED",
+    "STATIC FALLBACK",
+    "UNAVAILABLE",
+  ],
 );
-assert.equal(
-  getPublicationPresentation({
-    publicationTier: "trusted",
-    dataMode: "live",
-    sourceUpdatedAt: generatedAt,
-  }).label,
-  "TRUSTED CURRENT",
+
+for (const [dataset, fixture] of Object.entries(CURRENT_PRODUCTION_CONTRACT)) {
+  const health = sanitizeDatasetHealth(fixture.payload, 200);
+  assert.equal(health.state, fixture.expected, dataset);
+  assert.notEqual(
+    health.state,
+    "trusted-current",
+    `${dataset} must not be labeled trusted-current`,
+  );
+}
+
+const commodityHealth = sanitizeDatasetHealth(
+  CURRENT_PRODUCTION_CONTRACT.commodities.payload,
+  200,
 );
-assert.equal(
-  getPublicationPresentation({
+assert.deepEqual(commodityHealth.trustedCoverage, { records: 0, total: 5 });
+
+const unavailable = sanitizeDatasetHealth(
+  {
+    success: false,
+    source: "trusted/unavailable",
     publicationTier: "trusted",
     dataMode: "stale",
-    sourceUpdatedAt: "2024-01-01T00:00:00.000Z",
-  }).label,
-  "TRUSTED STALE",
+  },
+  503,
 );
+assert.deepEqual(unavailable, {
+  state: "unavailable",
+  sourceKind: "none",
+  publicationTier: "unavailable",
+  dataMode: "unavailable",
+  asOf: null,
+  records: 0,
+  trustedCoverage: null,
+});
+
 assert.equal(
   getPublicationPresentation({
     publicationTier: "legacy",

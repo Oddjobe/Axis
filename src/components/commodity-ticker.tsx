@@ -3,7 +3,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown, ShieldCheck, Globe2, Clock } from 'lucide-react';
-import type { DataMode } from '@/lib/intelligence/trust';
 import {
     getPresentationTone,
     getPublicationPresentation,
@@ -24,7 +23,6 @@ interface Commodity {
     frequency?: string;
     category: string;
     color: string;
-    dataMode?: DataMode;
     sourceUpdatedAt?: string | null;
     observedAt?: string | null;
 }
@@ -107,7 +105,7 @@ export default function CommodityTicker() {
     const displayItems = [...commodities, ...commodities];
     return (
         <div className="h-8 lg:h-9 bg-black/60 dark:bg-black/40 border-b border-border flex items-center overflow-hidden relative group">
-            {/* Vetted Source Badge */}
+            {/* Aggregate provenance and freshness badge */}
             <div
                 className={`absolute left-0 top-0 bottom-0 px-3 backdrop-blur-md border-r flex items-center gap-2 z-20 shadow-[8px_0_15px_rgba(0,0,0,0.5)] ${tone.bg} ${tone.border}`}
                 title={presentation.tooltip}

@@ -51,7 +51,6 @@ interface Article {
 
 const UNAVAILABLE_PRESENTATION = getPublicationPresentation({ success: false });
 
-
 // Brand SVG Icons
 const YouTubeIcon = () => (
     <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0" fill="currentColor">

@@ -10,6 +10,7 @@ import {
     trustedSnapshotUnavailable,
 } from "@/lib/intelligence/publication-selection.server";
 import { getPublicationPresentation } from "@/lib/intelligence/publication-health";
+import { derivePublicTrustState } from "@/lib/intelligence/trust-health";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 60; // Cache for 1 minute at the edge
@@ -210,6 +211,7 @@ export async function GET() {
                 fallbackUsed: false,
                 dataMode: "stale",
                 displayState: getPublicationPresentation({ success: false }).state,
+                trustState: "unavailable",
                 generatedAt,
                 data: [],
                 error: "No trusted intelligence snapshot is available.",
@@ -225,18 +227,25 @@ export async function GET() {
         rows = selection.records;
     }
 
-    const data = decorateItems(rows, requestedMode, generatedAt).map((item) => ({
+    const decoratedData = decorateItems(rows, requestedMode, generatedAt).map((item) => ({
         ...item,
         publicationTier,
     }));
-    const sourceUpdatedAt = getLatestTimestamp(data.map((record) => record.sourceUpdatedAt));
-    const observedAt = getLatestTimestamp(data.map((record) => record.observedAt));
+    const sourceUpdatedAt = getLatestTimestamp(decoratedData.map((record) => record.sourceUpdatedAt));
+    const observedAt = getLatestTimestamp(decoratedData.map((record) => record.observedAt));
     const dataMode: DataMode = getFreshnessMetadata({
         sourceUpdatedAt,
         observedAt,
         dataset: "intelligence",
         requestedMode,
     }).dataMode;
+    const trustState = derivePublicTrustState({
+        publicationTier,
+        dataMode,
+        fallbackUsed,
+        source,
+    });
+    const data = decoratedData.map((record) => ({ ...record, trustState }));
     const asOf = sourceUpdatedAt ?? observedAt;
     const freshness = { dataMode, sourceUpdatedAt, observedAt, asOf };
     const displayState = getPublicationPresentation({
@@ -257,6 +266,7 @@ export async function GET() {
         fallbackUsed,
         dataMode,
         displayState,
+        trustState,
         generatedAt,
         sourceUpdatedAt,
         observedAt,

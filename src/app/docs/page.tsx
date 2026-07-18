@@ -10,6 +10,25 @@ export default function DocsPage() {
     const endpoints = [
         {
             method: 'GET',
+            path: '/api/public/trust-health',
+            description: 'Sanitized aggregate trust and freshness state for public scores, intelligence, blogs, and commodities.',
+            curl: 'curl -s https://axis-mocha.vercel.app/api/public/trust-health | jq .',
+            response: `{
+  "status": "degraded",
+  "generatedAt": "2026-07-18T00:00:00.000Z",
+  "datasets": {
+    "countryScores": { "state": "static-fallback" },
+    "intelligence": { "state": "legacy-live-ingested" },
+    "blogs": { "state": "legacy-live-ingested" },
+    "commodities": {
+      "state": "static-fallback",
+      "trustedCoverage": { "records": 0, "total": 5 }
+    }
+  }
+}`,
+        },
+        {
+            method: 'GET',
             path: '/api/public/scores',
             description: 'Returns sovereignty scores for all 54 African nations. Includes axisScore, status, key resources, and sub-indices.',
             curl: 'curl -s https://axis-mocha.vercel.app/api/public/scores | jq .',
@@ -20,6 +39,7 @@ export default function DocsPage() {
   "sourceUpdatedAt": "2026-04-12T00:00:00.000Z",
   "asOf": "2026-04-12T00:00:00.000Z",
   "dataMode": "fallback",
+  "trustState": "static-fallback",
   "data": [
     {
       "country": "NGA",
@@ -32,6 +52,7 @@ export default function DocsPage() {
       "resourceWealth": 92,
       "keyResources": ["Oil", "Gas", "Tin"],
       "dataMode": "fallback",
+      "trustState": "static-fallback",
       "sourceUpdatedAt": "2026-04-12T00:00:00.000Z"
     }
   ]
@@ -76,6 +97,7 @@ export default function DocsPage() {
   "generatedAt": "2026-07-16T19:15:09.411Z",
   "sourceUpdatedAt": "2026-07-15T00:00:00.000Z",
   "dataMode": "fallback",
+  "trustState": "static-fallback",
   "data": [
     {
       "id": "gold",
@@ -88,6 +110,7 @@ export default function DocsPage() {
       "frequency": "daily",
       "lastUpdated": "2026-07-15",
       "dataMode": "fallback",
+      "trustState": "static-fallback",
       "sourceUpdatedAt": "2026-07-15T00:00:00.000Z"
     }
   ]

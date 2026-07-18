@@ -58,7 +58,6 @@ import { AXIS_TAGLINE } from "@/lib/brand";
 import {
   getFreshnessMetadata,
   STATIC_SCORE_BASELINE_AS_OF,
-  type DataMode,
   type FreshnessMetadata,
 } from "@/lib/intelligence/trust";
 import { mergeAuthoritativeCountryScores } from "@/lib/intelligence/score-selection";
@@ -122,7 +121,6 @@ export default function Home() {
   const [timeValue, setTimeValue] = useState(currentYear);
   const [language, setLanguage] = useState<Language>("en");
   const [countryDataMaster, setCountryDataMaster] = useState<CountryData[]>(STATIC_COUNTRY_DATA);
-  const [dataSourceMode, setDataSourceMode] = useState<DataMode>(STATIC_SCORE_FRESHNESS.dataMode);
   const [scorePublicationTier, setScorePublicationTier] = useState<"trusted" | "legacy">("legacy");
   const [scoreDisplayState, setScoreDisplayState] =
     useState<PublicationDisplayState>("static-fallback");
@@ -139,15 +137,14 @@ export default function Home() {
     displayState: scoreDisplayState,
     source: scorePublicationTier === "trusted" ? "trusted" : "legacy/static",
     publicationTier: scorePublicationTier,
-    dataMode: dataSourceMode,
+    dataMode: dashboardFreshness.dataMode,
     fallbackUsed:
-      scorePublicationTier === "legacy" && dataSourceMode !== "cached",
+      scorePublicationTier === "legacy" && dashboardFreshness.dataMode !== "cached",
     sourceUpdatedAt: dashboardFreshness.sourceUpdatedAt,
     observedAt: dashboardFreshness.observedAt,
     generatedAt: dashboardFreshness.generatedAt,
   });
   const scorePublicationTone = getPresentationTone(scorePublication.state);
-
   const openTool = useCallback((action: string) => {
     switch (action) {
       case "mission": setMissionOpen(true); break;
@@ -216,7 +213,6 @@ export default function Home() {
             payload.publicationTier === "trusted" ? "live" : "fallback",
         });
         setCountryDataMaster(merged);
-        setDataSourceMode(responseFreshness.dataMode);
         setScorePublicationTier(payload.publicationTier);
         setScoreDisplayState(
           isPublicationDisplayState(payload.displayState)
@@ -267,7 +263,6 @@ export default function Home() {
               requestedMode: "cached",
             });
             setCountryDataMaster(cachedData);
-            setDataSourceMode(freshness.dataMode);
             setScorePublicationTier(cached.publicationTier);
             if (!trustedSelectionUnavailable) {
               setScoreDisplayState("cached");
@@ -275,7 +270,6 @@ export default function Home() {
             setDashboardFreshness({ ...freshness, generatedAt });
           } else {
             setCountryDataMaster(STATIC_COUNTRY_DATA);
-            setDataSourceMode(STATIC_SCORE_FRESHNESS.dataMode);
             setScorePublicationTier("legacy");
             if (!trustedSelectionUnavailable) {
               setScoreDisplayState("static-fallback");
@@ -284,7 +278,6 @@ export default function Home() {
           }
         } catch {
           setCountryDataMaster(STATIC_COUNTRY_DATA);
-          setDataSourceMode(STATIC_SCORE_FRESHNESS.dataMode);
           setScorePublicationTier("legacy");
           if (!trustedSelectionUnavailable) {
             setScoreDisplayState("static-fallback");
