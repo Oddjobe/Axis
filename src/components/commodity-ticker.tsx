@@ -89,12 +89,33 @@ export default function CommodityTicker() {
         return () => clearInterval(interval);
     }, []);
 
-    if (loading || commodities.length === 0) return null;
+    const tone = getPresentationTone(presentation.state);
+    if (loading) return null;
+    if (commodities.length === 0) {
+        return (
+            <div
+                className="h-8 lg:h-9 bg-black/60 dark:bg-black/40 border-b border-border flex items-center overflow-hidden relative"
+                role="status"
+                aria-live="polite"
+            >
+                <div
+                    className={`h-full px-3 border-r flex items-center gap-2 ${tone.bg} ${tone.border}`}
+                    title={presentation.tooltip}
+                >
+                    <ShieldCheck className={`w-3.5 h-3.5 ${tone.text}`} />
+                    <span className={`text-[9px] font-bold font-mono tracking-widest ${tone.text}`}>
+                        {presentation.label}
+                    </span>
+                </div>
+                <span className="px-3 text-[9px] font-mono text-slate-light">
+                    COMMODITY DATA UNAVAILABLE
+                </span>
+            </div>
+        );
+    }
 
     // Duplicate items for seamless loop
     const displayItems = [...commodities, ...commodities];
-    const tone = getPresentationTone(presentation.state);
-
     return (
         <div className="h-8 lg:h-9 bg-black/60 dark:bg-black/40 border-b border-border flex items-center overflow-hidden relative group">
             {/* Vetted Source Badge */}
