@@ -66,6 +66,8 @@ import type { LegacyRecord } from "@/lib/intelligence/trust-rollout";
 import {
   getPresentationTone,
   getPublicationPresentation,
+  isPublicationDisplayState,
+  type PublicationDisplayState,
 } from "@/lib/intelligence/publication-health";
 const TOTAL_POPULATION = 1_444; // ~1.44 billion
 
@@ -122,6 +124,8 @@ export default function Home() {
   const [countryDataMaster, setCountryDataMaster] = useState<CountryData[]>(STATIC_COUNTRY_DATA);
   const [dataSourceMode, setDataSourceMode] = useState<DataMode>(STATIC_SCORE_FRESHNESS.dataMode);
   const [scorePublicationTier, setScorePublicationTier] = useState<"trusted" | "legacy">("legacy");
+  const [scoreDisplayState, setScoreDisplayState] =
+    useState<PublicationDisplayState>("static-fallback");
   const [dashboardFreshness, setDashboardFreshness] = useState<DashboardFreshness>({
     ...STATIC_SCORE_FRESHNESS,
     generatedAt: null,
@@ -131,7 +135,8 @@ export default function Home() {
   const { newAlertCount, clearNewAlerts } = useRealtimeAlerts();
   const [searchOpen, setSearchOpen] = useState(false);
   const scorePublication = getPublicationPresentation({
-    success: true,
+    success: scoreDisplayState !== "unavailable",
+    displayState: scoreDisplayState,
     source: scorePublicationTier === "trusted" ? "trusted" : "legacy/static",
     publicationTier: scorePublicationTier,
     dataMode: dataSourceMode,
@@ -174,11 +179,11 @@ export default function Home() {
     // Fetch the authoritative public score selection, then cache it for offline use.
     void (async () => {
       const generatedAt = new Date().toISOString();
+      let trustedSelectionUnavailable = false;
       try {
         const response = await fetch("/api/public/scores", {
           headers: { Accept: "application/json" },
         });
-        if (!response.ok) throw new Error("Public score fetch failed");
         const payload = await response.json() as {
           countries: LegacyRecord[];
           count: number;
@@ -186,7 +191,16 @@ export default function Home() {
           sourceUpdatedAt: string | null;
           observedAt: string | null;
           publicationTier: "trusted" | "legacy";
+          displayState?: PublicationDisplayState;
         };
+        if (!response.ok) {
+          trustedSelectionUnavailable =
+            payload.displayState === "unavailable";
+          if (trustedSelectionUnavailable) {
+            setScoreDisplayState("unavailable");
+          }
+          throw new Error("Public score fetch failed");
+        }
         if (payload.count !== ALL_SOVEREIGN_DATA.length) {
           throw new Error("Public score release is incomplete");
         }
@@ -204,6 +218,23 @@ export default function Home() {
         setCountryDataMaster(merged);
         setDataSourceMode(responseFreshness.dataMode);
         setScorePublicationTier(payload.publicationTier);
+        setScoreDisplayState(
+          isPublicationDisplayState(payload.displayState)
+            ? payload.displayState
+            : getPublicationPresentation({
+                success: true,
+                source:
+                  payload.publicationTier === "trusted"
+                    ? "trusted"
+                    : "legacy/static",
+                publicationTier: payload.publicationTier,
+                dataMode: responseFreshness.dataMode,
+                fallbackUsed: payload.publicationTier !== "trusted",
+                sourceUpdatedAt: payload.sourceUpdatedAt,
+                observedAt: payload.observedAt,
+                generatedAt: payload.generatedAt ?? generatedAt,
+              }).state,
+        );
         setDashboardFreshness({
           ...responseFreshness,
           generatedAt: payload.generatedAt ?? generatedAt,
@@ -238,17 +269,26 @@ export default function Home() {
             setCountryDataMaster(cachedData);
             setDataSourceMode(freshness.dataMode);
             setScorePublicationTier(cached.publicationTier);
+            if (!trustedSelectionUnavailable) {
+              setScoreDisplayState("cached");
+            }
             setDashboardFreshness({ ...freshness, generatedAt });
           } else {
             setCountryDataMaster(STATIC_COUNTRY_DATA);
             setDataSourceMode(STATIC_SCORE_FRESHNESS.dataMode);
             setScorePublicationTier("legacy");
+            if (!trustedSelectionUnavailable) {
+              setScoreDisplayState("static-fallback");
+            }
             setDashboardFreshness({ ...STATIC_SCORE_FRESHNESS, generatedAt });
           }
         } catch {
           setCountryDataMaster(STATIC_COUNTRY_DATA);
           setDataSourceMode(STATIC_SCORE_FRESHNESS.dataMode);
           setScorePublicationTier("legacy");
+          if (!trustedSelectionUnavailable) {
+            setScoreDisplayState("static-fallback");
+          }
           setDashboardFreshness({ ...STATIC_SCORE_FRESHNESS, generatedAt });
         }
       }

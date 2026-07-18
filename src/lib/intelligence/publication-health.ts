@@ -3,16 +3,20 @@ import { AFRICAN_ISO3_CODES, toIsoTimestamp, type DataMode } from "@/lib/intelli
 
 export type PublicationTier = "trusted" | "mixed" | "legacy";
 export type PublicationStatus = "current" | "stale" | "unavailable";
+export const PUBLICATION_DISPLAY_STATES = [
+  "trusted-current",
+  "trusted-stale",
+  "legacy-live-ingested",
+  "cached",
+  "static-fallback",
+  "unavailable",
+] as const;
 export type PublicationDisplayState =
-  | "trusted-current"
-  | "trusted-stale"
-  | "legacy-live-ingested"
-  | "cached"
-  | "static-fallback"
-  | "unavailable";
+  (typeof PUBLICATION_DISPLAY_STATES)[number];
 
 export interface PublicationSummaryInput {
   success?: boolean;
+  displayState?: PublicationDisplayState;
   source?: string | null;
   publicationTier?: PublicationTier | null;
   dataMode?: DataMode | null;
@@ -49,6 +53,12 @@ const TONE_BY_STATE: Record<PublicationDisplayState, PresentationTone> = {
   "static-fallback": "degraded",
   unavailable: "critical",
 };
+
+export function isPublicationDisplayState(
+  value: unknown,
+): value is PublicationDisplayState {
+  return PUBLICATION_DISPLAY_STATES.includes(value as PublicationDisplayState);
+}
 
 const TONE_CLASSES: Record<PresentationTone, PresentationToneClasses> = {
   positive: {
@@ -103,27 +113,32 @@ export function getPublicationPresentation(
       ? "stale"
       : "current";
 
-  let state: PublicationDisplayState;
+  let derivedState: PublicationDisplayState;
   if (unavailable) {
-    state = "unavailable";
+    derivedState = "unavailable";
   } else if (input.dataMode === "cached") {
-    state = "cached";
+    derivedState = "cached";
   } else if (
     input.fallbackUsed === true ||
     input.dataMode === "fallback" ||
     source.includes("static")
   ) {
-    state = "static-fallback";
+    derivedState = "static-fallback";
   } else if (input.publicationTier === "trusted") {
-    state = status === "current" ? "trusted-current" : "trusted-stale";
+    derivedState = status === "current" ? "trusted-current" : "trusted-stale";
   } else if (
     source.includes("legacy/supabase") ||
     input.dataMode === "live"
   ) {
-    state = "legacy-live-ingested";
+    derivedState = "legacy-live-ingested";
   } else {
-    state = "static-fallback";
+    derivedState = "static-fallback";
   }
+  const state =
+    isPublicationDisplayState(input.displayState) &&
+    input.displayState === derivedState
+      ? input.displayState
+      : derivedState;
 
   const labelByState: Record<PublicationDisplayState, string> = {
     "trusted-current": "TRUSTED CURRENT",
@@ -170,19 +185,22 @@ export function getRefreshFailurePresentation(
 type JsonRecord = Record<string, unknown>;
 type TrustDataset = "countryScores" | "intelligence" | "blogs" | "commodities";
 
+export const TRUST_HEALTH_REASON_CODES = [
+  "cached-data",
+  "incomplete-identity-coverage",
+  "legacy-live-ingested",
+  "legacy-publication",
+  "source-observation-time-missing",
+  "source-publication-time-missing",
+  "source-stale",
+  "static-fallback",
+  "trusted-coverage-partial",
+  "trusted-coverage-zero",
+  "trusted-publication-unavailable",
+  "upstream-unavailable",
+] as const;
 export type TrustHealthReasonCode =
-  | "cached-data"
-  | "incomplete-identity-coverage"
-  | "legacy-live-ingested"
-  | "legacy-publication"
-  | "source-observation-time-missing"
-  | "source-publication-time-missing"
-  | "source-stale"
-  | "static-fallback"
-  | "trusted-coverage-partial"
-  | "trusted-coverage-zero"
-  | "trusted-publication-unavailable"
-  | "upstream-unavailable";
+  (typeof TRUST_HEALTH_REASON_CODES)[number];
 
 export interface TrustHealthDataset {
   publicationTier: PublicationTier;
@@ -309,6 +327,9 @@ function buildDataset({
     : expected?.filter((id) => !trustedIdentities.has(id)) ?? [];
   const presentation = getPublicationPresentation({
     success: payload.success !== false,
+    displayState: isPublicationDisplayState(payload.displayState)
+      ? payload.displayState
+      : undefined,
     source: text(payload.source),
     publicationTier,
     dataMode: mode(payload.dataMode),
