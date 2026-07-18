@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { TrendingUp, TrendingDown, Shield, Globe2, Clock } from 'lucide-react';
+import { TrendingUp, TrendingDown, ShieldCheck, Globe2, Clock } from 'lucide-react';
 import {
     getPresentationTone,
     getPublicationPresentation,
@@ -23,10 +23,11 @@ interface Commodity {
     frequency?: string;
     category: string;
     color: string;
-    trustState?: PublicTrustState;
     sourceUpdatedAt?: string | null;
     observedAt?: string | null;
 }
+
+const UNAVAILABLE_PRESENTATION = getPublicationPresentation({ success: false });
 
 function relativeTime(dateStr: string): string {
     const now = new Date();
@@ -116,9 +117,12 @@ export default function CommodityTicker() {
     return (
         <div className="h-8 lg:h-9 bg-black/60 dark:bg-black/40 border-b border-border flex items-center overflow-hidden relative group">
             {/* Aggregate provenance and freshness badge */}
-            <div className="absolute left-0 top-0 bottom-0 px-3 bg-cobalt/20 backdrop-blur-md border-r border-cobalt/30 flex items-center gap-2 z-20 shadow-[8px_0_15px_rgba(0,0,0,0.5)]">
-                <Shield className="w-3.5 h-3.5 text-cobalt" />
-                <span className="text-[9px] font-bold font-mono text-cobalt tracking-widest uppercase">{getPublicTrustStateLabel(trustState)}</span>
+            <div
+                className={`absolute left-0 top-0 bottom-0 px-3 backdrop-blur-md border-r flex items-center gap-2 z-20 shadow-[8px_0_15px_rgba(0,0,0,0.5)] ${tone.bg} ${tone.border}`}
+                title={presentation.tooltip}
+            >
+                <ShieldCheck className={`w-3.5 h-3.5 ${tone.text}`} />
+                <span className={`text-[9px] font-bold font-mono tracking-widest uppercase ${tone.text}`}>{presentation.label}</span>
             </div>
 
             <motion.div

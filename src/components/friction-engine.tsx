@@ -49,6 +49,8 @@ interface Article {
     observedAt?: string | null
 }
 
+const UNAVAILABLE_PRESENTATION = getPublicationPresentation({ success: false });
+
 // Brand SVG Icons
 const YouTubeIcon = () => (
     <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0" fill="currentColor">
@@ -594,7 +596,12 @@ export default function FrictionEngine({ mode, filterCountries, onSelectCountry,
                 {activeTab === "ALERTS" && (
                     <>
                         <div className="flex justify-between items-center mb-2 px-1">
-                            <span className="text-[10px] font-mono text-slate-light/60 uppercase tracking-widest">{getPublicTrustStateLabel(intelligenceTrustState)} signals</span>
+                            <span
+                                className={`text-[10px] font-mono uppercase tracking-widest ${getPresentationTone(intelligencePresentation.state).text}`}
+                                title={intelligencePresentation.tooltip}
+                            >
+                                {intelligencePresentation.label} SIGNALS
+                            </span>
                             <button
                                 onClick={filteredAlerts.length > 0 ? (isPlayingAudio && !audioPaused ? stopAudio : toggleAudioBrief) : undefined}
                                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] font-bold tracking-widest transition-all ${filteredAlerts.length === 0 ? "opacity-30 cursor-not-allowed border border-border bg-background" :
@@ -764,9 +771,12 @@ export default function FrictionEngine({ mode, filterCountries, onSelectCountry,
 
                 {activeTab === "BLOGS" && (
                     <div className="space-y-4">
-                        <div className={`text-[10px] font-mono flex items-center gap-2 mb-2 ${blogTrustState === "trusted-current" ? "text-green-500" : blogTrustState === "cached" || blogTrustState === "legacy-live-ingested" ? "text-amber-500" : "text-red-500"}`}>
-                            <span className={`w-2 h-2 rounded-full ${blogTrustState === "trusted-current" ? "bg-green-500 animate-pulse" : blogTrustState === "cached" || blogTrustState === "legacy-live-ingested" ? "bg-amber-500" : "bg-red-500"}`} />
-                            {getPublicTrustStateLabel(blogTrustState)} GEOPOLITICAL ANALYSIS
+                        <div
+                            className={`text-[10px] font-mono flex items-center gap-2 mb-2 ${getPresentationTone(blogPresentation.state).text}`}
+                            title={blogPresentation.tooltip}
+                        >
+                            <span className={`w-2 h-2 rounded-full ${getPresentationTone(blogPresentation.state).dot} ${blogPresentation.state === "trusted-current" || blogPresentation.state === "legacy-live-ingested" ? "animate-pulse" : ""}`} />
+                            {blogPresentation.label} · GEOPOLITICAL ANALYSIS
                         </div>
                         {blogsLoading && blogs.length === 0 ? (
                             <div className="space-y-3">

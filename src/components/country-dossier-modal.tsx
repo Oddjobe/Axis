@@ -10,10 +10,6 @@ import { supabase } from "@/lib/supabase";
 import SovereigntyTrendlineChart from "./sovereignty-trendline-chart";
 import type { DataMode, FreshnessMetadata } from "@/lib/intelligence/trust";
 import {
-    getPublicTrustStateLabel,
-    type PublicTrustState,
-} from "@/lib/intelligence/trust-health";
-import {
     getPresentationTone,
     getPublicationPresentation,
 } from "@/lib/intelligence/publication-health";

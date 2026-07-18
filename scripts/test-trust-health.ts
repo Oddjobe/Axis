@@ -9,9 +9,25 @@ import {
 } from "../src/lib/intelligence/publication-health";
 import { COMMODITY_IDS } from "../src/lib/intelligence/ingestion/commodity-sources";
 import { AFRICAN_ISO3_CODES } from "../src/lib/intelligence/trust";
+import {
+  CURRENT_PRODUCTION_CONTRACT,
+  TRUST_STATE_FIXTURES,
+} from "./fixtures/trust-health";
+import {
+  PUBLIC_TRUST_STATES,
+  derivePublicTrustState,
+  getPublicTrustStateLabel,
+  sanitizeDatasetHealth,
+} from "../src/lib/intelligence/trust-health";
 
-assert.equal(PUBLIC_TRUST_STATES.length, 6);
-assert.equal(new Set(PUBLIC_TRUST_STATES).size, 6);
+const ALL_DISPLAY_STATES: readonly PublicationDisplayState[] = [
+  "trusted-current",
+  "trusted-stale",
+  "legacy-live-ingested",
+  "cached",
+  "static-fallback",
+  "unavailable",
+];
 
 const generatedAt = "2026-07-18T00:00:00.000Z";
 const staleScoreRows = AFRICAN_ISO3_CODES.map((country, index) => ({
@@ -147,6 +163,114 @@ for (const [name, dataset] of Object.entries(payload.datasets)) {
     `${name} must never be labeled trusted while all sources are legacy/stale/zero-coverage (got ${dataset.displayState})`,
   );
   assert.equal(
+    dataset.publicationTier === "trusted",
+    false,
+    `${name} publicationTier must not be trusted in this all-legacy fixture`,
+  );
+}
+assert.equal(payload.datasets.countryScores.displayState, "static-fallback");
+assert.equal(payload.datasets.commodities.displayState, "static-fallback");
+
+// A genuinely live-ingested-but-aged legacy score (not a static fallback) must
+// still resolve to the legacy state, never trusted-stale.
+const staleLegacyLiveScore = getPublicationPresentation({
+  publicationTier: "legacy",
+  source: "legacy/supabase",
+  dataMode: "stale",
+  fallbackUsed: false,
+  sourceUpdatedAt: "2024-01-01T00:00:00.000Z",
+});
+assert.equal(staleLegacyLiveScore.state, "legacy-live-ingested");
+assert.notEqual(staleLegacyLiveScore.state, "trusted-stale");
+
+// Full trusted-current scenario: all four datasets complete, fresh, and
+// authentically trusted end to end.
+const trustedScoreRows = AFRICAN_ISO3_CODES.map((country) => ({
+  country,
+  publicationTier: "trusted",
+  dataMode: "live",
+  sourceUpdatedAt: generatedAt,
+  observedAt: generatedAt,
+}));
+const trustedFeed = {
+  success: true,
+  publicationTier: "trusted",
+  source: "trusted",
+  dataMode: "live",
+  fallbackUsed: false,
+  sourceUpdatedAt: generatedAt,
+  observedAt: generatedAt,
+  generatedAt,
+  data: [
+    {
+      id: "trusted-row",
+      publicationTier: "trusted",
+      sourcePublishedAt: generatedAt,
+    },
+  ],
+};
+const trustedPayload = buildTrustHealthPayload(
+  {
+    scores: {
+      success: true,
+      publicationTier: "trusted",
+      source: "trusted",
+      dataMode: "live",
+      fallbackUsed: false,
+      sourceUpdatedAt: generatedAt,
+      observedAt: generatedAt,
+      generatedAt,
+      count: 54,
+      countries: trustedScoreRows,
+    },
+    intelligence: trustedFeed,
+    blogs: trustedFeed,
+    commodities: {
+      success: true,
+      publicationTier: "trusted",
+      source: "trusted",
+      dataMode: "live",
+      fallbackUsed: false,
+      sourceUpdatedAt: generatedAt,
+      observedAt: generatedAt,
+      generatedAt,
+      trustedCoverage: {
+        records: COMMODITY_IDS.length,
+        total: COMMODITY_IDS.length,
+        ratio: 1,
+        missingIds: [],
+      },
+      data: COMMODITY_IDS.map((id) => ({
+        id,
+        publicationTier: "trusted",
+        sourceUpdatedAt: generatedAt,
+      })),
+    },
+  },
+  generatedAt,
+  true,
+);
+assert.equal(trustedPayload.status, "current");
+assert.equal(trustedPayload.trustedPublicationsEnabled, true);
+for (const [name, dataset] of Object.entries(trustedPayload.datasets)) {
+  assert.equal(
+    dataset.displayState,
+    "trusted-current",
+    `${name} should be trusted-current when fully covered, fresh, and trusted`,
+  );
+  assert.equal(dataset.status, "current");
+}
+assert.equal(trustedPayload.datasets.commodities.coverage.trustedRecords, 5);
+assert.equal(
+  trustedPayload.datasets.commodities.coverage.trustedExpectedRecords,
+  5,
+);
+
+assert.equal(PUBLIC_TRUST_STATES.length, 6);
+assert.equal(new Set(PUBLIC_TRUST_STATES).size, 6);
+
+for (const fixture of TRUST_STATE_FIXTURES) {
+  assert.equal(
     derivePublicTrustState(fixture.input),
     fixture.expected,
     fixture.name,
@@ -190,6 +314,16 @@ const unavailable = sanitizeDatasetHealth(
   },
   503,
 );
+assert.deepEqual(unavailable, {
+  state: "unavailable",
+  sourceKind: "none",
+  publicationTier: "unavailable",
+  dataMode: "unavailable",
+  asOf: null,
+  records: 0,
+  trustedCoverage: null,
+});
+
 assert.equal(
   getPublicationPresentation({
     publicationTier: "legacy",
