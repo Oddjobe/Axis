@@ -22,6 +22,7 @@ interface MockOptions {
   connectivityFailure?: boolean;
   exposeAnonRpc?: boolean;
   newestTimestamp?: string;
+  denyAnonOpenApi?: boolean;
 }
 
 function response(
@@ -92,6 +93,9 @@ function mockPostgrest(options: MockOptions = {}): {
     const service = authorization === `Bearer ${SERVICE_KEY}`;
 
     if (path === "/") {
+      if (!service && options.denyAnonOpenApi) {
+        return response(401);
+      }
       const paths = Object.fromEntries(
         [
           ...READINESS_RELATIONS.filter(
@@ -367,6 +371,50 @@ async function validatesFailureCategories(): Promise<void> {
   assert.equal(data.ready, false);
 }
 
+async function validatesAnonSecurePosture(): Promise<void> {
+  const anonDeniedMock = mockPostgrest({ denyAnonOpenApi: true });
+  const report = await runTrustReadiness({
+    env: configuredEnv,
+    fetchImpl: anonDeniedMock.fetchImpl,
+    now: NOW,
+  });
+
+  // Anon OpenAPI introspection is denied (hardened posture); relations must
+  // still be probed directly rather than short-circuited to permission.
+  assert.equal(report.roles.anon.openApi.state, "permission");
+  assert.equal(
+    report.roles.anon.relations.intelligence_alerts.read.state,
+    "ready",
+  );
+  assert.equal(
+    report.roles.anon.relations.intelligence_alerts.expectationMet,
+    true,
+  );
+  // Anon-internal relation stays a clean permission denial with expectation met.
+  assert.equal(
+    report.roles.anon.relations.intelligence_candidates.read.state,
+    "permission",
+  );
+  assert.equal(
+    report.roles.anon.relations.intelligence_candidates.expectationMet,
+    true,
+  );
+
+  // A clean anon permission denial at the OpenAPI root is expected posture,
+  // not a readiness failure.
+  assert(
+    !report.issues.some(
+      (issue) => issue.role === "anon" && issue.scope === "openapi",
+    ),
+  );
+  assert(
+    !report.issues.some(
+      (issue) => issue.role === "anon" && issue.state === "permission",
+    ),
+  );
+  assert.equal(report.ready, true);
+}
+
 function validatesWriteRejection(): void {
   for (const argument of [
     "--apply",
@@ -388,6 +436,7 @@ function validatesWriteRejection(): void {
 async function main(): Promise<void> {
   await validatesReadyAndRedactedReport();
   await validatesFailureCategories();
+  await validatesAnonSecurePosture();
   validatesWriteRejection();
   console.log(
     "Trust readiness fixtures passed (redaction, categories, OpenAPI discovery, GET/HEAD-only paths, zero RPC invocation).",

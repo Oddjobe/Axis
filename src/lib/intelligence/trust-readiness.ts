@@ -485,19 +485,24 @@ async function roleReadiness(
     const expectedReadable =
       credential.role === "service" || relation.anonReadable;
     let read: ReadProbe;
-    if (!openApiReady) {
-      read = emptyRead(schema.request.state);
-    } else if (!available) {
-      read = emptyRead(
-        existsForAnotherRole || !expectedReadable ? "permission" : "migration",
-      );
-    } else {
+    if (available || existsForAnotherRole) {
+      // Probe directly when the relation is listed for this role, or when it
+      // exists canonically (per the service-role schema) but is absent from
+      // this role's own OpenAPI. The latter is the expected secure posture for
+      // anon, which is denied OpenAPI root introspection (401/403 -> permission)
+      // yet can still read anon-readable tables. Assuming a permission failure
+      // here produced false-negative issues; a direct HEAD probe is accurate
+      // and still catches genuine RLS/permission problems and over-exposure.
       read = await headCount(
         client,
         credential,
         relation.name,
         relation.select,
       );
+    } else if (!openApiReady) {
+      read = emptyRead(schema.request.state);
+    } else {
+      read = emptyRead(!expectedReadable ? "permission" : "migration");
     }
     const expectationMet = expectedReadable
       ? read.readable
@@ -850,11 +855,20 @@ function collectIssues(
       continue;
     }
     if (roleReport.openApi.state !== "ready") {
-      issues.push({
-        state: roleReport.openApi.state as Exclude<DiagnosticState, "ready">,
-        scope: "openapi",
-        role,
-      });
+      // Anon is expected to be denied OpenAPI root introspection under a
+      // hardened posture (401/403 -> permission). Relations are probed
+      // directly in that case, so a clean anon permission denial is not a
+      // readiness failure. Any non-permission anon failure (connectivity,
+      // migration) and every non-ready service state still surface.
+      const anonSecurePosture =
+        role === "anon" && roleReport.openApi.state === "permission";
+      if (!anonSecurePosture) {
+        issues.push({
+          state: roleReport.openApi.state as Exclude<DiagnosticState, "ready">,
+          scope: "openapi",
+          role,
+        });
+      }
     }
     for (const [name, relation] of Object.entries(roleReport.relations)) {
       if (!relation.expectationMet) {
