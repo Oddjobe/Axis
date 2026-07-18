@@ -208,7 +208,7 @@ assert.throws(
                         ...indicator,
                         provenance: {
                           ...indicator.provenance,
-                          observedAt: "2024-12-31T00:00:00.000Z",
+                          sourcePublishedAt: "2024-12-31T00:00:00.000Z",
                         },
                       }
                     : indicator,
@@ -238,7 +238,7 @@ assert.throws(
                         ...indicator,
                         provenance: {
                           ...indicator.provenance,
-                          observedAt: "2024-12-31T00:00:00.000Z",
+                          sourcePublishedAt: "2024-12-31T00:00:00.000Z",
                         },
                       }
                     : indicator,
@@ -259,7 +259,7 @@ assert.throws(
           ...indicator,
           provenance: {
             ...indicator.provenance,
-            observedAt: "2024-12-31T00:00:00.000Z",
+            sourcePublishedAt: "2024-12-31T00:00:00.000Z",
           },
         })),
       })),

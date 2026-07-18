@@ -71,6 +71,26 @@ export interface ScoreReadinessReport {
   };
 }
 
+/**
+ * Trusted-freshness clock for institutional score indicators.
+ *
+ * Per the trust freshness policy (docs/trust-rollout.md and the source/freshness
+ * policy in the activation plan): institutional score indicators "refresh when
+ * the institution publishes, maximum trusted age 400 days". Freshness is therefore
+ * measured against the institution's release/update date (`sourcePublishedAt`),
+ * NOT the observation's data period (`observedAt`), which legitimately lags one to
+ * three years for World Bank series. When the source publication date is unknown
+ * (e.g. the bundled baseline), fall back to `observedAt` so unverified data cannot
+ * silently claim currency. The public `asOf`/evidence dates below remain keyed off
+ * `observedAt` so consumers still see the true data period.
+ */
+function trustTimestamp(provenance: {
+  sourcePublishedAt: string | null;
+  observedAt: string | null;
+}): string | null {
+  return provenance.sourcePublishedAt ?? provenance.observedAt;
+}
+
 function isStale(
   timestamp: string | null | undefined,
   generatedAt: string,
@@ -121,10 +141,10 @@ export function evaluateScoreReadiness(
     if (!score) return [];
     const observed = score.indicators.filter((indicator) => !indicator.imputed);
     const stale = observed.filter((indicator) =>
-      isStale(indicator.provenance.observedAt, generatedAt)
+      isStale(trustTimestamp(indicator.provenance), generatedAt)
     );
     const fresh = observed.filter((indicator) =>
-      !isStale(indicator.provenance.observedAt, generatedAt)
+      !isStale(trustTimestamp(indicator.provenance), generatedAt)
     );
     const coverage = round(fresh.length / score.indicators.length);
     const recency = fresh.length
@@ -133,7 +153,7 @@ export function evaluateScoreReadiness(
             (total, indicator) =>
               total
               + observationRecency(
-                indicator.provenance.observedAt!,
+                trustTimestamp(indicator.provenance)!,
                 generatedAt,
               ),
             0,
