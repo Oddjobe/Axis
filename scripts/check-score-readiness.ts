@@ -158,7 +158,9 @@ const belowBoundaryReport = evaluateScoreReadiness(
                   ...indicator,
                   provenance: {
                     ...indicator.provenance,
-                    observedAt: "2024-12-31T00:00:00.000Z",
+                    // Staleness is driven by the institutional release date,
+                    // not the observation's data period, per the trust policy.
+                    sourcePublishedAt: "2024-12-31T00:00:00.000Z",
                   },
                 }
               : indicator
@@ -181,9 +183,11 @@ const dzaMixedScore = {
     ...indicator,
     provenance: {
       ...indicator.provenance,
-      observedAt:
+      // observedAt (public data period) stays current for every indicator;
+      // freshness is decided by the institutional release date below.
+      sourcePublishedAt:
         index === 0
-          ? "2026-06-30T00:00:00.000Z"
+          ? "2026-07-01T00:00:00.000Z"
           : "2024-12-31T00:00:00.000Z",
     },
   })),
@@ -202,6 +206,61 @@ assert.equal(dzaReadiness.confidence, 0.12);
 assert.equal(dzaReadiness.ready, false);
 assert.ok(dzaReadiness.blockers.includes("coverage_below_threshold"));
 assert.ok(dzaReadiness.blockers.includes("confidence_below_threshold"));
+
+// Guard the institutional-release freshness contract explicitly:
+// a recent release with an OLD data period must stay FRESH (World Bank series
+// legitimately lag), while an OLD release must be STALE even with a recent data
+// period (an abandoned series cannot claim currency). The public as-of always
+// reflects the true data period, never the release date.
+const releaseFreshScore = {
+  ...boundaryScores[0],
+  indicators: boundaryScores[0].indicators.map((indicator) => ({
+    ...indicator,
+    provenance: {
+      ...indicator.provenance,
+      observedAt: "2021-12-31T00:00:00.000Z",
+      sourcePublishedAt: "2026-07-13T00:00:00.000Z",
+    },
+  })),
+};
+const releaseFresh = evaluateScoreReadiness(
+  [releaseFreshScore, ...boundaryScores.slice(1)],
+  { generatedAt: retrievedAt },
+).countries[0];
+assert.equal(
+  releaseFresh.coverage,
+  1,
+  "recent institutional release keeps indicators fresh despite an older data period",
+);
+assert.equal(releaseFresh.staleObservationIds.length, 0);
+assert.equal(releaseFresh.ready, true);
+assert.equal(
+  releaseFresh.asOf,
+  "2021-12-31T00:00:00.000Z",
+  "public as-of reflects the true data period, not the release date",
+);
+
+const releaseStaleScore = {
+  ...boundaryScores[0],
+  indicators: boundaryScores[0].indicators.map((indicator) => ({
+    ...indicator,
+    provenance: {
+      ...indicator.provenance,
+      observedAt: "2026-06-30T00:00:00.000Z",
+      sourcePublishedAt: "2023-01-01T00:00:00.000Z",
+    },
+  })),
+};
+const releaseStale = evaluateScoreReadiness(
+  [releaseStaleScore, ...boundaryScores.slice(1)],
+  { generatedAt: retrievedAt },
+).countries[0];
+assert.equal(
+  releaseStale.coverage,
+  0,
+  "an abandoned series (old release) is rejected even with a recent data period",
+);
+assert.ok(releaseStale.blockers.includes("stale_score"));
 
 let legacyWrites = 0;
 let trustedPromotions = 0;
