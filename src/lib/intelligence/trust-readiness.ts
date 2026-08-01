@@ -235,6 +235,31 @@ export interface TrustReadinessOptions {
   timeoutMs?: number;
 }
 
+/**
+ * Checks that the storage contract is safe to ingest into. Dataset completeness
+ * intentionally does not participate: an empty or stale dataset is precisely
+ * what a repair ingestion run must be allowed to remediate.
+ */
+export function isTrustStorageReadyForIngestion(
+  report: TrustReadinessReport,
+): boolean {
+  const roles = Object.values(report.roles);
+  return (
+    roles.every(
+      (role) =>
+        role.configured &&
+        Object.values(role.relations).every(
+          (relation) => relation.expectationMet,
+        ) &&
+        Object.values(role.rpcs).every((rpc) => rpc.expectationMet),
+    ) &&
+    Object.values(report.schema.trustRelations).every(
+      (relation) => relation.available,
+    ) &&
+    Object.values(report.schema.rpcs).every((rpc) => rpc.available)
+  );
+}
+
 interface Credential {
   role: DiagnosticRole;
   value: string;

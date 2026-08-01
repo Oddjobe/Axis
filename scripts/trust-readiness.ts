@@ -1,7 +1,11 @@
-import "dotenv/config";
+import * as dotenv from "dotenv";
+
+dotenv.config({ path: ".env.local" });
+dotenv.config();
 
 import {
   assertReadOnlyArguments,
+  isTrustStorageReadyForIngestion,
   runTrustReadiness,
   serializeRedactedReport,
 } from "../src/lib/intelligence/trust-readiness";
@@ -22,6 +26,7 @@ async function main(): Promise<void> {
   const supported = args.filter(
     (argument) =>
       argument !== "--compact" &&
+      argument !== "--allow-stale-data" &&
       argument !== "--mode=read-only" &&
       argument !== "--mode=read-only-readiness" &&
       !argument.startsWith("--timeout-ms="),
@@ -41,7 +46,10 @@ async function main(): Promise<void> {
   process.stdout.write(
     serializeRedactedReport(report, secrets, !args.includes("--compact")),
   );
-  if (!report.ready) process.exitCode = 1;
+  const storageReady = isTrustStorageReadyForIngestion(report);
+  if (args.includes("--allow-stale-data") ? !storageReady : !report.ready) {
+    process.exitCode = 1;
+  }
 }
 
 main().catch((error) => {

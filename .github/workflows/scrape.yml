@@ -50,7 +50,7 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        run: npm run trust:readiness -- --compact > quality-reports/trust-readiness.json
+        run: npm run trust:readiness -- --compact --allow-stale-data > quality-reports/trust-readiness.json
 
       - name: Verify source trust policy before writes
         id: source_safety

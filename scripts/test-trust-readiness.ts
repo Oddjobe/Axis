@@ -4,6 +4,7 @@ import {
   READINESS_RELATIONS,
   READINESS_RPCS,
   assertReadOnlyArguments,
+  isTrustStorageReadyForIngestion,
   runTrustReadiness,
   serializeRedactedReport,
 } from "../src/lib/intelligence/trust-readiness";
@@ -204,6 +205,7 @@ async function validatesReadyAndRedactedReport(): Promise<void> {
     now: NOW,
   });
   assert.equal(report.ready, true);
+  assert.equal(isTrustStorageReadyForIngestion(report), true);
   assert.equal(report.mode, "read-only-readiness");
   assert.equal(report.safety.rpcInvocations, 0);
   assert.equal(report.byDataset.intelligence.currentCount, 10);
@@ -299,6 +301,7 @@ async function validatesFailureCategories(): Promise<void> {
     "migration",
   );
   assert.equal(migration.ready, false);
+  assert.equal(isTrustStorageReadyForIngestion(migration), false);
   assert(
     migrationMock.calls.every(
       (call) => call.path !== "/trusted_published_records",
@@ -369,6 +372,7 @@ async function validatesFailureCategories(): Promise<void> {
   assert.equal(data.byDataset.intelligence.state, "empty_data");
   assert.equal(data.byDataset.blog.state, "stale_data");
   assert.equal(data.ready, false);
+  assert.equal(isTrustStorageReadyForIngestion(data), true);
 }
 
 async function validatesAnonSecurePosture(): Promise<void> {

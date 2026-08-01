@@ -84,7 +84,7 @@ async function verifyWorkflowWiring(): Promise<void> {
   );
   assert.match(
     workflow,
-    /id: trust_readiness[\s\S]*NEXT_PUBLIC_SUPABASE_ANON_KEY:[\s\S]*npm run trust:readiness -- --compact > quality-reports\/trust-readiness\.json/,
+    /id: trust_readiness[\s\S]*NEXT_PUBLIC_SUPABASE_ANON_KEY:[\s\S]*npm run trust:readiness -- --compact --allow-stale-data > quality-reports\/trust-readiness\.json/,
   );
   const shadowIndex = workflow.indexOf(
     "Run intelligence, blog, and commodity shadow ingestion",
