@@ -74,6 +74,105 @@ assert.equal(
 );
 assert.equal(jinaEvidence.excerpt, rssExcerpt);
 
+const worldBankPageEvidence = extractFirecrawlPageEvidence(
+  {
+    success: true,
+    data: {
+      markdown: `# Financing Africa's infrastructure
+
+World Bank Blogs | Africa Can End Poverty
+
+Published on: July 15, 2026
+
+By Ada Okafor
+
+African infrastructure investors are adapting financing models to strengthen AfCFTA trade and regional development priorities.`,
+    },
+  },
+  "https://blogs.worldbank.org/en/africacan/financing-africa",
+  blogSource,
+);
+assert.equal(
+  worldBankPageEvidence.canonicalUrl,
+  "https://blogs.worldbank.org/en/africacan/financing-africa",
+);
+assert.equal(
+  worldBankPageEvidence.sourcePublishedAt,
+  "2026-07-15T00:00:00.000Z",
+);
+assert.equal(worldBankPageEvidence.timestampField, "datePublished");
+assert.equal(worldBankPageEvidence.author, "Ada Okafor");
+assert.deepEqual(worldBankPageEvidence.disagreements, []);
+
+const worldBankUnmarkedDate = extractFirecrawlPageEvidence(
+  {
+    success: true,
+    data: {
+      markdown: `# Financing Africa's infrastructure
+
+Published on: July 15, 2026
+
+African infrastructure investors are adapting financing models to strengthen AfCFTA trade and regional development priorities.`,
+    },
+  },
+  "https://blogs.worldbank.org/en/africacan/financing-africa",
+  blogSource,
+);
+assert.equal(worldBankUnmarkedDate.sourcePublishedAt, null);
+assert.deepEqual(worldBankUnmarkedDate.disagreements, [
+  "canonical_url:missing_page_metadata",
+]);
+
+const issSource = {
+  name: "ISS Africa Today",
+  url: "https://issafrica.org/iss-today",
+  role: "authority" as const,
+  publisherType: "market-analysis" as const,
+  allowedHosts: ["issafrica.org"],
+  sourceQuality: 0.9,
+  registryVersion: "2026-07-17.v1" as const,
+};
+const issPageEvidence = extractJinaPageEvidence(
+  `Title: Building resilience in Africa
+Markdown Content:
+
+# Building resilience in Africa
+
+ISS Today | Institute for Security Studies
+
+By Lindiwe Maseko
+
+16 Jul 2026
+
+African governments are strengthening regional resilience through coordinated security and economic initiatives.`,
+  "https://issafrica.org/iss-today/building-resilience",
+  issSource,
+);
+assert.equal(
+  issPageEvidence.canonicalUrl,
+  "https://issafrica.org/iss-today/building-resilience",
+);
+assert.equal(issPageEvidence.sourcePublishedAt, "2026-07-16T00:00:00.000Z");
+assert.equal(issPageEvidence.author, "Lindiwe Maseko");
+assert.deepEqual(issPageEvidence.disagreements, []);
+
+const issUnmarkedDate = extractJinaPageEvidence(
+  `Title: Building resilience in Africa
+Markdown Content:
+
+# Building resilience in Africa
+
+16 Jul 2026
+
+African governments are strengthening regional resilience through coordinated security and economic initiatives.`,
+  "https://issafrica.org/iss-today/building-resilience",
+  issSource,
+);
+assert.equal(issUnmarkedDate.sourcePublishedAt, null);
+assert.deepEqual(issUnmarkedDate.disagreements, [
+  "canonical_url:missing_page_metadata",
+]);
+
 const merged = mergeFeedProvenance(
   [
     {

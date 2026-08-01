@@ -79,6 +79,22 @@ function assertBlogRssFixtures(): void {
   assert.equal(afdbItems[0].url, "https://blogs.afdb.org/development-finance");
   assert.equal(afdbItems[0].sourcePublishedAt, "2026-07-17T10:00:00.000Z");
   assert.equal(afdbItems[0].sourceEvidence.supported, true);
+  const afdbMissingDate = normalizeRssFeedItems(afdb, [{
+      title: "AfDB post without source date",
+      link: "https://blogs.afdb.org/missing-date",
+      description: "An AfDB source excerpt cannot be published without a source date.",
+    }]);
+  assert.equal(afdbMissingDate.length, 1);
+  assert.equal(afdbMissingDate[0].sourceEvidence.supported, false);
+  assert.equal(
+    normalizeRssFeedItems(afdb, [{
+      title: "AfDB post from an unapproved host",
+      link: "https://example.invalid/afdb-post",
+      description: "An AfDB source excerpt cannot be accepted from another host.",
+      pubDate: "2026-07-17T10:00:00.000Z",
+    }])[0].sourceEvidence.supported,
+    false,
+  );
 
   const uneca = blogSource("UNECA Blogs");
   assert.equal(uneca.rssUrl, "https://www.uneca.org/rss.xml");
@@ -122,8 +138,90 @@ function assertBlogRssFixtures(): void {
   );
 }
 
+async function assertDirectBlogRssRetrieval(): Promise<void> {
+  const afdb = blogSource("African Development Bank Opinion");
+  const uneca = blogSource("UNECA Blogs");
+  const originalFetch = globalThis.fetch;
+  let afdbAttempts = 0;
+  const observedHeaders: Headers[] = [];
+  try {
+    globalThis.fetch = async (input, init) => {
+      const url = String(input);
+      if (url === afdb.rssUrl) {
+        afdbAttempts += 1;
+        observedHeaders.push(new Headers(init?.headers));
+        if (afdbAttempts === 1) {
+          return new Response("blocked", { status: 403, statusText: "Forbidden" });
+        }
+        return new Response(
+          `<?xml version="1.0"?><rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><item>
+            <title>AfDB direct RSS post</title>
+            <link>https://blogs.afdb.org/direct-rss-post</link>
+            <description>An African Development Bank source excerpt with enough detail for deterministic validation.</description>
+            <pubDate>Thu, 17 Jul 2026 10:00:00 GMT</pubDate>
+            <dc:creator>AfDB Author</dc:creator>
+            <category>Development finance</category>
+          </item></channel></rss>`,
+          { headers: { "Content-Type": "application/rss+xml" } },
+        );
+      }
+      if (url === uneca.rssUrl) {
+        return new Response(
+          `<?xml version="1.0"?><rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><item>
+            <title>[Blog] UNECA direct RSS post</title>
+            <link>https://www.uneca.org/stories/direct-rss-post</link>
+            <description><![CDATA[<span property="dc:date" content="2026-07-16T00:00:00+03:00">16 July, 2026</span><p>UNECA source excerpt with enough detail for deterministic validation.</p>]]></description>
+            <pubDate>Thu, 16 Jul 2026 10:00:00 GMT</pubDate>
+            <dc:creator>UNECA Author</dc:creator>
+            <category>Regional integration</category>
+          </item></channel></rss>`,
+          { headers: { "Content-Type": "application/rss+xml" } },
+        );
+      }
+      throw new Error(`Unexpected request ${url}`);
+    };
+
+    const adapter = createProductionIngestionAdapter({});
+    const afdbPosts = await adapter.collectBlog(
+      afdb,
+      new AbortController().signal,
+    );
+    assert.equal(afdbAttempts, 2);
+    assert.equal(
+      observedHeaders[0].get("accept"),
+      "application/rss+xml, application/xml, text/xml;q=0.9, */*;q=0.8",
+    );
+    assert.equal(observedHeaders[0].get("accept-language"), "en-US,en;q=0.9");
+    assert.equal(observedHeaders[0].get("cache-control"), "no-cache");
+    assert.equal(observedHeaders[0].get("referer"), afdb.url);
+    assert.match(observedHeaders[0].get("user-agent") ?? "", /^AXIS-Africa-Ingestion\//);
+    assert.equal(afdbPosts.length, 1);
+    assert.equal(afdbPosts[0].author, "AfDB Author");
+    assert.equal(afdbPosts[0].tag, "Development finance");
+    assert.equal(
+      (afdbPosts[0].sourceEvidence as { supported: boolean }).supported,
+      true,
+    );
+
+    const unecaPosts = await adapter.collectBlog(
+      uneca,
+      new AbortController().signal,
+    );
+    assert.equal(unecaPosts.length, 1);
+    assert.equal(unecaPosts[0].author, "UNECA Author");
+    assert.equal(unecaPosts[0].tag, "Regional integration");
+    assert.equal(
+      (unecaPosts[0].sourceEvidence as { timestampField: string }).timestampField,
+      "dc:date",
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+}
+
 async function main(): Promise<void> {
   assertBlogRssFixtures();
+  await assertDirectBlogRssRetrieval();
   const originalFetch = globalThis.fetch;
   try {
     let failingArticleAttempts = 0;
@@ -187,7 +285,7 @@ async function main(): Promise<void> {
   }
 
   console.log(
-    "Source adapter fixtures passed (RSS source normalization and original-page fail-closed behavior).",
+    "Source adapter fixtures passed (direct RSS recovery and original-page fail-closed behavior).",
   );
 }
 

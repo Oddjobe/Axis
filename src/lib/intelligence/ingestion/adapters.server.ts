@@ -58,6 +58,8 @@ function firecrawlSafeSchema(schema: unknown): unknown {
 export interface FeedCandidate extends RawCandidate {
   title?: string;
   summary?: string;
+  author?: string;
+  tag?: string;
   url?: string;
   sourcePublishedAt?: string;
   sourceEvidence: SourceEvidence;
@@ -78,6 +80,15 @@ function isUnecaBlogsSource(source: IntelligenceSource | BlogSource): boolean {
   return source.name === "UNECA Blogs";
 }
 
+function isDirectBlogRssSource(
+  source: IntelligenceSource | BlogSource,
+): boolean {
+  return (
+    source.name === "African Development Bank Opinion" ||
+    isUnecaBlogsSource(source)
+  );
+}
+
 function decodeDescriptionHtml(value: string): string {
   return value
     .replace(/&lt;/gi, "<")
@@ -91,21 +102,44 @@ function decodeDescriptionHtml(value: string): string {
 function unecaDescriptionTimestamp(
   item: RawCandidate,
 ): ReturnType<typeof selectExplicitPublicationTimestamp> {
-  if (typeof item.description !== "string") return null;
+  for (const value of [item.description, item.content]) {
+    if (typeof value !== "string") continue;
+    for (const tag of decodeDescriptionHtml(value).match(/<[^>]+>/g) ?? []) {
+      const property = tag.match(/\bproperty\s*=\s*(["'])dc:date\1/i);
+      const content = tag.match(/\bcontent\s*=\s*(["'])(.*?)\1/i);
+      if (!property || !content) continue;
 
-  for (const tag of decodeDescriptionHtml(item.description).match(/<[^>]+>/g) ??
-    []) {
-    const property = tag.match(/\bproperty\s*=\s*(["'])dc:date\1/i);
-    const content = tag.match(/\bcontent\s*=\s*(["'])(.*?)\1/i);
-    if (!property || !content) continue;
-
-    const timestamp = selectExplicitPublicationTimestamp({
-      "dc:date": decodeDescriptionHtml(content[2]),
-    });
-    if (timestamp) return timestamp;
+      const timestamp = selectExplicitPublicationTimestamp({
+        "dc:date": decodeDescriptionHtml(content[2]),
+      });
+      if (timestamp) return timestamp;
+    }
   }
 
   return null;
+}
+
+function feedAuthor(item: RawCandidate): string {
+  for (const field of ["author", "creator", "dc:creator", "dcCreator"]) {
+    const value = item[field];
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  return "";
+}
+
+function feedTag(item: RawCandidate): string {
+  for (const field of ["category", "categories", "tag", "tags"]) {
+    const value = item[field];
+    if (typeof value === "string" && value.trim()) return value.trim();
+    if (Array.isArray(value)) {
+      const tag = value.find(
+        (candidate): candidate is string =>
+          typeof candidate === "string" && candidate.trim().length > 0,
+      );
+      if (tag) return tag.trim();
+    }
+  }
+  return "";
 }
 
 export function normalizeRssFeedItems(
@@ -126,19 +160,28 @@ export function normalizeRssFeedItems(
 
     const canonicalUrl = selectCanonicalSourceUrl(item);
     const excerpt = selectSourceExcerpt(item);
+    const hostIsAuthoritative = Boolean(
+      canonicalUrl && sourceAllowsCanonicalUrl(source, canonicalUrl),
+    );
     const evidence: SourceEvidence = {
       origin: "rss",
       canonicalUrl,
       sourcePublishedAt: timestamp?.value ?? null,
       excerpt,
       timestampField: timestamp?.field ?? null,
-      supported: Boolean(canonicalUrl && timestamp && excerpt),
-      disagreements: [],
+      supported: Boolean(
+        canonicalUrl && timestamp && excerpt && hostIsAuthoritative,
+      ),
+      disagreements: hostIsAuthoritative
+        ? []
+        : ["publisher_host:not_authoritative"],
     };
     return [{
       title,
       summary: excerpt,
       excerpt,
+      author: feedAuthor(item),
+      tag: feedTag(item),
       url: canonicalUrl ?? undefined,
       sourcePublishedAt: timestamp?.value,
       sourceEvidence: evidence,
@@ -379,19 +422,112 @@ function firstSubstantiveParagraph(value: string): string {
     ?.slice(0, 2_000) ?? "";
 }
 
+interface PageBodyPublicationEvidence {
+  timestamp: ReturnType<typeof selectExplicitPublicationTimestamp>;
+  author: string;
+  publisherMarker: boolean;
+}
+
+function pageDateTimestamp(
+  value: string,
+): ReturnType<typeof selectExplicitPublicationTimestamp> {
+  const months = [
+    "jan", "feb", "mar", "apr", "may", "jun",
+    "jul", "aug", "sep", "oct", "nov", "dec",
+  ];
+  const monthFirst = value.match(
+    /^([A-Za-z]+)\s+(\d{1,2}),\s+(\d{4})$/,
+  );
+  const dayFirst = value.match(
+    /^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})$/,
+  );
+  const day = Number(monthFirst?.[2] ?? dayFirst?.[1]);
+  const monthName = (monthFirst?.[1] ?? dayFirst?.[2] ?? "").slice(0, 3)
+    .toLowerCase();
+  const year = Number(monthFirst?.[3] ?? dayFirst?.[3]);
+  const month = months.indexOf(monthName);
+  if (!Number.isInteger(day) || !Number.isInteger(year) || month < 0) {
+    return null;
+  }
+  const date = new Date(Date.UTC(year, month, day));
+  if (
+    date.getUTCFullYear() !== year ||
+    date.getUTCMonth() !== month ||
+    date.getUTCDate() !== day
+  ) {
+    return null;
+  }
+  return selectExplicitPublicationTimestamp({
+    datePublished: date.toISOString(),
+  });
+}
+
+function pageBodyPublicationEvidence(
+  source: IntelligenceSource | BlogSource | undefined,
+  markdown: string,
+): PageBodyPublicationEvidence {
+  if (!source || !markdown) {
+    return { timestamp: null, author: "", publisherMarker: false };
+  }
+
+  const body = markdown.slice(0, 12_000);
+  const byline =
+    body.match(/\bBy\s+([A-Z][\p{L}'’.-]+(?: [A-Z][\p{L}'’.-]+){1,5})\b/u)
+      ?.[1] ?? "";
+  if (source.name === "World Bank Africa Can End Poverty") {
+    const publisherMarker = /\b(?:World Bank Blogs|Africa Can End Poverty)\b/i
+      .test(body);
+    const published = body.match(
+      /\bPublished\s+on\s*:?\s*([A-Z][a-z]+\s+\d{1,2},\s+\d{4})\b/i,
+    )?.[1];
+    return {
+      timestamp: publisherMarker && published
+        ? pageDateTimestamp(published)
+        : null,
+      author: byline,
+      publisherMarker,
+    };
+  }
+  if (source.name === "ISS Africa Today") {
+    const publisherMarker = /\b(?:ISS Today|Institute for Security Studies)\b/i
+      .test(body);
+    const published = body.match(
+      /\b(\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{4})\b/i,
+    )?.[1];
+    return {
+      timestamp: publisherMarker && published
+        ? pageDateTimestamp(published)
+        : null,
+      author: byline,
+      publisherMarker,
+    };
+  }
+  return { timestamp: null, author: "", publisherMarker: false };
+}
+
 export function extractFirecrawlPageEvidence(
   payload: unknown,
   fallbackUrl: string,
+  source?: IntelligenceSource | BlogSource,
 ): OriginalPageEvidence {
   const metadata = pageMetadataRecords(payload);
   const markdown = pageMarkdown(payload);
-  const timestamp = selectExplicitPublicationTimestamp(...metadata);
+  const bodyEvidence = pageBodyPublicationEvidence(source, markdown);
+  const timestamp =
+    selectExplicitPublicationTimestamp(...metadata) ?? bodyEvidence.timestamp;
   const metadataCanonicalUrl = selectCanonicalSourceUrl(...metadata);
+  const canonicalUrl =
+    metadataCanonicalUrl ??
+    selectCanonicalSourceUrl({ url: fallbackUrl });
+  const sourceSpecificProof = Boolean(
+    !metadataCanonicalUrl &&
+      canonicalUrl &&
+      bodyEvidence.publisherMarker &&
+      bodyEvidence.timestamp,
+  );
   return {
     origin: "firecrawl-page",
-    canonicalUrl:
-      metadataCanonicalUrl ??
-      selectCanonicalSourceUrl({ url: fallbackUrl }),
+    canonicalUrl,
     sourcePublishedAt: timestamp?.value ?? null,
     excerpt:
       selectSourceExcerpt(...metadata) ||
@@ -399,10 +535,12 @@ export function extractFirecrawlPageEvidence(
     title:
       textField(metadata, ["headline", "title", "ogTitle", "name"]) ||
       markdownTitle(markdown),
-    author: textField(metadata, ["author", "byline", "articleAuthor"]),
+    author:
+      textField(metadata, ["author", "byline", "articleAuthor"]) ||
+      bodyEvidence.author,
     timestampField: timestamp?.field ?? null,
     supported: false,
-    disagreements: metadataCanonicalUrl
+    disagreements: metadataCanonicalUrl || sourceSpecificProof
       ? []
       : ["canonical_url:missing_page_metadata"],
   };
@@ -411,6 +549,7 @@ export function extractFirecrawlPageEvidence(
 export function extractJinaPageEvidence(
   content: string,
   fallbackUrl: string,
+  source?: IntelligenceSource | BlogSource,
 ): OriginalPageEvidence {
   const header: RawCandidate = {};
   for (const line of content.split(/\r?\n/).slice(0, 30)) {
@@ -433,24 +572,33 @@ export function extractJinaPageEvidence(
       header.author = match[2].trim();
     }
   }
-  const timestamp = selectExplicitPublicationTimestamp(header);
   const markdown = content.split(/Markdown Content:\s*/i)[1] ?? content;
+  const bodyEvidence = pageBodyPublicationEvidence(source, markdown);
+  const timestamp =
+    selectExplicitPublicationTimestamp(header) ?? bodyEvidence.timestamp;
   const metadataCanonicalUrl = selectCanonicalSourceUrl(header);
+  const canonicalUrl =
+    metadataCanonicalUrl ??
+    selectCanonicalSourceUrl({ url: fallbackUrl });
+  const sourceSpecificProof = Boolean(
+    !metadataCanonicalUrl &&
+      canonicalUrl &&
+      bodyEvidence.publisherMarker &&
+      bodyEvidence.timestamp,
+  );
   return {
     origin: "jina-page",
-    canonicalUrl:
-      metadataCanonicalUrl ??
-      selectCanonicalSourceUrl({ url: fallbackUrl }),
+    canonicalUrl,
     sourcePublishedAt: timestamp?.value ?? null,
     excerpt:
       selectSourceExcerpt(header) || firstSubstantiveParagraph(markdown),
     title:
       textField([header], ["headline", "title", "name"]) ||
       markdownTitle(markdown),
-    author: textField([header], ["author", "byline"]),
+    author: textField([header], ["author", "byline"]) || bodyEvidence.author,
     timestampField: timestamp?.field ?? null,
     supported: false,
-    disagreements: metadataCanonicalUrl
+    disagreements: metadataCanonicalUrl || sourceSpecificProof
       ? []
       : ["canonical_url:missing_page_metadata"],
   };
@@ -532,14 +680,22 @@ export function createProductionIngestionAdapter(
     const text = await fetchWithBoundedRetry(
       `RSS ${source.name}`,
       rssUrl,
-      { headers: { "User-Agent": "AXIS-Africa-Ingestion/1.0" } },
+      {
+        headers: {
+          Accept: "application/rss+xml, application/xml, text/xml;q=0.9, */*;q=0.8",
+          "Accept-Language": "en-US,en;q=0.9",
+          "Cache-Control": "no-cache",
+          Referer: source.url,
+          "User-Agent": "AXIS-Africa-Ingestion/1.0 (+https://axisafrica.co)",
+        },
+      },
       async (response, attemptSignal) => {
         const body = await response.text();
         attemptSignal.throwIfAborted();
         return body;
       },
       {
-        attempts: 2,
+        attempts: 3,
         timeoutMs: 20_000,
         deadlineAt: options.deadlineAt,
         signal,
@@ -548,9 +704,13 @@ export function createProductionIngestionAdapter(
     signal.throwIfAborted();
     const feed = await parser.parseString(text);
     signal.throwIfAborted();
-    return normalizeRssFeedItems(
+    const items = normalizeRssFeedItems(
       source,
       feed.items as RawCandidate[],
+    );
+    return (isDirectBlogRssSource(source)
+      ? items.filter((item) => item.sourceEvidence.supported)
+      : items
     ).slice(0, 3);
   }
 
@@ -600,6 +760,7 @@ export function createProductionIngestionAdapter(
     label: string,
     url: string,
     signal: AbortSignal,
+    source?: IntelligenceSource | BlogSource,
   ): Promise<{ content: string; evidence: OriginalPageEvidence }> {
     const content = await fetchWithBoundedRetry(
       `Jina ${label}`,
@@ -620,7 +781,7 @@ export function createProductionIngestionAdapter(
     signal.throwIfAborted();
     return {
       content,
-      evidence: extractJinaPageEvidence(content, url),
+      evidence: extractJinaPageEvidence(content, url, source),
     };
   }
 
@@ -628,6 +789,7 @@ export function createProductionIngestionAdapter(
     label: string,
     url: string,
     signal: AbortSignal,
+    source?: IntelligenceSource | BlogSource,
   ): Promise<OriginalPageEvidence> {
     if (!options.firecrawlApiKey) {
       throw new Error("Firecrawl is not configured");
@@ -664,7 +826,7 @@ export function createProductionIngestionAdapter(
     ) {
       throw new Error("Firecrawl returned success=false");
     }
-    return extractFirecrawlPageEvidence(payload, url);
+    return extractFirecrawlPageEvidence(payload, url, source);
   }
 
   async function verifyOriginalPages(
@@ -781,7 +943,12 @@ export function createProductionIngestionAdapter(
       source,
       candidates,
       (canonicalUrl) =>
-        firecrawlPageEvidence(`${label} article`, canonicalUrl, signal),
+        firecrawlPageEvidence(
+          `${label} article`,
+          canonicalUrl,
+          signal,
+          source,
+        ),
       key === "posts",
     );
   }
@@ -868,7 +1035,7 @@ export function createProductionIngestionAdapter(
           {
             name: "Jina + Foundry",
             run: async () => {
-              const page = await jina(source.name, source.url, signal);
+              const page = await jina(source.name, source.url, signal, source);
               const result = await phi(
                 source.name,
                 `Extract candidate articles only when supported by the supplied page. Do not invent URLs, timestamps, excerpts, actors, or categories. ${isoInstruction}`,
@@ -888,6 +1055,7 @@ export function createProductionIngestionAdapter(
                     `${source.name} article`,
                     canonicalUrl,
                     signal,
+                    source,
                   )).evidence,
                 false,
               );
@@ -902,9 +1070,17 @@ export function createProductionIngestionAdapter(
       return fallback(source.name, [
         ...(source.rssUrl
           ? [{
-              name: "RSS + Foundry",
+              name: isDirectBlogRssSource(source)
+                ? "RSS"
+                : "RSS + Foundry",
               run: async () => {
                 const feed = await rss(source, source.rssUrl!, signal);
+                if (isDirectBlogRssSource(source)) {
+                  return requireItems(
+                    feed,
+                    `RSS ${source.name}`,
+                  );
+                }
             const result = await phi(
               source.name,
               "Classify each blog post from the supplied evidence. Do not invent titles, excerpts, authors, tags, URLs, or timestamps.",
@@ -940,7 +1116,7 @@ export function createProductionIngestionAdapter(
         {
           name: "Jina + Foundry",
           run: async () => {
-            const page = await jina(source.name, source.url, signal);
+            const page = await jina(source.name, source.url, signal, source);
             const result = await phi(
               source.name,
               "Extract candidate posts only when supported by the supplied page. Do not invent titles, excerpts, authors, tags, URLs, or timestamps.",
@@ -960,6 +1136,7 @@ export function createProductionIngestionAdapter(
                   `${source.name} post`,
                   canonicalUrl,
                   signal,
+                  source,
                 )).evidence,
               true,
             );

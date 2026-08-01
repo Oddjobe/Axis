@@ -112,6 +112,246 @@ function renderedEvidenceAt(value: unknown): string {
   return evidence.join("\n");
 }
 
+function recordAt(value: unknown): Record<string, unknown> {
+  return typeof value === "object" && value !== null
+    ? value as Record<string, unknown>
+    : {};
+}
+
+function pageMetadataAt(payload: unknown): Record<string, unknown> {
+  const root = recordAt(payload);
+  const data = recordAt(root.data);
+  return recordAt(data.metadata ?? root.metadata);
+}
+
+function pageMarkdownAt(payload: unknown): string {
+  const root = recordAt(payload);
+  const data = recordAt(root.data);
+  const markdown = data.markdown ?? root.markdown;
+  return typeof markdown === "string" ? markdown : "";
+}
+
+function finalCanonicalUrlAt(payload: unknown): string | null {
+  const metadata = pageMetadataAt(payload);
+  for (const field of [
+    "canonicalUrl",
+    "canonicalURL",
+    "sourceURL",
+    "sourceUrl",
+    "url",
+  ]) {
+    const value = metadata[field];
+    if (typeof value !== "string" || !value.trim()) continue;
+    try {
+      return new URL(value).toString();
+    } catch {
+      continue;
+    }
+  }
+  return null;
+}
+
+function canonicalUrlIdentity(value: string): string | null {
+  try {
+    const url = new URL(value);
+    const hostname = url.hostname.toLowerCase().replace(/^www\./, "");
+    const pathname = url.pathname.replace(/\/+$/, "") || "/";
+    return `${url.protocol.toLowerCase()}//${hostname}${pathname}`;
+  } catch {
+    return null;
+  }
+}
+
+interface VisibleQuote {
+  price: number;
+  unit: "T" | "OZ";
+  currency: "CNY" | "USD";
+  index: number;
+  text: string;
+}
+
+interface ExplicitDate {
+  index: number;
+  sourcePublishedAt: string;
+  timestamp: number;
+}
+
+function explicitDates(text: string): ExplicitDate[] {
+  const dates: ExplicitDate[] = [];
+  const pattern = /\b(20\d{2})-(\d{2})-(\d{2})\b/g;
+  for (const match of text.matchAll(pattern)) {
+    const year = Number(match[1]);
+    const month = Number(match[2]);
+    const day = Number(match[3]);
+    const timestamp = Date.UTC(year, month - 1, day);
+    const date = new Date(timestamp);
+    if (
+      date.getUTCFullYear() === year &&
+      date.getUTCMonth() === month - 1 &&
+      date.getUTCDate() === day
+    ) {
+      dates.push({
+        index: match.index ?? 0,
+        sourcePublishedAt: `${match[1]}-${match[2]}-${match[3]}`,
+        timestamp,
+      });
+    }
+  }
+  return dates;
+}
+
+function sourceQuote(
+  text: string,
+  patterns: readonly RegExp[],
+  unit: VisibleQuote["unit"],
+  currency: VisibleQuote["currency"],
+): VisibleQuote[] {
+  const quotes: VisibleQuote[] = [];
+  for (const pattern of patterns) {
+    for (const match of text.matchAll(pattern)) {
+      const price = Number(match[1].replace(/,/g, ""));
+      if (!Number.isFinite(price) || price <= 0) continue;
+      quotes.push({
+        price,
+        unit,
+        currency,
+        index: match.index ?? 0,
+        text: match[0],
+      });
+    }
+  }
+  return quotes;
+}
+
+function closestVisibleQuote(
+  date: ExplicitDate,
+  quotes: readonly VisibleQuote[],
+): VisibleQuote | null {
+  const candidates = quotes
+    .map((quote) => ({ quote, distance: Math.abs(quote.index - date.index) }))
+    .filter(({ distance }) => distance <= 700)
+    .sort((left, right) => left.distance - right.distance);
+  return candidates[0]?.quote ?? null;
+}
+
+function visibleExcerpt(
+  text: string,
+  date: ExplicitDate,
+  quote: VisibleQuote,
+): string {
+  const start = Math.max(0, Math.min(date.index, quote.index) - 120);
+  const end = Math.min(
+    text.length,
+    Math.max(date.index, quote.index) + quote.text.length + 180,
+  );
+  return text.slice(start, end).replace(/\s+/g, " ").trim();
+}
+
+function isHistoricalQuote(
+  text: string,
+  date: ExplicitDate,
+  quote: VisibleQuote,
+): boolean {
+  const start = Math.max(0, Math.min(date.index, quote.index) - 32);
+  const end = Math.min(
+    text.length,
+    Math.max(date.index, quote.index) + quote.text.length + 32,
+  );
+  return /\b(?:historical|history|archive|previous|past)\b/i.test(
+    text.slice(start, end),
+  );
+}
+
+function newestDatedVisibleQuote(
+  text: string,
+  quotes: readonly VisibleQuote[],
+): { date: ExplicitDate; quote: VisibleQuote; excerpt: string } | null {
+  const matches = explicitDates(text)
+    .map((date) => {
+      const quote = closestVisibleQuote(date, quotes);
+      const excerpt = quote ? visibleExcerpt(text, date, quote) : "";
+      return quote && !isHistoricalQuote(text, date, quote)
+        ? { date, quote, excerpt: visibleExcerpt(text, date, quote) }
+        : null;
+    })
+    .filter(
+      (
+        item,
+      ): item is { date: ExplicitDate; quote: VisibleQuote; excerpt: string } =>
+        item !== null,
+    )
+    .sort((left, right) => right.date.timestamp - left.date.timestamp);
+  return matches[0] ?? null;
+}
+
+function deterministicSourceCandidate(
+  source: CommoditySource,
+  payload: unknown,
+): RawCommodityCandidate[] | null {
+  if (!["lithium", "gold", "bauxite"].includes(source.id)) return null;
+  const evidence = pageMarkdownAt(payload);
+  if (!evidence.trim()) return [];
+
+  let quote: VisibleQuote[] = [];
+  if (source.id === "lithium") {
+    quote = sourceQuote(
+      evidence,
+      [
+        /\b(?:CNY|RMB|yuan)\s*([0-9][0-9,]*(?:\.[0-9]+)?)\s*(?:\/\s*|per\s+)?(?:metric\s+)?(?:tonne|ton|t)\b/gi,
+        /\b([0-9][0-9,]*(?:\.[0-9]+)?)\s*(?:CNY|RMB|yuan)\s*(?:\/\s*|per\s+)?(?:metric\s+)?(?:tonne|ton|t)\b/gi,
+      ],
+      "T",
+      "CNY",
+    );
+  } else if (source.id === "gold") {
+    const finalUrl = finalCanonicalUrlAt(payload);
+    if (
+      !finalUrl ||
+      canonicalUrlIdentity(finalUrl) !== canonicalUrlIdentity(source.canonicalUrl)
+    ) {
+      return [];
+    }
+    quote = sourceQuote(
+      evidence,
+      [
+        /\b(?:USD|US\$|\$)\s*([0-9][0-9,]*(?:\.[0-9]+)?)\s*(?:\/\s*(?:troy\s*)?oz|per\s+(?:troy\s*)?ounce)\b/gi,
+        /\b([0-9][0-9,]*(?:\.[0-9]+)?)\s*USD\s*\/\s*(?:troy\s*)?oz\b/gi,
+      ],
+      "OZ",
+      "USD",
+    );
+  } else {
+    const guineaFob = /\bguinea\b[\s\S]{0,120}\bfob\b|\bfob\b[\s\S]{0,120}\bguinea\b/i;
+    if (!guineaFob.test(evidence) || !/\bbauxite\b/i.test(evidence)) {
+      return [];
+    }
+    quote = sourceQuote(
+      evidence,
+      [
+        /\b(?:USD|US\$|\$)\s*([0-9][0-9,]*(?:\.[0-9]+)?)\s*(?:\/\s*|per\s+)(?:metric\s+)?(?:tonne|ton|t)\b/gi,
+        /\b([0-9][0-9,]*(?:\.[0-9]+)?)\s*USD\s*\/\s*(?:metric\s+)?(?:tonne|ton|t)\b/gi,
+      ],
+      "T",
+      "USD",
+    );
+  }
+
+  const current = newestDatedVisibleQuote(evidence, quote);
+  if (!current) return [];
+  return [{
+    commodityId: source.id,
+    price: current.quote.price,
+    unit: current.quote.unit,
+    currency: current.quote.currency,
+    sourceMarket: source.market,
+    sourcePublishedAt: current.date.sourcePublishedAt,
+    publisher: source.publisher,
+    canonicalUrl: source.canonicalUrl,
+    excerpt: current.excerpt,
+    confidence: 0.95,
+  }];
+}
+
 const MONTH_NAMES = [
   "january",
   "february",
@@ -241,11 +481,16 @@ export function createCommodityFirecrawlAdapter(
         throw new Error(`Firecrawl ${source.id} returned success=false`);
       }
       const renderedEvidence = renderedEvidenceAt(payload);
-      const candidates = recordsAt(payload).map((candidate) =>
+      const sourceEvidenceCandidates = deterministicSourceCandidate(source, payload);
+      const candidates = (sourceEvidenceCandidates ?? recordsAt(payload)).map((candidate) =>
         normalizeCorroboratedDateOnly(candidate, renderedEvidence),
       );
       if (candidates.length === 0) {
-        throw new Error(`Firecrawl ${source.id} returned no commodity quotes`);
+        throw new Error(
+          sourceEvidenceCandidates !== null
+            ? `Firecrawl ${source.id} returned no source-specific visible quote evidence`
+            : `Firecrawl ${source.id} returned no commodity quotes`,
+        );
       }
       if (source.id === "lithium") {
         let fxEvidence: EcbDailyFxEvidence | {
