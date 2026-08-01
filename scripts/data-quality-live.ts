@@ -95,6 +95,35 @@ function requireCurrentTrustedPayload(
   }
 }
 
+function requireCurrentPayload(
+  payload: JsonRecord,
+  rows: JsonRecord[],
+  endpoint: string,
+): void {
+  if (!CURRENT_DATA_MODES.has(String(payload.dataMode))) {
+    throw new Error(
+      `Live ${endpoint} endpoint is ${String(payload.dataMode)}; current data is required.`,
+    );
+  }
+  if (!payload.asOf) {
+    throw new Error(`Live ${endpoint} endpoint omitted freshness metadata.`);
+  }
+  if (payload.fallbackUsed === true) {
+    throw new Error(`Live ${endpoint} endpoint used fallback records.`);
+  }
+  if (
+    rows.some(
+      (row) =>
+        !CURRENT_DATA_MODES.has(String(row.dataMode)) ||
+        row.fallbackUsed === true,
+    )
+  ) {
+    throw new Error(
+      `Live ${endpoint} endpoint includes stale or fallback rows.`,
+    );
+  }
+}
+
 function validateScores(scores: JsonRecord, mode: PublicationMode): void {
   const scoreRows = rowsAt(scores, "countries", "score");
   if (scoreRows.length !== 54 || Number(scores.count) !== 54) {
@@ -108,6 +137,7 @@ function validateScores(scores: JsonRecord, mode: PublicationMode): void {
     throw new Error("Live score endpoint has invalid or duplicate ISO-3 codes.");
   }
   requirePublicationLabel(scores, scoreRows, "score");
+  requireCurrentPayload(scores, scoreRows, "score");
   if (mode === "enforce") {
     requireCurrentTrustedPayload(scores, scoreRows, "score");
   }
@@ -119,6 +149,7 @@ function validateCommodities(
 ): void {
   const commodityRows = rowsAt(commodities, "data", "commodities");
   requirePublicationLabel(commodities, commodityRows, "commodities");
+  requireCurrentPayload(commodities, commodityRows, "commodities");
 
   const ids = commodityRows.map((row) => String(row.id));
   if (new Set(ids).size !== ids.length) {
@@ -244,8 +275,8 @@ async function jsonAt(baseUrl: string, path: string): Promise<JsonRecord> {
 
 function fixturePayloads(tier: "trusted" | "legacy"): LivePayloads {
   const trusted = tier === "trusted";
-  const dataMode = trusted ? "live" : "fallback";
-  const fallbackUsed = !trusted;
+  const dataMode = "live";
+  const fallbackUsed = false;
   const asOf = "2026-07-16T12:00:00.000Z";
   const scoreRows = AFRICAN_ISO3_CODES.map((country) => ({
     country,
@@ -339,6 +370,13 @@ function runFixtures(): void {
   assert.throws(
     () => validateLiveQuality(staleScores, "enforce"),
     /current data is required/,
+  );
+
+  const staleShadowScores = structuredClone(shadow);
+  staleShadowScores.scores.dataMode = "stale";
+  assert.throws(
+    () => validateLiveQuality(staleShadowScores, "shadow"),
+    /score endpoint is stale; current data is required/,
   );
 
   const incompleteScores = structuredClone(trusted);

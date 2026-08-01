@@ -11,6 +11,7 @@ type Environment = Readonly<Record<string, string | undefined>>;
 
 const REQUIRED_STEPS = [
   "preflight",
+  "kpiRefresh",
   "shadowIngestion",
   "scoreRefresh",
   "dataQuality",
@@ -57,6 +58,7 @@ export function evaluateWorkflowSummary(
 ): WorkflowSummaryReport {
   const steps = {
     preflight: outcome(environment.PREFLIGHT_OUTCOME),
+    kpiRefresh: outcome(environment.KPI_REFRESH_OUTCOME),
     shadowIngestion: outcome(environment.SHADOW_INGESTION_OUTCOME),
     scoreRefresh: outcome(environment.SCORE_REFRESH_OUTCOME),
     dataQuality: outcome(environment.DATA_QUALITY_OUTCOME),

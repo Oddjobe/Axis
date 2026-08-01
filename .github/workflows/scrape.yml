@@ -125,6 +125,7 @@ jobs:
         if: always()
         env:
           PREFLIGHT_OUTCOME: ${{ steps.preflight.outcome }}
+          KPI_REFRESH_OUTCOME: ${{ steps.kpis.outcome }}
           SHADOW_INGESTION_OUTCOME: ${{ steps.shadow_ingestion.outcome }}
           SCORE_REFRESH_OUTCOME: ${{ steps.score_refresh.outcome }}
           DATA_QUALITY_OUTCOME: ${{ steps.data_quality.outcome }}
@@ -168,6 +169,7 @@ jobs:
         run: |
           for outcome in \
             "$PREFLIGHT_OUTCOME" \
+            "$KPI_REFRESH_OUTCOME" \
             "$TRUST_READINESS_OUTCOME" \
             "$SOURCE_SAFETY_OUTCOME" \
             "$SHADOW_INGESTION_OUTCOME" \

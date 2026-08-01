@@ -89,6 +89,7 @@ async function verifyWorkflowWiring(): Promise<void> {
   const shadowIndex = workflow.indexOf(
     "Run intelligence, blog, and commodity shadow ingestion",
   );
+  const kpiIndex = workflow.indexOf("Refresh legacy KPI metadata");
   const scoreIndex = workflow.indexOf(
     "Refresh legacy scores and report trusted readiness",
   );
@@ -99,13 +100,18 @@ async function verifyWorkflowWiring(): Promise<void> {
   const enforcementIndex = workflow.indexOf(
     "Enforce required workflow outcomes",
   );
-  assert(shadowIndex > 0 && scoreIndex > shadowIndex);
+  assert(kpiIndex > 0 && shadowIndex > kpiIndex && scoreIndex > shadowIndex);
   assert(summaryIndex > scoreIndex && artifactIndex > summaryIndex);
   assert(enforcementIndex > artifactIndex);
   assert.match(
     workflow,
     /id: shadow_ingestion[\s\S]*steps\.trust_readiness\.outcome == 'success'[\s\S]*continue-on-error: true[\s\S]*id: score_refresh[\s\S]*steps\.trust_readiness\.outcome == 'success'[\s\S]*continue-on-error: true/,
   );
+  assert.match(
+    workflow,
+    /KPI_REFRESH_OUTCOME: \$\{\{ steps\.kpis\.outcome \}\}/,
+  );
+  assert.match(workflow, /"\$KPI_REFRESH_OUTCOME"/);
   assert.doesNotMatch(workflow, /trust:promotion-check|QUALITY_PUBLICATION_MODE: trusted/);
 }
 

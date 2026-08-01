@@ -9,6 +9,7 @@ import {
 
 const complete = {
   PREFLIGHT_OUTCOME: "success",
+  KPI_REFRESH_OUTCOME: "success",
   SHADOW_INGESTION_OUTCOME: "success",
   SCORE_REFRESH_OUTCOME: "success",
   DATA_QUALITY_OUTCOME: "success",
@@ -77,6 +78,13 @@ assert.deepEqual(failed.failedRequiredSteps, [
   "liveQuality",
 ]);
 assert(!JSON.stringify(failed).includes("secret"));
+
+const kpiFailure = evaluateWorkflowSummary({
+  ...complete,
+  KPI_REFRESH_OUTCOME: "failure",
+});
+assert.equal(kpiFailure.status, "failed");
+assert(kpiFailure.failedRequiredSteps.includes("kpiRefresh"));
 
 const markdown = formatWorkflowSummary(degraded);
 assert.match(markdown, /Status:\*\* degraded/);
