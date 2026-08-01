@@ -55,7 +55,7 @@ function firecrawlSafeSchema(schema: unknown): unknown {
   return schema;
 }
 
-interface FeedCandidate extends RawCandidate {
+export interface FeedCandidate extends RawCandidate {
   title?: string;
   summary?: string;
   url?: string;
@@ -73,6 +73,78 @@ const quietLogger: IngestionLogger = {
   warn: () => undefined,
   error: () => undefined,
 };
+
+function isUnecaBlogsSource(source: IntelligenceSource | BlogSource): boolean {
+  return source.name === "UNECA Blogs";
+}
+
+function decodeDescriptionHtml(value: string): string {
+  return value
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&apos;/gi, "'")
+    .replace(/&#39;/gi, "'")
+    .replace(/&amp;/gi, "&");
+}
+
+function unecaDescriptionTimestamp(
+  item: RawCandidate,
+): ReturnType<typeof selectExplicitPublicationTimestamp> {
+  if (typeof item.description !== "string") return null;
+
+  for (const tag of decodeDescriptionHtml(item.description).match(/<[^>]+>/g) ??
+    []) {
+    const property = tag.match(/\bproperty\s*=\s*(["'])dc:date\1/i);
+    const content = tag.match(/\bcontent\s*=\s*(["'])(.*?)\1/i);
+    if (!property || !content) continue;
+
+    const timestamp = selectExplicitPublicationTimestamp({
+      "dc:date": decodeDescriptionHtml(content[2]),
+    });
+    if (timestamp) return timestamp;
+  }
+
+  return null;
+}
+
+export function normalizeRssFeedItems(
+  source: IntelligenceSource | BlogSource,
+  items: readonly RawCandidate[],
+): FeedCandidate[] {
+  const unecaBlogs = isUnecaBlogsSource(source);
+  return items.flatMap((item) => {
+    const title = typeof item.title === "string" ? item.title : "";
+    if (unecaBlogs && !/^\s*\[Blog\]\s+\S/.test(title)) return [];
+
+    // UNECA's item-level pubDate is the feed event time. Blog provenance must
+    // use the explicit source date embedded in its description instead.
+    const timestamp = unecaBlogs
+      ? unecaDescriptionTimestamp(item)
+      : selectExplicitPublicationTimestamp(item);
+    if (unecaBlogs && !timestamp) return [];
+
+    const canonicalUrl = selectCanonicalSourceUrl(item);
+    const excerpt = selectSourceExcerpt(item);
+    const evidence: SourceEvidence = {
+      origin: "rss",
+      canonicalUrl,
+      sourcePublishedAt: timestamp?.value ?? null,
+      excerpt,
+      timestampField: timestamp?.field ?? null,
+      supported: Boolean(canonicalUrl && timestamp && excerpt),
+      disagreements: [],
+    };
+    return [{
+      title,
+      summary: excerpt,
+      excerpt,
+      url: canonicalUrl ?? undefined,
+      sourcePublishedAt: timestamp?.value,
+      sourceEvidence: evidence,
+    }];
+  });
+}
 
 function arrayAt(value: unknown, key: "articles" | "posts"): RawCandidate[] {
   if (typeof value !== "object" || value === null) return [];
@@ -453,12 +525,12 @@ export function createProductionIngestionAdapter(
       : null;
 
   async function rss(
-    sourceName: string,
+    source: IntelligenceSource | BlogSource,
     rssUrl: string,
     signal: AbortSignal,
   ): Promise<FeedCandidate[]> {
     const text = await fetchWithBoundedRetry(
-      `RSS ${sourceName}`,
+      `RSS ${source.name}`,
       rssUrl,
       { headers: { "User-Agent": "AXIS-Africa-Ingestion/1.0" } },
       async (response, attemptSignal) => {
@@ -476,29 +548,10 @@ export function createProductionIngestionAdapter(
     signal.throwIfAborted();
     const feed = await parser.parseString(text);
     signal.throwIfAborted();
-    return feed.items.slice(0, 3).map((item) => {
-      const raw = item as RawCandidate;
-      const timestamp = selectExplicitPublicationTimestamp(raw);
-      const canonicalUrl = selectCanonicalSourceUrl(raw);
-      const excerpt = selectSourceExcerpt(raw);
-      const evidence: SourceEvidence = {
-        origin: "rss",
-        canonicalUrl,
-        sourcePublishedAt: timestamp?.value ?? null,
-        excerpt,
-        timestampField: timestamp?.field ?? null,
-        supported: Boolean(canonicalUrl && timestamp && excerpt),
-        disagreements: [],
-      };
-      return {
-        title: item.title,
-        summary: excerpt,
-        excerpt,
-        url: canonicalUrl ?? undefined,
-        sourcePublishedAt: timestamp?.value,
-        sourceEvidence: evidence,
-      };
-    });
+    return normalizeRssFeedItems(
+      source,
+      feed.items as RawCandidate[],
+    ).slice(0, 3);
   }
 
   async function phi(
@@ -774,7 +827,7 @@ export function createProductionIngestionAdapter(
                 {
                   name: "RSS + Foundry",
                   run: async () => {
-                    const feed = await rss(source.name, source.rssUrl!, signal);
+                    const feed = await rss(source, source.rssUrl!, signal);
                     const result = await phi(
                       source.name,
                       `Classify each news item. Treat the supplied source text as evidence and do not invent URLs, timestamps, excerpts, actors, or categories. ${isoInstruction}`,
@@ -851,7 +904,7 @@ export function createProductionIngestionAdapter(
           ? [{
               name: "RSS + Foundry",
               run: async () => {
-                const feed = await rss(source.name, source.rssUrl!, signal);
+                const feed = await rss(source, source.rssUrl!, signal);
             const result = await phi(
               source.name,
               "Classify each blog post from the supplied evidence. Do not invent titles, excerpts, authors, tags, URLs, or timestamps.",

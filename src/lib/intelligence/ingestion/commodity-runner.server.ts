@@ -549,7 +549,7 @@ function normalizeCandidate(
   }
   if (
     !canonicalUrl ||
-    canonicalUrl !== canonicalizeUrl(source.url) ||
+    canonicalUrl !== canonicalizeUrl(source.canonicalUrl) ||
     publisher.toLowerCase() !== source.publisher.toLowerCase()
   ) {
     reasons.push(

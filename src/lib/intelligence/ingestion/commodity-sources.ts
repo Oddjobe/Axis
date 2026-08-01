@@ -25,6 +25,7 @@ export interface CommoditySource {
   id: CommodityId;
   publisher: string;
   url: string;
+  canonicalUrl: string;
   unit: CommodityUnit;
   currency: "USD";
   market: string;
@@ -42,6 +43,7 @@ export const COMMODITY_SOURCES: readonly CommoditySource[] = [
     id: "lithium",
     publisher: "SunSirs",
     url: "https://www.sunsirs.com/uk/prodetail-1162.html",
+    canonicalUrl: "https://www.sunsirs.com/uk/prodetail-1162.html",
     unit: "T",
     currency: "USD",
     market: "China lithium carbonate",
@@ -55,6 +57,7 @@ export const COMMODITY_SOURCES: readonly CommoditySource[] = [
     id: "cobalt",
     publisher: "Trading Economics",
     url: "https://tradingeconomics.com/commodity/cobalt",
+    canonicalUrl: "https://tradingeconomics.com/commodity/cobalt",
     unit: "T",
     currency: "USD",
     market: "LME cobalt",
@@ -68,6 +71,7 @@ export const COMMODITY_SOURCES: readonly CommoditySource[] = [
     id: "copper",
     publisher: "Trading Economics",
     url: "https://tradingeconomics.com/commodity/copper",
+    canonicalUrl: "https://tradingeconomics.com/commodity/copper",
     unit: "T",
     currency: "USD",
     market: "LME copper",
@@ -80,7 +84,8 @@ export const COMMODITY_SOURCES: readonly CommoditySource[] = [
   {
     id: "gold",
     publisher: "Kitco",
-    url: "https://www.kitco.com/gold-price-today-usa/",
+    url: "https://www.kitco.com/charts/gold",
+    canonicalUrl: "https://www.kitco.com/charts/gold",
     unit: "OZ",
     currency: "USD",
     market: "Gold spot",
@@ -94,6 +99,7 @@ export const COMMODITY_SOURCES: readonly CommoditySource[] = [
     id: "bauxite",
     publisher: "AluHub",
     url: "https://www.alu-hub.com/market-data",
+    canonicalUrl: "https://www.alu-hub.com/market-data",
     unit: "T",
     currency: "USD",
     market: "Guinea bauxite FOB",
@@ -134,7 +140,7 @@ export const COMMODITY_EXTRACT_SCHEMA = {
           sourcePublishedAt: {
             type: "string",
             description:
-              "The publication's explicit source date-time in ISO 8601 format. Never infer or convert a timestamp.",
+              "The publication's explicit source date-time in ISO 8601 format, or YYYY-MM-DD only when that exact calendar date is explicitly shown by the source. Never infer or convert a timestamp.",
           },
           publisher: { type: "string" },
           canonicalUrl: {

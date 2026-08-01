@@ -125,7 +125,7 @@ function historyRow(
       price,
       publisher: source.publisher,
       sourceMarket: source.market,
-      canonicalUrl: source.url,
+      canonicalUrl: source.canonicalUrl,
       ...recordOverrides,
     },
     source_published_at: sourcePublishedAt,
@@ -146,7 +146,7 @@ function quote(
     sourceMarket: source.market,
     sourcePublishedAt,
     publisher: source.publisher,
-    canonicalUrl: source.url,
+    canonicalUrl: source.canonicalUrl,
     excerpt: `Published ${source.id} benchmark quote for ${source.market} from the cited public market page.`,
     confidence: 0.9,
   };

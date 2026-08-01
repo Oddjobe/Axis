@@ -178,16 +178,18 @@ export const BLOG_SOURCES: readonly BlogSource[] = [
   },
   {
     name: "African Development Bank Opinion",
-    url: "https://www.afdb.org/en/news-and-events/opinion",
+    url: "https://blogs.afdb.org/",
+    rssUrl: "https://blogs.afdb.org/rss.xml",
     ...governed({
       publisherType: "multilateral",
-      allowedHosts: ["afdb.org"],
+      allowedHosts: ["blogs.afdb.org"],
       sourceQuality: 0.98,
     }),
   },
   {
     name: "UNECA Blogs",
     url: "https://www.uneca.org/blogs",
+    rssUrl: "https://www.uneca.org/rss.xml",
     ...governed({
       publisherType: "multilateral",
       allowedHosts: ["uneca.org"],

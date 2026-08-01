@@ -57,7 +57,7 @@ function quote(
     sourceMarket: source.market,
     sourcePublishedAt: "2026-07-16T12:00:00.000Z",
     publisher: source.publisher,
-    canonicalUrl: source.url,
+    canonicalUrl: source.canonicalUrl,
     excerpt: `Published ${source.id} benchmark quote for ${source.market} from the cited public market page.`,
     confidence: 0.9,
     ...overrides,
@@ -68,6 +68,7 @@ function mockedAdapter(
   fixtures: FixtureFactory,
   failedIds: readonly CommodityId[] = [],
   fx: { status?: number; xml?: string } = {},
+  renderedEvidence: { markdown?: string; metadata?: Record<string, unknown> } = {},
 ) {
   const requests: Array<{
     url: string;
@@ -99,7 +100,11 @@ function mockedAdapter(
     return new Response(
       JSON.stringify({
         success: true,
-        data: { extract: { quotes: fixtures(source) } },
+        data: {
+          markdown: renderedEvidence.markdown,
+          metadata: renderedEvidence.metadata,
+          extract: { quotes: fixtures(source) },
+        },
       }),
       { status: 200, headers: { "Content-Type": "application/json" } },
     );
@@ -142,6 +147,14 @@ assert.equal(
   completeMock.requests.filter((request) => request.url !== ECB_DAILY_FX_URL)
     .length,
   5,
+);
+const commodityRequest = completeMock.requests.find(
+  (request) => request.url !== ECB_DAILY_FX_URL,
+);
+assert(commodityRequest);
+assert.deepEqual(
+  (JSON.parse(String(commodityRequest.body)) as { formats: string[] }).formats,
+  ["markdown", "extract"],
 );
 const ecbRequest = completeMock.requests.find(
   (request) => request.url === ECB_DAILY_FX_URL,
@@ -218,6 +231,80 @@ assert.deepEqual(convertedCopper.sourceEvidence.canonicalQuote, {
   currency: "USD",
 });
 
+const copperSource = COMMODITY_SOURCES.find((source) => source.id === "copper");
+assert(copperSource);
+const dateOnlyMock = mockedAdapter(
+  (source) => [
+    quote(
+      source,
+      source.id === "copper"
+        ? {
+            sourcePublishedAt: "2026-07-16",
+            excerpt: "Trading Economics copper benchmark quote.",
+          }
+        : {},
+    ),
+  ],
+  [],
+  {},
+  {
+    markdown: "Copper price benchmark, published July 16, 2026.",
+    metadata: { sourceURL: copperSource.canonicalUrl },
+  },
+);
+const dateOnly = await runCommodityIngestion({
+  adapter: dateOnlyMock.adapter,
+  sources: [copperSource],
+  now,
+  previousPrices: { copper: prices.copper },
+});
+assert.equal(dateOnly.quality.acceptedCount, 1);
+assert.equal(
+  dateOnly.decisions[0]?.normalized?.sourcePublishedAt,
+  "2026-07-16T00:00:00.000Z",
+);
+
+const missingDateMock = mockedAdapter((source) => [
+  quote(source, source.id === "copper" ? { sourcePublishedAt: "" } : {}),
+]);
+const missingDate = await runCommodityIngestion({
+  adapter: missingDateMock.adapter,
+  sources: [copperSource],
+  now,
+});
+assert.equal(missingDate.quality.acceptedCount, 0);
+assert.equal(missingDate.quality.rejectionReasons.missing_explicit_timestamp, 1);
+
+const goldSource = COMMODITY_SOURCES.find((source) => source.id === "gold");
+assert(goldSource);
+const redirectedGoldMock = mockedAdapter((source) => [quote(source)]);
+const redirectedGold = await runCommodityIngestion({
+  adapter: redirectedGoldMock.adapter,
+  sources: [goldSource],
+  now,
+  previousPrices: { gold: prices.gold },
+});
+assert.equal(redirectedGold.quality.acceptedCount, 1);
+assert.equal(
+  redirectedGold.decisions[0]?.normalized?.canonicalUrl,
+  "https://kitco.com/charts/gold",
+);
+const mismatchedGoldMock = mockedAdapter((source) => [
+  quote(
+    source,
+    source.id === "gold"
+      ? { canonicalUrl: "https://www.kitco.com/gold-price-today-usa/" }
+      : {},
+  ),
+]);
+const mismatchedGold = await runCommodityIngestion({
+  adapter: mismatchedGoldMock.adapter,
+  sources: [goldSource],
+  now,
+});
+assert.equal(mismatchedGold.quality.acceptedCount, 0);
+assert.equal(mismatchedGold.quality.rejectionReasons.source_mismatch, 1);
+
 const wrongBauxiteEvidence = mockedAdapter((source) => [
   quote(
     source,
@@ -268,8 +355,6 @@ const stableLithium = stableHashRun.decisions.find(
 assert(stableLithium);
 assert.equal(stableLithium.contentHash, convertedLithium.contentHash);
 
-const copperSource = COMMODITY_SOURCES.find((source) => source.id === "copper");
-assert(copperSource);
 const wrongCopperUnitMock = mockedAdapter((source) => [
   quote(source, { unit: "LB/MT" }),
 ]);
@@ -281,6 +366,18 @@ const wrongCopperUnit = await runCommodityIngestion({
 assert.equal(wrongCopperUnit.quality.acceptedCount, 0);
 assert.equal(wrongCopperUnit.quality.rejectionReasons.unsupported_unit, 1);
 assert.equal(wrongCopperUnit.quality.rejectionReasons.implausible_price ?? 0, 0);
+
+const copperJumpMock = mockedAdapter((source) => [
+  quote(source, source.id === "copper" ? { price: 9 } : {}),
+]);
+const copperJump = await runCommodityIngestion({
+  adapter: copperJumpMock.adapter,
+  sources: [copperSource],
+  now,
+  previousPrices: { copper: prices.copper },
+});
+assert.equal(copperJump.quality.acceptedCount, 0);
+assert.equal(copperJump.quality.rejectionReasons.implausible_price_change, 1);
 
 const lithiumSource = COMMODITY_SOURCES.find((source) => source.id === "lithium");
 assert(lithiumSource);
@@ -354,6 +451,19 @@ const invalidTimes = await runCommodityIngestion({
 assert.deepEqual(invalidTimes.trustedCoverage.missingIds, ["lithium", "cobalt"]);
 assert.equal(invalidTimes.quality.rejectionReasons.stale_timestamp, 1);
 assert.equal(invalidTimes.quality.rejectionReasons.future_timestamp, 1);
+
+const bauxiteSource = COMMODITY_SOURCES.find((source) => source.id === "bauxite");
+assert(bauxiteSource);
+const staleBauxiteMock = mockedAdapter((source) => [
+  quote(source, { sourcePublishedAt: "2026-07-01T12:00:00.000Z" }),
+]);
+const staleBauxite = await runCommodityIngestion({
+  adapter: staleBauxiteMock.adapter,
+  sources: [bauxiteSource],
+  now,
+});
+assert.equal(staleBauxite.quality.acceptedCount, 0);
+assert.equal(staleBauxite.quality.rejectionReasons.stale_timestamp, 1);
 
 const duplicateMock = mockedAdapter((source) =>
   source.id === "lithium"
