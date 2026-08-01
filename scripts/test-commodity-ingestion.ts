@@ -7,6 +7,7 @@ import {
 import { runCommodityIngestion } from "../src/lib/intelligence/ingestion/commodity-runner.server";
 import { runIntelligenceIngestion } from "../src/lib/intelligence/ingestion/orchestrator.server";
 import {
+  ALPHA_VANTAGE_GOLD_SILVER_SPOT_URL,
   COMMODITY_SOURCES,
   COPPER_LB_TO_TONNE_FORMULA,
   ECB_DAILY_FX_URL,
@@ -153,6 +154,51 @@ function mockedAdapter(
       fetchImpl,
     }),
     requests,
+  };
+}
+
+function alphaVantageMockedAdapter(
+  alphaVantagePayload: unknown,
+  alphaVantageApiKey = "fixture-alpha-vantage-key",
+) {
+  const directRequests: URL[] = [];
+  let firecrawlRequests = 0;
+  const fetchImpl: typeof fetch = async (input, init) => {
+    const url = String(input);
+    if (url.startsWith("https://alpha-vantage.test/query")) {
+      directRequests.push(new URL(url));
+      return new Response(JSON.stringify(alphaVantagePayload), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    firecrawlRequests += 1;
+    const body = JSON.parse(String(init?.body)) as { url: string };
+    const source = COMMODITY_SOURCES.find((item) => item.url === body.url);
+    assert(source);
+    assert.equal(source.id, "gold");
+    const evidence = currentVisibleEvidence(source);
+    return new Response(
+      JSON.stringify({
+        success: true,
+        data: {
+          markdown: evidence.markdown,
+          metadata: evidence.metadata,
+          extract: { quotes: [quote(source)] },
+        },
+      }),
+      { status: 200, headers: { "Content-Type": "application/json" } },
+    );
+  };
+  return {
+    adapter: createCommodityFirecrawlAdapter({
+      apiKey: "fixture-firecrawl-key",
+      alphaVantageApiKey,
+      alphaVantageEndpoint: "https://alpha-vantage.test/query",
+      fetchImpl,
+    }),
+    directRequests,
+    getFirecrawlRequests: () => firecrawlRequests,
   };
 }
 
@@ -392,6 +438,110 @@ assert.equal(missingDate.quality.rejectionReasons.missing_explicit_timestamp, 1)
 
 const goldSource = COMMODITY_SOURCES.find((source) => source.id === "gold");
 assert(goldSource);
+const alphaVantageResponse = (lastRefreshed = "2026-07-16T12:00:00.000Z") => ({
+  endpoint: "Gold and Silver Spot Prices",
+  last_refreshed: lastRefreshed,
+  unit: "USD per ounce",
+  data: [{
+    date: lastRefreshed.slice(0, 10),
+    value: "4725.00",
+  }],
+});
+const alphaVantage = alphaVantageMockedAdapter(alphaVantageResponse());
+const alphaVantageRun = await runCommodityIngestion({
+  adapter: alphaVantage.adapter,
+  sources: [goldSource],
+  now,
+  previousPrices: { gold: prices.gold },
+});
+assert.equal(alphaVantageRun.quality.acceptedCount, 1);
+assert.equal(alphaVantage.getFirecrawlRequests(), 0);
+assert.equal(alphaVantage.directRequests.length, 1);
+assert.equal(
+  alphaVantage.directRequests[0]?.searchParams.get("function"),
+  "GOLD_SILVER_SPOT",
+);
+assert.equal(
+  alphaVantage.directRequests[0]?.searchParams.get("apikey"),
+  "fixture-alpha-vantage-key",
+);
+const alphaVantageGold = alphaVantageRun.decisions[0]?.normalized;
+assert.equal(alphaVantageGold?.publisher, "Alpha Vantage");
+assert.equal(
+  alphaVantageGold?.canonicalUrl,
+  ALPHA_VANTAGE_GOLD_SILVER_SPOT_URL,
+);
+assert.equal(alphaVantageGold?.unit, "OZ");
+assert.equal(alphaVantageGold?.currency, "USD");
+assert.equal(
+  alphaVantageGold?.sourcePublishedAt,
+  "2026-07-16T12:00:00.000Z",
+);
+
+const missingAlphaVantageKey = alphaVantageMockedAdapter(
+  alphaVantageResponse(),
+  "",
+);
+const missingAlphaVantageKeyRun = await runCommodityIngestion({
+  adapter: missingAlphaVantageKey.adapter,
+  sources: [goldSource],
+  now,
+});
+assert.equal(missingAlphaVantageKey.directRequests.length, 0);
+assert.equal(missingAlphaVantageKey.getFirecrawlRequests(), 1);
+assert.equal(
+  missingAlphaVantageKeyRun.decisions[0]?.normalized?.publisher,
+  "Kitco",
+);
+
+const badAlphaVantageResponse = alphaVantageMockedAdapter({
+  Note: "Thank you for using Alpha Vantage!",
+});
+const badAlphaVantageResponseRun = await runCommodityIngestion({
+  adapter: badAlphaVantageResponse.adapter,
+  sources: [goldSource],
+  now,
+});
+assert.equal(badAlphaVantageResponse.directRequests.length, 1);
+assert.equal(badAlphaVantageResponse.getFirecrawlRequests(), 1);
+assert.equal(
+  badAlphaVantageResponseRun.decisions[0]?.normalized?.publisher,
+  "Kitco",
+);
+
+for (const fixture of [
+  {
+    name: "stale Alpha Vantage refresh timestamp",
+    lastRefreshed: "2026-07-01T12:00:00.000Z",
+    reason: "stale_timestamp",
+  },
+  {
+    name: "future Alpha Vantage refresh timestamp",
+    lastRefreshed: "2026-07-17T12:00:00.000Z",
+    reason: "future_timestamp",
+  },
+] as const) {
+  const alphaVantageTimestamp = alphaVantageMockedAdapter(
+    alphaVantageResponse(fixture.lastRefreshed),
+  );
+  const alphaVantageTimestampRun = await runCommodityIngestion({
+    adapter: alphaVantageTimestamp.adapter,
+    sources: [goldSource],
+    now,
+  });
+  assert.equal(alphaVantageTimestamp.getFirecrawlRequests(), 0, fixture.name);
+  assert.equal(
+    alphaVantageTimestampRun.quality.acceptedCount,
+    0,
+    fixture.name,
+  );
+  assert.equal(
+    alphaVantageTimestampRun.quality.rejectionReasons[fixture.reason],
+    1,
+    fixture.name,
+  );
+}
+
 const redirectedGoldMock = mockedAdapter(
   (source) => [quote(source)],
   [],

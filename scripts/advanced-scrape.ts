@@ -89,6 +89,7 @@ async function main(): Promise<void> {
       }),
       commodityAdapter: createCommodityFirecrawlAdapter({
         apiKey: firecrawlApiKey,
+        alphaVantageApiKey: process.env.ALPHA_VANTAGE_API_KEY,
         deadlineAt,
       }),
       previousCommodityPrices: commodityHistory.previousCommodityPrices,

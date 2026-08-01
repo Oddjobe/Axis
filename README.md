@@ -154,7 +154,7 @@ npm install --legacy-peer-deps
 
 # Set up environment variables
 cp .env.example .env.local
-# Add your FIRECRAWL_API_KEY and Supabase keys
+# Add your FIRECRAWL_API_KEY and Supabase keys (optionally ALPHA_VANTAGE_API_KEY for direct gold spot data)
 
 # Run development server
 npm run dev
@@ -169,6 +169,7 @@ Open [http://localhost:3000](http://localhost:3000) to view the dashboard.
 | `NEXT_PUBLIC_SUPABASE_URL` | Your Supabase project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Your public Supabase API key |
 | `FIRECRAWL_API_KEY` | API key from [firecrawl.dev](https://firecrawl.dev) |
+| `ALPHA_VANTAGE_API_KEY` | Optional server-side [Alpha Vantage](https://www.alphavantage.co/support/#api-key) key for direct GOLD_SILVER_SPOT gold quotes; invalid or absent responses fall back to Kitco via Firecrawl |
 | `SUPABASE_SERVICE_ROLE_KEY` | Master database bypass key (GitHub Actions only) |
 
 ## Sovereignty Index Explained

@@ -395,6 +395,24 @@ function rawText(raw: RawCommodityCandidate, key: string): string {
   return normalizeText(raw[key]);
 }
 
+function matchesConfiguredProvenance(
+  source: CommoditySource,
+  publisher: string,
+  canonicalUrl: string | null,
+): boolean {
+  const actualPublisher = publisher.toLowerCase();
+  const actualUrl = canonicalizeUrl(canonicalUrl);
+  if (!actualUrl) return false;
+  return [
+    { publisher: source.publisher, canonicalUrl: source.canonicalUrl },
+    ...(source.alternateProvenance ?? []),
+  ].some(
+    (provenance) =>
+      actualPublisher === provenance.publisher.toLowerCase() &&
+      actualUrl === canonicalizeUrl(provenance.canonicalUrl),
+  );
+}
+
 function normalizeCandidate(
   source: CommoditySource,
   raw: RawCommodityCandidate,
@@ -428,6 +446,11 @@ function normalizeCandidate(
   const publisher = rawText(raw, "publisher");
   const excerpt = normalizeText(raw.excerpt);
   const canonicalUrl = canonicalizeUrl(raw.canonicalUrl);
+  const configuredProvenance = matchesConfiguredProvenance(
+    source,
+    publisher,
+    canonicalUrl,
+  );
   const timestampText =
     typeof raw.sourcePublishedAt === "string"
       ? raw.sourcePublishedAt.trim()
@@ -548,15 +571,13 @@ function normalizeCandidate(
     );
   }
   if (
-    !canonicalUrl ||
-    canonicalUrl !== canonicalizeUrl(source.canonicalUrl) ||
-    publisher.toLowerCase() !== source.publisher.toLowerCase()
+    !configuredProvenance
   ) {
     reasons.push(
       reason(
         "missing_provenance",
         "source_mismatch",
-        "Publisher and canonical URL must match the configured public source.",
+        "Publisher and canonical URL must match a configured public source.",
       ),
     );
   }
@@ -625,14 +646,14 @@ function normalizeCandidate(
       currency: canonicalCurrency,
       sourceMarket,
       sourcePublishedAt,
-      publisher: source.publisher,
+      publisher,
       canonicalUrl,
       excerpt,
       conversion,
     }),
   );
   const sourceEvidence = {
-    publisher: source.publisher,
+    publisher,
     sourceMarket,
     canonicalUrl,
     sourcePublishedAt,
@@ -661,8 +682,8 @@ function normalizeCandidate(
     unit,
     currency: "USD",
     sourceMarket,
-    source: source.publisher,
-    publisher: source.publisher,
+    source: publisher,
+    publisher,
     sourceUrl: canonicalUrl,
     canonicalUrl,
     excerpt,

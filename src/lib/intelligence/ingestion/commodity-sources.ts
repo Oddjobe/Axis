@@ -26,6 +26,10 @@ export interface CommoditySource {
   publisher: string;
   url: string;
   canonicalUrl: string;
+  alternateProvenance?: readonly {
+    publisher: string;
+    canonicalUrl: string;
+  }[];
   unit: CommodityUnit;
   currency: "USD";
   market: string;
@@ -37,6 +41,9 @@ export interface CommoditySource {
 }
 
 const maximumAgeMs = DATASET_TRUST_POLICIES.commodity.maximumAgeMs;
+
+export const ALPHA_VANTAGE_GOLD_SILVER_SPOT_URL =
+  "https://alphavantage.co/query?function=GOLD_SILVER_SPOT";
 
 export const COMMODITY_SOURCES: readonly CommoditySource[] = [
   {
@@ -86,6 +93,10 @@ export const COMMODITY_SOURCES: readonly CommoditySource[] = [
     publisher: "Kitco",
     url: "https://www.kitco.com/charts/gold",
     canonicalUrl: "https://www.kitco.com/charts/gold",
+    alternateProvenance: [{
+      publisher: "Alpha Vantage",
+      canonicalUrl: ALPHA_VANTAGE_GOLD_SILVER_SPOT_URL,
+    }],
     unit: "OZ",
     currency: "USD",
     market: "Gold spot",

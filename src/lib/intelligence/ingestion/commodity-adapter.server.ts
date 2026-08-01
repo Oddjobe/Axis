@@ -1,4 +1,5 @@
 import {
+  ALPHA_VANTAGE_GOLD_SILVER_SPOT_URL,
   COMMODITY_EXTRACT_SCHEMA,
   ECB_DAILY_FX_URL,
   type CommoditySource,
@@ -16,6 +17,8 @@ export interface CommodityAdapter {
 
 export interface CommodityFirecrawlAdapterOptions {
   apiKey: string;
+  alphaVantageApiKey?: string;
+  alphaVantageEndpoint?: string;
   endpoint?: string;
   fetchImpl?: typeof fetch;
   deadlineAt?: number;
@@ -26,6 +29,117 @@ export interface EcbDailyFxEvidence {
   usdPerEur: number;
   cnyPerEur: number;
   sourceUrl: typeof ECB_DAILY_FX_URL;
+}
+
+const ALPHA_VANTAGE_ENDPOINT = "https://www.alphavantage.co/query";
+const ALPHA_VANTAGE_GOLD_UNIT = /^USD\s*(?:\/|per)\s*(?:troy\s+)?ounce$/i;
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+const ISO_TIMESTAMP =
+  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d{1,3})?)?(?:Z|[+-]\d{2}:\d{2})$/;
+
+function record(value: unknown): Record<string, unknown> | null {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : null;
+}
+
+function alphaVantageRefreshTimestamp(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const timestamp = value.trim();
+  if (ISO_TIMESTAMP.test(timestamp)) {
+    const milliseconds = Date.parse(timestamp);
+    return Number.isFinite(milliseconds)
+      ? new Date(milliseconds).toISOString()
+      : null;
+  }
+  if (!ISO_DATE.test(timestamp)) return null;
+  const milliseconds = Date.parse(`${timestamp}T00:00:00.000Z`);
+  return Number.isFinite(milliseconds)
+    ? new Date(milliseconds).toISOString()
+    : null;
+}
+
+function alphaVantageRefreshDate(timestamp: string): string {
+  return timestamp.slice(0, 10);
+}
+
+function alphaVantageGoldCandidate(payload: unknown): RawCommodityCandidate {
+  const response = record(payload);
+  if (!response) throw new Error("Alpha Vantage returned a non-object response");
+  const endpoint = typeof response.endpoint === "string" ? response.endpoint : "";
+  const timestamp = alphaVantageRefreshTimestamp(response.last_refreshed);
+  const unit = typeof response.unit === "string" ? response.unit.trim() : "";
+  const data = Array.isArray(response.data) ? response.data : [];
+  const quote = record(data[0]);
+  const quoteDate = typeof quote?.date === "string" ? quote.date.trim() : "";
+  const price = typeof quote?.value === "string" || typeof quote?.value === "number"
+    ? Number(quote.value)
+    : Number.NaN;
+
+  if (
+    endpoint !== "Gold and Silver Spot Prices" ||
+    !timestamp ||
+    !ALPHA_VANTAGE_GOLD_UNIT.test(unit) ||
+    !quote ||
+    quoteDate !== alphaVantageRefreshDate(timestamp) ||
+    !Number.isFinite(price) ||
+    price <= 0
+  ) {
+    throw new Error(
+      "Alpha Vantage GOLD_SILVER_SPOT response lacks a current USD-per-troy-ounce quote with an explicit refresh timestamp",
+    );
+  }
+
+  return {
+    commodityId: "gold",
+    price,
+    unit: "TROY OUNCE",
+    currency: "USD",
+    sourceMarket: "Gold spot",
+    sourcePublishedAt: timestamp,
+    publisher: "Alpha Vantage",
+    canonicalUrl: ALPHA_VANTAGE_GOLD_SILVER_SPOT_URL,
+    excerpt: `Alpha Vantage GOLD_SILVER_SPOT refreshed ${timestamp}: ${price} USD per troy ounce.`,
+    confidence: 0.95,
+  };
+}
+
+async function collectAlphaVantageGold(
+  options: CommodityFirecrawlAdapterOptions,
+  fetchImpl: typeof fetch,
+  signal: AbortSignal,
+): Promise<RawCommodityCandidate[]> {
+  const apiKey = options.alphaVantageApiKey?.trim();
+  if (!apiKey) throw new Error("Alpha Vantage is not configured");
+  const endpoint = options.alphaVantageEndpoint ?? ALPHA_VANTAGE_ENDPOINT;
+  const url = new URL(endpoint);
+  url.searchParams.set("function", "GOLD_SILVER_SPOT");
+  url.searchParams.set("apikey", apiKey);
+  const payload = await withBoundedRetry(
+    "Alpha Vantage GOLD_SILVER_SPOT",
+    async (_attempt, _timeoutMs, attemptSignal) => {
+      const response = await fetchImpl(url, {
+        method: "GET",
+        headers: { Accept: "application/json" },
+        signal: attemptSignal,
+      });
+      if (!response.ok) {
+        throw new Error(
+          `Alpha Vantage GOLD_SILVER_SPOT request failed with status ${response.status}`,
+        );
+      }
+      const body: unknown = await response.json();
+      attemptSignal.throwIfAborted();
+      return body;
+    },
+    {
+      attempts: 2,
+      timeoutMs: 20_000,
+      deadlineAt: options.deadlineAt,
+      signal,
+    },
+  );
+  return [alphaVantageGoldCandidate(payload)];
 }
 
 function attributes(tag: string): Record<string, string> {
@@ -269,7 +383,6 @@ function newestDatedVisibleQuote(
   const matches = explicitDates(text)
     .map((date) => {
       const quote = closestVisibleQuote(date, quotes);
-      const excerpt = quote ? visibleExcerpt(text, date, quote) : "";
       return quote && !isHistoricalQuote(text, date, quote)
         ? { date, quote, excerpt: visibleExcerpt(text, date, quote) }
         : null;
@@ -422,6 +535,14 @@ export function createCommodityFirecrawlAdapter(
 
   return {
     async collectCommodity(source, signal) {
+      if (source.id === "gold" && options.alphaVantageApiKey?.trim()) {
+        try {
+          return await collectAlphaVantageGold(options, fetchImpl, signal);
+        } catch {
+          signal.throwIfAborted();
+          // Invalid or unavailable optional direct data must never displace Kitco.
+        }
+      }
       if (!options.apiKey.trim()) {
         throw new Error("Firecrawl is not configured");
       }
