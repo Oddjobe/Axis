@@ -32,6 +32,8 @@
     "quality:live": "npm run data-quality:live",
     "workflow:preflight": "tsx scripts/workflow-preflight.ts",
     "workflow:summary": "tsx scripts/workflow-summary.ts",
+    "workflow:enforce": "tsx scripts/workflow-enforce.ts",
+    "test:workflow-enforce": "tsx scripts/test-workflow-enforce.ts",
     "trust:readiness": "tsx scripts/trust-readiness.ts",
     "trust:rollout": "tsx scripts/trust-rollout.ts",
     "trust:rollout:fixtures": "tsx scripts/trust-rollout.ts --fixtures",

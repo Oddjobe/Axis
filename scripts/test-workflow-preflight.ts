@@ -94,6 +94,7 @@ async function verifyWorkflowWiring(): Promise<void> {
     "Refresh legacy scores and report trusted readiness",
   );
   const summaryIndex = workflow.indexOf("Publish workflow summary");
+  const commitIndex = workflow.indexOf("Commit and Push Changes");
   const artifactIndex = workflow.indexOf(
     "Upload workflow safety and quality reports",
   );
@@ -101,8 +102,10 @@ async function verifyWorkflowWiring(): Promise<void> {
     "Enforce required workflow outcomes",
   );
   assert(kpiIndex > 0 && shadowIndex > kpiIndex && scoreIndex > shadowIndex);
-  assert(summaryIndex > scoreIndex && artifactIndex > summaryIndex);
-  assert(enforcementIndex > artifactIndex);
+  assert(summaryIndex > scoreIndex && commitIndex > summaryIndex);
+  // Enforcement runs after the commit so refreshed metadata is never discarded,
+  // and before the upload so its own report is captured in the artifact.
+  assert(enforcementIndex > commitIndex && artifactIndex > enforcementIndex);
   assert.match(
     workflow,
     /id: shadow_ingestion[\s\S]*steps\.trust_readiness\.outcome == 'success'[\s\S]*continue-on-error: true[\s\S]*id: score_refresh[\s\S]*steps\.trust_readiness\.outcome == 'success'[\s\S]*continue-on-error: true/,
@@ -111,7 +114,8 @@ async function verifyWorkflowWiring(): Promise<void> {
     workflow,
     /KPI_REFRESH_OUTCOME: \$\{\{ steps\.kpis\.outcome \}\}/,
   );
-  assert.match(workflow, /"\$KPI_REFRESH_OUTCOME"/);
+  assert.match(workflow, /run: npm run workflow:enforce/);
+  assert.match(workflow, /quality-reports\/workflow-enforcement\.json/);
   assert.doesNotMatch(workflow, /trust:promotion-check|QUALITY_PUBLICATION_MODE: trusted/);
 }
 

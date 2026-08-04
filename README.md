@@ -172,6 +172,25 @@ Open [http://localhost:3000](http://localhost:3000) to view the dashboard.
 | `ALPHA_VANTAGE_API_KEY` | Optional server-side [Alpha Vantage](https://www.alphavantage.co/support/#api-key) key for direct GOLD_SILVER_SPOT gold quotes; invalid or absent responses fall back to Kitco via Firecrawl |
 | `SUPABASE_SERVICE_ROLE_KEY` | Master database bypass key (GitHub Actions only) |
 
+## Daily Ingestion Coverage Baseline
+
+The scheduled workflow (`.github/workflows/scrape.yml`) publishes only records that carry a
+canonical source URL, an explicit source publication timestamp, and valid units. Some governed
+sources cannot currently meet that bar, so the run is measured against a versioned baseline in
+`.github/known-source-gaps.json`:
+
+| Outcome | Meaning |
+|---|---|
+| **failed** | A required check broke (credentials, schema, deterministic quality), or coverage fell **below a floor** — a real regression. |
+| **degraded** | Coverage held, but documented gaps are still open. The run succeeds and lists every gap. |
+| **pass** | No gaps remain. The live post-write quality gate becomes mandatory again automatically. |
+
+For each metric, `observed` is the coverage confirmed when the baseline was accepted and `floor`
+is the alarm threshold (set at or below `observed` to absorb normal per-source variance). When
+coverage rises above `observed`, the run prints a reminder to raise the baseline so a recovery is
+never silently lost. Update this file whenever a source is fixed, added, or retired — it is the
+record of what the dashboard is knowingly missing and why.
+
 ## Sovereignty Index Explained
 
 | Status | Score | Meaning |

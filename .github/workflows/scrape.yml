@@ -142,6 +142,26 @@ jobs:
           COMMODITY_HISTORY_LATEST_PUBLISHED_AT: ${{ steps.shadow_ingestion.outputs.commodity_history_latest_published_at }}
         run: npm run workflow:summary
 
+      - name: Commit and Push Changes
+        if: always() && steps.kpis.outcome == 'success' && steps.data_quality.outcome == 'success'
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: daily dashboard metadata update [skip ci]"
+          branch: main
+
+      - name: Enforce required workflow outcomes
+        if: always()
+        env:
+          PREFLIGHT_OUTCOME: ${{ steps.preflight.outcome }}
+          KPI_REFRESH_OUTCOME: ${{ steps.kpis.outcome }}
+          TRUST_READINESS_OUTCOME: ${{ steps.trust_readiness.outcome }}
+          SOURCE_SAFETY_OUTCOME: ${{ steps.source_safety.outcome }}
+          SHADOW_INGESTION_OUTCOME: ${{ steps.shadow_ingestion.outcome }}
+          SCORE_REFRESH_OUTCOME: ${{ steps.score_refresh.outcome }}
+          DATA_QUALITY_OUTCOME: ${{ steps.data_quality.outcome }}
+          LIVE_QUALITY_OUTCOME: ${{ steps.live_quality.outcome }}
+        run: npm run workflow:enforce
+
       - name: Upload workflow safety and quality reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -152,39 +172,8 @@ jobs:
             quality-reports/trust-readiness.json
             quality-reports/workflow-data-quality-report.json
             quality-reports/workflow-summary.json
+            quality-reports/workflow-enforcement.json
             quality-reports/shadow-ingestion-report.json
             quality-reports/score-readiness-report.json
           if-no-files-found: warn
           retention-days: 30
-
-      - name: Enforce required workflow outcomes
-        if: always()
-        env:
-          PREFLIGHT_OUTCOME: ${{ steps.preflight.outcome }}
-          TRUST_READINESS_OUTCOME: ${{ steps.trust_readiness.outcome }}
-          SOURCE_SAFETY_OUTCOME: ${{ steps.source_safety.outcome }}
-          SHADOW_INGESTION_OUTCOME: ${{ steps.shadow_ingestion.outcome }}
-          SCORE_REFRESH_OUTCOME: ${{ steps.score_refresh.outcome }}
-          DATA_QUALITY_OUTCOME: ${{ steps.data_quality.outcome }}
-          LIVE_QUALITY_OUTCOME: ${{ steps.live_quality.outcome }}
-        run: |
-          for outcome in \
-            "$PREFLIGHT_OUTCOME" \
-            "$KPI_REFRESH_OUTCOME" \
-            "$TRUST_READINESS_OUTCOME" \
-            "$SOURCE_SAFETY_OUTCOME" \
-            "$SHADOW_INGESTION_OUTCOME" \
-            "$SCORE_REFRESH_OUTCOME" \
-            "$DATA_QUALITY_OUTCOME" \
-            "$LIVE_QUALITY_OUTCOME"; do
-            if [ "$outcome" != "success" ]; then
-             echo "Required workflow outcome failed or was skipped: $outcome"
-             exit 1
-            fi
-          done
-
-      - name: Commit and Push Changes
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "chore: daily dashboard metadata update [skip ci]"
-          branch: main

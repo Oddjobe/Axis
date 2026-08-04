@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "acceptedAt": "2026-08-04",
+  "summary": "Coverage baseline for the daily ingestion workflow. 'observed' is the coverage confirmed when this baseline was accepted; 'floor' is the alarm threshold, set at or below observed to tolerate normal per-source variance. The run fails when coverage drops below a floor (a regression), reports 'degraded' while documented gaps remain open, and asks for the baseline to be raised when coverage rises above observed.",
+  "datasets": {
+    "intelligence": {
+      "sourcesSucceeded": { "observed": 3, "floor": 2 },
+      "published": { "observed": 8, "floor": 3 },
+      "reason": "Several governed publishers reject automated retrieval (HTTP 403) or expose no authoritative original-page evidence. The floor sits below observed because per-source availability fluctuates daily."
+    },
+    "blog": {
+      "sourcesSucceeded": { "observed": 1, "floor": 0 },
+      "published": { "observed": 0, "floor": 0 },
+      "reason": "All four governed blog sources currently fail publication: World Bank and ISS expose no machine-readable publication evidence, and AfDB/UNECA feeds are refused or yield no admissible dated candidates."
+    },
+    "commodity": {
+      "trustedRecords": { "observed": 2, "floor": 2 },
+      "expectedTotal": 5,
+      "reason": "Only cobalt and copper expose a current dated quote with valid unit and currency. Lithium, gold, and bauxite have no free source publishing admissible current quote evidence; Guinea bauxite FOB needs a licensed benchmark. The floor equals observed because losing either remaining identity is material."
+    }
+  }
+}
