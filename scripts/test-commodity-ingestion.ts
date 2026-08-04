@@ -7,7 +7,7 @@ import {
 import { runCommodityIngestion } from "../src/lib/intelligence/ingestion/commodity-runner.server";
 import { runIntelligenceIngestion } from "../src/lib/intelligence/ingestion/orchestrator.server";
 import {
-  ALPHA_VANTAGE_GOLD_SILVER_SPOT_URL,
+  COMMODITY_EXTRACT_SCHEMA,
   COMMODITY_SOURCES,
   COPPER_LB_TO_TONNE_FORMULA,
   ECB_DAILY_FX_URL,
@@ -46,20 +46,26 @@ const validFxXml = [
   "</gesmes:Envelope>",
 ].join("");
 
+/**
+ * The price a publisher actually prints, before the runner applies any unit or
+ * currency conversion. Lithium is quoted in CNY per tonne and copper in USD per
+ * pound, so those differ from the canonical values in `prices`.
+ */
+function nativePrice(source: CommoditySource): number {
+  if (source.id === "lithium") return 198_500;
+  if (source.id === "copper") return 6.24;
+  return prices[source.id];
+}
+
 function quote(
   source: CommoditySource,
   overrides: Fixture = {},
 ): Fixture {
   return {
     commodityId: source.id,
-    price:
-      source.id === "lithium"
-        ? 198_500
-        : source.id === "copper"
-          ? 6.24
-          : prices[source.id],
-    unit: source.id === "copper" ? "Lbs" : source.unit,
-    currency: source.id === "lithium" ? "CNY" : source.currency,
+    price: nativePrice(source),
+    unit: source.sourceUnit,
+    currency: source.sourceCurrency,
     sourceMarket: source.market,
     sourcePublishedAt: "2026-07-16T12:00:00.000Z",
     publisher: source.publisher,
@@ -70,28 +76,19 @@ function quote(
   };
 }
 
+/**
+ * Rendered page evidence must contain the quoted price, because extraction is
+ * only trusted when the page corroborates it.
+ */
 function currentVisibleEvidence(source: CommoditySource): RenderedEvidence {
-  if (source.id === "lithium") {
-    return {
-      markdown:
-        "SunSirs current lithium carbonate quote. Price date: 2026-07-16. RMB 198,500/ton.",
-    };
-  }
-  if (source.id === "gold") {
-    return {
-      markdown:
-        "Kitco Gold Spot current quote as of 2026-07-16: USD 4,725.00/oz.",
-      metadata: { sourceURL: source.canonicalUrl },
-    };
-  }
-  if (source.id === "bauxite") {
-    return {
-      markdown:
-        "AluHub current Guinea bauxite FOB quote dated 2026-07-16: USD 60.99/T.",
-    };
-  }
+  const price = nativePrice(source).toLocaleString("en-US", {
+    maximumFractionDigits: 2,
+  });
   return {
-    markdown: `${source.publisher} current quote dated 2026-07-16.`,
+    markdown:
+      `${source.publisher} ${source.id} quote for ${source.market} dated ` +
+      `2026-07-16: ${source.sourceCurrency} ${price}/${source.sourceUnit}.`,
+    metadata: { sourceURL: source.canonicalUrl },
   };
 }
 
@@ -121,7 +118,10 @@ function mockedAdapter(
     }
     const body = JSON.parse(String(init?.body)) as {
       url: string;
-      extract: { schema: unknown };
+      formats: unknown[];
+      maxAge?: unknown;
+      onlyMainContent?: unknown;
+      actions?: unknown;
     };
     const source = COMMODITY_SOURCES.find((item) => item.url === body.url);
     assert(source, `Unexpected source URL ${body.url}`);
@@ -132,17 +132,26 @@ function mockedAdapter(
       typeof renderedEvidence === "function"
         ? renderedEvidence(source)
         : renderedEvidence;
-    const currentEvidence = currentVisibleEvidence(source);
+    const quotes = fixtures(source);
+    // Extraction is only trusted when the page corroborates the price, so the
+    // default mock page states whatever price the fixture returns. Tests that
+    // exercise corroboration failure supply their own evidence instead.
+    const defaultMarkdown =
+      `${source.publisher} ${source.id} quote for ${source.market} dated ` +
+      `2026-07-16: ${quotes
+        .map((item) => String(item.price ?? ""))
+        .filter(Boolean)
+        .join(", ")} (${source.sourceCurrency}/${source.sourceUnit}).`;
     return new Response(
       JSON.stringify({
         success: true,
         data: {
-          markdown: suppliedEvidence.markdown ?? currentEvidence.markdown,
+          markdown: suppliedEvidence.markdown ?? defaultMarkdown,
           metadata: {
-            ...currentEvidence.metadata,
+            sourceURL: source.canonicalUrl,
             ...suppliedEvidence.metadata,
           },
-          extract: { quotes: fixtures(source) },
+          json: { quotes },
         },
       }),
       { status: 200, headers: { "Content-Type": "application/json" } },
@@ -154,51 +163,6 @@ function mockedAdapter(
       fetchImpl,
     }),
     requests,
-  };
-}
-
-function alphaVantageMockedAdapter(
-  alphaVantagePayload: unknown,
-  alphaVantageApiKey = "fixture-alpha-vantage-key",
-) {
-  const directRequests: URL[] = [];
-  let firecrawlRequests = 0;
-  const fetchImpl: typeof fetch = async (input, init) => {
-    const url = String(input);
-    if (url.startsWith("https://alpha-vantage.test/query")) {
-      directRequests.push(new URL(url));
-      return new Response(JSON.stringify(alphaVantagePayload), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-    firecrawlRequests += 1;
-    const body = JSON.parse(String(init?.body)) as { url: string };
-    const source = COMMODITY_SOURCES.find((item) => item.url === body.url);
-    assert(source);
-    assert.equal(source.id, "gold");
-    const evidence = currentVisibleEvidence(source);
-    return new Response(
-      JSON.stringify({
-        success: true,
-        data: {
-          markdown: evidence.markdown,
-          metadata: evidence.metadata,
-          extract: { quotes: [quote(source)] },
-        },
-      }),
-      { status: 200, headers: { "Content-Type": "application/json" } },
-    );
-  };
-  return {
-    adapter: createCommodityFirecrawlAdapter({
-      apiKey: "fixture-firecrawl-key",
-      alphaVantageApiKey,
-      alphaVantageEndpoint: "https://alpha-vantage.test/query",
-      fetchImpl,
-    }),
-    directRequests,
-    getFirecrawlRequests: () => firecrawlRequests,
   };
 }
 
@@ -232,14 +196,32 @@ assert.equal(
     .length,
   5,
 );
-const commodityRequest = completeMock.requests.find(
+const commodityRequests = completeMock.requests.filter(
   (request) => request.url !== ECB_DAILY_FX_URL,
 );
-assert(commodityRequest);
-assert.deepEqual(
-  (JSON.parse(String(commodityRequest.body)) as { formats: string[] }).formats,
-  ["markdown", "extract"],
-);
+assert.equal(commodityRequests.length, 5);
+assert(commodityRequests.every((request) => request.url.endsWith("/v2/scrape")));
+for (const request of commodityRequests) {
+  const body = JSON.parse(String(request.body)) as {
+    url: string;
+    formats: Array<string | { type?: string; schema?: unknown; prompt?: string }>;
+    maxAge?: unknown;
+    onlyMainContent?: unknown;
+    actions?: unknown;
+  };
+  const source = COMMODITY_SOURCES.find((item) => item.url === body.url);
+  assert(source);
+  assert.equal(body.maxAge, 0);
+  assert.equal(body.onlyMainContent, source.id === "bauxite" ? false : true);
+  if (source.id === "bauxite") {
+    assert.deepEqual(body.actions, source.renderActions);
+  } else {
+    assert.equal(body.actions, undefined);
+  }
+  assert.equal(body.formats[0], "markdown");
+  assert.equal((body.formats[1] as { type?: string }).type, "json");
+  assert.deepEqual((body.formats[1] as { schema?: unknown }).schema, COMMODITY_EXTRACT_SCHEMA);
+}
 const ecbRequest = completeMock.requests.find(
   (request) => request.url === ECB_DAILY_FX_URL,
 );
@@ -292,7 +274,9 @@ const lithiumSource = COMMODITY_SOURCES.find(
   (source) => source.id === "lithium",
 );
 assert(lithiumSource);
-const newestSunSirs = mockedAdapter(
+// A model-supplied price that the page does not corroborate is rejected, even
+// when the page shows a different, well-formed quote.
+const uncorroboratedLithium = mockedAdapter(
   (source) => [
     quote(source, {
       price: 1,
@@ -305,61 +289,78 @@ const newestSunSirs = mockedAdapter(
     source.id === "lithium"
       ? {
           markdown:
-            "SunSirs history: 2023-11-15 RMB 400,000/ton. Current lithium carbonate quote, price date 2026-07-16: RMB 198,500/ton.",
+            "Trading Economics history: 2023-11-15 CNY 400,000/ton. Current lithium carbonate quote, price date 2026-07-16: CNY 198,500/ton.",
         }
-      : currentVisibleEvidence(source),
-);
-const newestSunSirsCandidates = await newestSunSirs.adapter.collectCommodity(
-  lithiumSource,
-  new AbortController().signal,
-);
-assert.deepEqual(newestSunSirsCandidates[0], {
-  commodityId: "lithium",
-  price: 198_500,
-  unit: "T",
-  currency: "CNY",
-  sourceMarket: lithiumSource.market,
-  sourcePublishedAt: "2026-07-16T00:00:00.000Z",
-  publisher: "SunSirs",
-  canonicalUrl: lithiumSource.canonicalUrl,
-  excerpt:
-    "SunSirs history: 2023-11-15 RMB 400,000/ton. Current lithium carbonate quote, price date 2026-07-16: RMB 198,500/ton.",
-  confidence: 0.95,
-  fxEvidence: {
-    date: "2026-07-16",
-    usdPerEur: 1.16,
-    cnyPerEur: 8.2,
-    sourceUrl: ECB_DAILY_FX_URL,
-  },
-});
-const staleSunSirs = mockedAdapter(
-  (source) => [quote(source)],
-  [],
-  {},
-  (source) =>
-    source.id === "lithium"
-      ? { markdown: "SunSirs quote dated 2023-11-15: RMB 400,000/ton." }
-      : currentVisibleEvidence(source),
-);
-const staleSunSirsRun = await runCommodityIngestion({
-  adapter: staleSunSirs.adapter,
-  sources: [lithiumSource],
-  now,
-});
-assert.equal(staleSunSirsRun.quality.acceptedCount, 0);
-assert.equal(staleSunSirsRun.quality.rejectionReasons.stale_timestamp, 1);
-const unpricedSunSirs = mockedAdapter(
-  (source) => [quote(source)],
-  [],
-  {},
-  (source) =>
-    source.id === "lithium"
-      ? { markdown: "SunSirs current lithium carbonate price date 2026-07-16." }
       : currentVisibleEvidence(source),
 );
 await assert.rejects(
   () =>
-    unpricedSunSirs.adapter.collectCommodity(
+    uncorroboratedLithium.adapter.collectCommodity(
+      lithiumSource,
+      new AbortController().signal,
+    ),
+  /no source-specific visible quote evidence/,
+);
+
+// A corroborated quote is returned verbatim, with ECB evidence attached so the
+// runner — never the extractor — performs the CNY conversion.
+const corroboratedLithium = mockedAdapter(
+  (source) => [quote(source)],
+  [],
+  {},
+  (source) =>
+    source.id === "lithium"
+      ? {
+          markdown:
+            "Trading Economics history: 2023-11-15 CNY 400,000/ton. Current lithium carbonate quote, price date 2026-07-16: CNY 198,500/ton.",
+        }
+      : currentVisibleEvidence(source),
+);
+const corroboratedLithiumCandidates =
+  await corroboratedLithium.adapter.collectCommodity(
+    lithiumSource,
+    new AbortController().signal,
+  );
+assert.equal(corroboratedLithiumCandidates.length, 1);
+assert.equal(corroboratedLithiumCandidates[0].price, 198_500);
+assert.equal(corroboratedLithiumCandidates[0].unit, "T");
+assert.equal(corroboratedLithiumCandidates[0].currency, "CNY");
+assert.deepEqual(corroboratedLithiumCandidates[0].fxEvidence, {
+  date: "2026-07-16",
+  usdPerEur: 1.16,
+  cnyPerEur: 8.2,
+  sourceUrl: ECB_DAILY_FX_URL,
+});
+const staleTradingEconomicsLithium = mockedAdapter(
+  (source) => [
+    quote(source, { price: 400_000, sourcePublishedAt: "2023-11-15T00:00:00.000Z" }),
+  ],
+  [],
+  {},
+  (source) =>
+    source.id === "lithium"
+      ? { markdown: "Trading Economics quote dated 2023-11-15: CNY 400,000/ton." }
+      : currentVisibleEvidence(source),
+);
+const staleTradingEconomicsLithiumRun = await runCommodityIngestion({
+  adapter: staleTradingEconomicsLithium.adapter,
+  sources: [lithiumSource],
+  now,
+});
+assert.equal(staleTradingEconomicsLithiumRun.quality.acceptedCount, 0);
+assert.equal(staleTradingEconomicsLithiumRun.quality.rejectionReasons.stale_timestamp, 1);
+const unpricedTradingEconomicsLithium = mockedAdapter(
+  (source) => [quote(source)],
+  [],
+  {},
+  (source) =>
+    source.id === "lithium"
+      ? { markdown: "Trading Economics current lithium carbonate price date 2026-07-16." }
+      : currentVisibleEvidence(source),
+);
+await assert.rejects(
+  () =>
+    unpricedTradingEconomicsLithium.adapter.collectCommodity(
       lithiumSource,
       new AbortController().signal,
     ),
@@ -409,7 +410,7 @@ const dateOnlyMock = mockedAdapter(
   [],
   {},
   {
-    markdown: "Copper price benchmark, published July 16, 2026.",
+    markdown: "Copper price benchmark USD 6.24/Lbs, published July 16, 2026.",
     metadata: { sourceURL: copperSource.canonicalUrl },
   },
 );
@@ -438,109 +439,20 @@ assert.equal(missingDate.quality.rejectionReasons.missing_explicit_timestamp, 1)
 
 const goldSource = COMMODITY_SOURCES.find((source) => source.id === "gold");
 assert(goldSource);
-const alphaVantageResponse = (lastRefreshed = "2026-07-16T12:00:00.000Z") => ({
-  endpoint: "Gold and Silver Spot Prices",
-  last_refreshed: lastRefreshed,
-  unit: "USD per ounce",
-  data: [{
-    date: lastRefreshed.slice(0, 10),
-    value: "4725.00",
-  }],
-});
-const alphaVantage = alphaVantageMockedAdapter(alphaVantageResponse());
-const alphaVantageRun = await runCommodityIngestion({
-  adapter: alphaVantage.adapter,
+const troyOunceGold = await runCommodityIngestion({
+  adapter: {
+    async collectCommodity(source) {
+      return [quote(source, { unit: "USD/t.oz" })];
+    },
+  },
   sources: [goldSource],
   now,
   previousPrices: { gold: prices.gold },
 });
-assert.equal(alphaVantageRun.quality.acceptedCount, 1);
-assert.equal(alphaVantage.getFirecrawlRequests(), 0);
-assert.equal(alphaVantage.directRequests.length, 1);
-assert.equal(
-  alphaVantage.directRequests[0]?.searchParams.get("function"),
-  "GOLD_SILVER_SPOT",
-);
-assert.equal(
-  alphaVantage.directRequests[0]?.searchParams.get("apikey"),
-  "fixture-alpha-vantage-key",
-);
-const alphaVantageGold = alphaVantageRun.decisions[0]?.normalized;
-assert.equal(alphaVantageGold?.publisher, "Alpha Vantage");
-assert.equal(
-  alphaVantageGold?.canonicalUrl,
-  ALPHA_VANTAGE_GOLD_SILVER_SPOT_URL,
-);
-assert.equal(alphaVantageGold?.unit, "OZ");
-assert.equal(alphaVantageGold?.currency, "USD");
-assert.equal(
-  alphaVantageGold?.sourcePublishedAt,
-  "2026-07-16T12:00:00.000Z",
-);
-
-const missingAlphaVantageKey = alphaVantageMockedAdapter(
-  alphaVantageResponse(),
-  "",
-);
-const missingAlphaVantageKeyRun = await runCommodityIngestion({
-  adapter: missingAlphaVantageKey.adapter,
-  sources: [goldSource],
-  now,
-});
-assert.equal(missingAlphaVantageKey.directRequests.length, 0);
-assert.equal(missingAlphaVantageKey.getFirecrawlRequests(), 1);
-assert.equal(
-  missingAlphaVantageKeyRun.decisions[0]?.normalized?.publisher,
-  "Kitco",
-);
-
-const badAlphaVantageResponse = alphaVantageMockedAdapter({
-  Note: "Thank you for using Alpha Vantage!",
-});
-const badAlphaVantageResponseRun = await runCommodityIngestion({
-  adapter: badAlphaVantageResponse.adapter,
-  sources: [goldSource],
-  now,
-});
-assert.equal(badAlphaVantageResponse.directRequests.length, 1);
-assert.equal(badAlphaVantageResponse.getFirecrawlRequests(), 1);
-assert.equal(
-  badAlphaVantageResponseRun.decisions[0]?.normalized?.publisher,
-  "Kitco",
-);
-
-for (const fixture of [
-  {
-    name: "stale Alpha Vantage refresh timestamp",
-    lastRefreshed: "2026-07-01T12:00:00.000Z",
-    reason: "stale_timestamp",
-  },
-  {
-    name: "future Alpha Vantage refresh timestamp",
-    lastRefreshed: "2026-07-17T12:00:00.000Z",
-    reason: "future_timestamp",
-  },
-] as const) {
-  const alphaVantageTimestamp = alphaVantageMockedAdapter(
-    alphaVantageResponse(fixture.lastRefreshed),
-  );
-  const alphaVantageTimestampRun = await runCommodityIngestion({
-    adapter: alphaVantageTimestamp.adapter,
-    sources: [goldSource],
-    now,
-  });
-  assert.equal(alphaVantageTimestamp.getFirecrawlRequests(), 0, fixture.name);
-  assert.equal(
-    alphaVantageTimestampRun.quality.acceptedCount,
-    0,
-    fixture.name,
-  );
-  assert.equal(
-    alphaVantageTimestampRun.quality.rejectionReasons[fixture.reason],
-    1,
-    fixture.name,
-  );
-}
+assert.equal(troyOunceGold.quality.acceptedCount, 1);
+assert.equal(troyOunceGold.decisions[0]?.normalized?.rawUnit, "USD/t.oz");
+assert.equal(troyOunceGold.decisions[0]?.normalized?.unit, "OZ");
+assert.equal(troyOunceGold.decisions[0]?.normalized?.currency, "USD");
 
 const redirectedGoldMock = mockedAdapter(
   (source) => [quote(source)],
@@ -550,8 +462,8 @@ const redirectedGoldMock = mockedAdapter(
     source.id === "gold"
       ? {
           markdown:
-            "Kitco Gold Spot current quote as of 2026-07-16: USD 4,725.00/oz.",
-          metadata: { sourceURL: "https://www.kitco.com/charts/gold" },
+            "Trading Economics gold commodity quote as of 2026-07-16: USD 4,725.00/oz.",
+          metadata: { sourceURL: "https://www.tradingeconomics.com/commodity/gold" },
         }
       : currentVisibleEvidence(source),
 );
@@ -564,7 +476,7 @@ const redirectedGold = await runCommodityIngestion({
 assert.equal(redirectedGold.quality.acceptedCount, 1);
 assert.equal(
   redirectedGold.decisions[0]?.normalized?.canonicalUrl,
-  "https://kitco.com/charts/gold",
+  "https://tradingeconomics.com/commodity/gold",
 );
 const redirectedAwayGold = mockedAdapter(
   (source) => [quote(source)],
@@ -574,7 +486,7 @@ const redirectedAwayGold = mockedAdapter(
     source.id === "gold"
       ? {
           markdown:
-            "Kitco Gold Spot current quote as of 2026-07-16: USD 4,725.00/oz.",
+            "Trading Economics gold commodity quote as of 2026-07-16: USD 4,725.00/oz.",
           metadata: { sourceURL: "https://example.test/charts/gold" },
         }
       : currentVisibleEvidence(source),
@@ -587,67 +499,32 @@ await assert.rejects(
     ),
   /no source-specific visible quote evidence/,
 );
-const unitlessGold = mockedAdapter(
-  (source) => [quote(source)],
-  [],
-  {},
-  (source) =>
-    source.id === "gold"
-      ? {
-          markdown: "Kitco Gold Spot current quote as of 2026-07-16: USD 4,725.00.",
-          metadata: { sourceURL: source.canonicalUrl },
-        }
-      : currentVisibleEvidence(source),
-);
-await assert.rejects(
-  () =>
-    unitlessGold.adapter.collectCommodity(
-      goldSource,
-      new AbortController().signal,
-    ),
-  /no source-specific visible quote evidence/,
-);
-
+// Unit, currency, market, and timestamp are validated against the extracted
+// candidate by the runner, so those rejections are asserted there rather than by
+// pattern-matching the rendered page.
 const bauxiteSource = COMMODITY_SOURCES.find(
   (source) => source.id === "bauxite",
 );
 assert(bauxiteSource);
-for (const [name, evidence] of [
-  [
-    "non-Guinea benchmark",
-    "AluHub current Australian bauxite FOB quote dated 2026-07-16: USD 60.99/T.",
-  ],
-  [
-    "missing date",
-    "AluHub current Guinea bauxite FOB quote: USD 60.99/T.",
-  ],
-  [
-    "wrong currency",
-    "AluHub current Guinea bauxite FOB quote dated 2026-07-16: CNY 60.99/T.",
-  ],
-  [
-    "wrong unit",
-    "AluHub current Guinea bauxite FOB quote dated 2026-07-16: USD 60.99/oz.",
-  ],
+for (const [name, overrides, reason] of [
+  ["wrong market", { sourceMarket: "Australian bauxite FOB" }, "schema_invalid"],
+  ["missing date", { sourcePublishedAt: "" }, "missing_explicit_timestamp"],
+  ["wrong currency", { currency: "CNY" }, "unsupported_currency"],
+  ["wrong unit", { unit: "oz" }, "unsupported_unit"],
 ] as const) {
   const invalidBauxite = mockedAdapter(
-    (source) => [quote(source)],
+    (source) => [quote(source, overrides)],
     [],
     {},
-    (source) =>
-      source.id === "bauxite"
-        ? { markdown: evidence }
-        : currentVisibleEvidence(source),
+    currentVisibleEvidence,
   );
-  await assert.rejects(
-    () =>
-      invalidBauxite.adapter.collectCommodity(
-        bauxiteSource,
-        new AbortController().signal,
-      ),
-    /no source-specific visible quote evidence/,
-    name,
-  );
+  const invalidBauxiteRun = await runCommodityIngestion({
+    adapter: invalidBauxite.adapter,
+    sources: [bauxiteSource],
+    now,
+  });
+  assert.equal(invalidBauxiteRun.quality.acceptedCount, 0, name);
+  assert.equal(invalidBauxiteRun.quality.rejectionReasons[reason], 1, name);
 }
 
 const stableHashMock = mockedAdapter((source) => [quote(source)]);
@@ -759,7 +636,7 @@ const timeMock = mockedAdapter((source) => [
   source.id === "lithium"
     ? {
         markdown:
-          "SunSirs current lithium carbonate quote, price date 2026-07-01: RMB 198,500/ton.",
+          "Trading Economics current lithium carbonate quote, price date 2026-07-01: CNY 198,500/ton.",
       }
     : currentVisibleEvidence(source),
 );
@@ -806,7 +683,7 @@ const duplicateMock = mockedAdapter((source) =>
     source.id === "lithium"
       ? {
           markdown:
-            "SunSirs history: 2026-07-15 RMB 197,000/ton. Current lithium carbonate quote, price date 2026-07-16: RMB 198,500/ton.",
+            "Trading Economics history: 2026-07-15 CNY 197,000/ton. Current lithium carbonate quote, price date 2026-07-16: CNY 198,500/ton.",
         }
       : currentVisibleEvidence(source),
 );
@@ -815,7 +692,9 @@ const duplicates = await runCommodityIngestion({
   now,
 });
 assert.equal(duplicates.publicationTier, "trusted");
-assert.equal(duplicates.quality.rejectionReasons.duplicate_candidate ?? 0, 0);
+// Two dated quotes for one identity: the newest is published and the superseded
+// one is quarantined rather than silently dropped.
+assert.equal(duplicates.quality.rejectionReasons.duplicate_candidate ?? 0, 1);
 const acceptedLithium = duplicates.decisions.find(
   (item) =>
     item.decision === "publish" && item.normalized?.id === "lithium",

@@ -14,9 +14,9 @@
       "reason": "All four governed blog sources currently fail publication: World Bank and ISS expose no machine-readable publication evidence, and AfDB/UNECA feeds are refused or yield no admissible dated candidates."
     },
     "commodity": {
-      "trustedRecords": { "observed": 2, "floor": 2 },
+      "trustedRecords": { "observed": 5, "floor": 4 },
       "expectedTotal": 5,
-      "reason": "Only cobalt and copper expose a current dated quote with valid unit and currency. Lithium, gold, and bauxite have no free source publishing admissible current quote evidence; Guinea bauxite FOB needs a licensed benchmark. The floor equals observed because losing either remaining identity is material."
+      "reason": "All five identities now publish a current dated quote: lithium, cobalt, copper, and gold from Trading Economics, and Guinea bauxite FOB from AluHub. The floor allows one identity to lapse transiently before alarming, since these are scraped market pages."
     }
   }
 }

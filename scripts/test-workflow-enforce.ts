@@ -281,9 +281,15 @@ async function verifyShippedBaseline(): Promise<void> {
 
   // The shipped baseline must still describe today's known gaps, so a green run
   // can never be mistaken for full coverage.
-  const result = evaluateEnforcement(allStepsSucceeded, actuals, shipped);
+  const currentActuals: CoverageActuals = {
+    intelligence: { sourcesSucceeded: 3, published: 8 },
+    blog: { sourcesSucceeded: 1, published: 0 },
+    commodity: { trustedRecords: 5, expectedTotal: 5 },
+  };
+  const result = evaluateEnforcement(allStepsSucceeded, currentActuals, shipped);
   assert.equal(result.status, "degraded");
   assert.equal(result.liveQualityRequired, false);
+  assert.deepEqual(result.regressions, []);
 }
 
 Promise.all([

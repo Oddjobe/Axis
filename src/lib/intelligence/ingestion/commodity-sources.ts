@@ -21,6 +21,12 @@ export const ECB_USD_PER_CNY_FORMULA =
 export const LITHIUM_CNY_TO_USD_FORMULA =
   "canonicalPrice = rawPrice * (usdPerEur / cnyPerEur)";
 
+export interface CommodityRenderAction {
+  type: "wait" | "scroll";
+  milliseconds?: number;
+  direction?: "up" | "down";
+}
+
 export interface CommoditySource {
   id: CommodityId;
   publisher: string;
@@ -30,6 +36,24 @@ export interface CommoditySource {
     publisher: string;
     canonicalUrl: string;
   }[];
+  /**
+   * Firecrawl strips boilerplate by default. Sources that render their quote
+   * outside the main-content heuristic must opt out of that filtering.
+   */
+  onlyMainContent?: boolean;
+  /**
+   * Browser actions run before the page is captured. Required for sources whose
+   * quote is rendered client-side after the initial response.
+   */
+  renderActions?: readonly CommodityRenderAction[];
+  /**
+   * The unit and currency the publisher actually prints, which is not always the
+   * canonical pair below. Extraction must capture the page verbatim and leave
+   * every conversion to the runner, so a converted value can never be published
+   * as if the source stated it.
+   */
+  sourceUnit: string;
+  sourceCurrency: string;
   unit: CommodityUnit;
   currency: "USD";
   market: string;
@@ -42,19 +66,20 @@ export interface CommoditySource {
 
 const maximumAgeMs = DATASET_TRUST_POLICIES.commodity.maximumAgeMs;
 
-export const ALPHA_VANTAGE_GOLD_SILVER_SPOT_URL =
-  "https://alphavantage.co/query?function=GOLD_SILVER_SPOT";
-
 export const COMMODITY_SOURCES: readonly CommoditySource[] = [
   {
     id: "lithium",
-    publisher: "SunSirs",
-    url: "https://www.sunsirs.com/uk/prodetail-1162.html",
-    canonicalUrl: "https://www.sunsirs.com/uk/prodetail-1162.html",
+    // SunSirs places its lithium carbonate table behind a member login, so the
+    // quote is unreachable by any scraping configuration.
+    publisher: "Trading Economics",
+    url: "https://tradingeconomics.com/commodity/lithium",
+    canonicalUrl: "https://tradingeconomics.com/commodity/lithium",
+    sourceUnit: "T",
+    sourceCurrency: "CNY",
     unit: "T",
     currency: "USD",
     market: "China lithium carbonate",
-    sourceQuality: 0.9,
+    sourceQuality: 0.92,
     minimumPrice: 3_000,
     maximumPrice: 150_000,
     maximumChangeRatio: 0.5,
@@ -65,6 +90,8 @@ export const COMMODITY_SOURCES: readonly CommoditySource[] = [
     publisher: "Trading Economics",
     url: "https://tradingeconomics.com/commodity/cobalt",
     canonicalUrl: "https://tradingeconomics.com/commodity/cobalt",
+    sourceUnit: "T",
+    sourceCurrency: "USD",
     unit: "T",
     currency: "USD",
     market: "LME cobalt",
@@ -79,6 +106,8 @@ export const COMMODITY_SOURCES: readonly CommoditySource[] = [
     publisher: "Trading Economics",
     url: "https://tradingeconomics.com/commodity/copper",
     canonicalUrl: "https://tradingeconomics.com/commodity/copper",
+    sourceUnit: "Lbs",
+    sourceCurrency: "USD",
     unit: "T",
     currency: "USD",
     market: "LME copper",
@@ -90,17 +119,17 @@ export const COMMODITY_SOURCES: readonly CommoditySource[] = [
   },
   {
     id: "gold",
-    publisher: "Kitco",
-    url: "https://www.kitco.com/charts/gold",
-    canonicalUrl: "https://www.kitco.com/charts/gold",
-    alternateProvenance: [{
-      publisher: "Alpha Vantage",
-      canonicalUrl: ALPHA_VANTAGE_GOLD_SILVER_SPOT_URL,
-    }],
+    // Kitco publishes a live ticker with no stated publication date, which can
+    // never satisfy the explicit-timestamp contract.
+    publisher: "Trading Economics",
+    url: "https://tradingeconomics.com/commodity/gold",
+    canonicalUrl: "https://tradingeconomics.com/commodity/gold",
+    sourceUnit: "t.oz",
+    sourceCurrency: "USD",
     unit: "OZ",
     currency: "USD",
     market: "Gold spot",
-    sourceQuality: 0.95,
+    sourceQuality: 0.92,
     minimumPrice: 500,
     maximumPrice: 10_000,
     maximumChangeRatio: 0.2,
@@ -111,6 +140,16 @@ export const COMMODITY_SOURCES: readonly CommoditySource[] = [
     publisher: "AluHub",
     url: "https://www.alu-hub.com/market-data",
     canonicalUrl: "https://www.alu-hub.com/market-data",
+    // The market data is a client-rendered dashboard; without waiting for it the
+    // page returns an empty shell.
+    onlyMainContent: false,
+    renderActions: [
+      { type: "wait", milliseconds: 6_000 },
+      { type: "scroll", direction: "down" },
+      { type: "wait", milliseconds: 3_000 },
+    ],
+    sourceUnit: "T",
+    sourceCurrency: "USD",
     unit: "T",
     currency: "USD",
     market: "Guinea bauxite FOB",

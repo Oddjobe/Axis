@@ -208,6 +208,12 @@ const UNIT_ALIASES: Readonly<Record<string, CommodityUnit>> = {
   OZ: "OZ",
   OUNCE: "OZ",
   "TROY OUNCE": "OZ",
+  // Trading Economics quotes gold as "USD/t.oz"; the currency prefix is stripped
+  // before lookup, leaving the troy-ounce form.
+  "T.OZ": "OZ",
+  "T OZ": "OZ",
+  "TOZ": "OZ",
+  "T.OZ.": "OZ",
   MT: "T",
 };
 

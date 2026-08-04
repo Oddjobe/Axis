@@ -273,6 +273,10 @@ export async function GET() {
     const trustedRows = await getLatestTrustedPublishedRecordsByIdentity(
         "commodity",
         COMMODITY_IDS,
+        // Commodity identities each render their own provenance and fall back
+        // individually, so partial trusted coverage is shown honestly rather
+        // than withheld until every identity is available.
+        { allowWithoutGlobalFlag: true },
     );
     if (
         trustedSnapshotUnavailable(trustedRows)

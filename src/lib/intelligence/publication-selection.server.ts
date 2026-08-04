@@ -221,11 +221,30 @@ export async function getTrustedPublishedRecords(
   ).slice(0, limit);
 }
 
+export interface TrustedIdentityReadOptions {
+  /**
+   * Read trusted rows even when global trusted publication is disabled.
+   *
+   * The global flag enforces an all-or-nothing contract because country scores
+   * must never be served from a partial release. Datasets that already render
+   * per-identity fallbacks — and label them as such — can safely surface the
+   * trusted rows they do have without waiting for that flag. Without this,
+   * validated records are written to trust storage every day and never read.
+   */
+  allowWithoutGlobalFlag?: boolean;
+}
+
 export async function getLatestTrustedPublishedRecordsByIdentity(
   dataset: RolloutDataset,
   identities: readonly string[],
+  options: TrustedIdentityReadOptions = {},
 ): Promise<LegacyRecord[] | null> {
-  if (!trustedPublicationSelectionEnabled()) return null;
+  if (
+    !trustedPublicationSelectionEnabled() &&
+    !options.allowWithoutGlobalFlag
+  ) {
+    return null;
+  }
   const results = await Promise.all(
     identities.map((identity) =>
       getLatestCurrentTrustedRecordByIdentity(
