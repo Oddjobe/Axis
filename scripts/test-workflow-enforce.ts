@@ -28,6 +28,10 @@ const baseline: KnownSourceGaps = {
       trustedRecords: { observed: 2, floor: 2 },
       expectedTotal: 5,
     },
+    countryScore: {
+      publishedCountries: { observed: 0, floor: 0 },
+      expectedTotal: 54,
+    },
   },
 };
 
@@ -46,6 +50,10 @@ const closedBaseline: KnownSourceGaps = {
     commodity: {
       trustedRecords: { observed: 5, floor: 5 },
       expectedTotal: 5,
+    },
+    countryScore: {
+      publishedCountries: { observed: 54, floor: 54 },
+      expectedTotal: 54,
     },
   },
 };
@@ -282,8 +290,8 @@ async function verifyShippedBaseline(): Promise<void> {
   // The shipped baseline must still describe today's known gaps, so a green run
   // can never be mistaken for full coverage.
   const currentActuals: CoverageActuals = {
-    intelligence: { sourcesSucceeded: 3, published: 8 },
-    blog: { sourcesSucceeded: 1, published: 0 },
+    intelligence: { sourcesSucceeded: 4, published: 7 },
+    blog: { sourcesSucceeded: 4, published: 6 },
     commodity: { trustedRecords: 5, expectedTotal: 5 },
   };
   const result = evaluateEnforcement(allStepsSucceeded, currentActuals, shipped);

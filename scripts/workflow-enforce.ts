@@ -38,6 +38,10 @@ export interface KnownSourceGaps {
       trustedRecords: CoverageBaseline;
       expectedTotal: number;
     };
+    countryScore: {
+      publishedCountries: CoverageBaseline;
+      expectedTotal: number;
+    };
   };
 }
 
@@ -165,6 +169,12 @@ function describeOpenGaps(baseline: KnownSourceGaps): string[] {
   if (trustedRecords.observed < expectedTotal) {
     gaps.push(
       `commodity: only ${trustedRecords.observed}/${expectedTotal} identities have admissible current quotes`,
+    );
+  }
+  const scores = baseline.datasets.countryScore;
+  if (scores.publishedCountries.observed < scores.expectedTotal) {
+    gaps.push(
+      `country score: only ${scores.publishedCountries.observed}/${scores.expectedTotal} countries are in a published trusted release`,
     );
   }
   return gaps;
