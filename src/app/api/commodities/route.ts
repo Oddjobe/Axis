@@ -31,7 +31,7 @@ const FALLBACK_DATA = [
     {
         id: "lithium",
         name: "LITHIUM (CARBONATE)",
-        price: 28189,
+        price: 28329,
         unit: "T",
         currency: "USD",
         trend: +3.8,
@@ -45,7 +45,7 @@ const FALLBACK_DATA = [
     {
         id: "cobalt",
         name: "COBALT (99.8%)",
-        price: 60259,
+        price: 60197,
         unit: "T",
         currency: "USD",
         trend: +0.0,
@@ -59,7 +59,7 @@ const FALLBACK_DATA = [
     {
         id: "copper",
         name: "COPPER (GRADE A)",
-        price: 12872,
+        price: 12860,
         unit: "T",
         currency: "USD",
         trend: +0.35,
@@ -73,7 +73,7 @@ const FALLBACK_DATA = [
     {
         id: "gold",
         name: "GOLD (SPOT)",
-        price: 4711,
+        price: 4674,
         unit: "OZ",
         currency: "USD",
         trend: +0.82,
@@ -87,7 +87,7 @@ const FALLBACK_DATA = [
     {
         id: "bauxite",
         name: "BAUXITE (GUINEA FOB)",
-        price: 61.38,
+        price: 61.61,
         unit: "T",
         currency: "USD",
         trend: -1.5,

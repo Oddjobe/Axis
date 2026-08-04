@@ -5,16 +5,16 @@ import { TrendingUp, TrendingDown } from "lucide-react";
 
 // Base synthetic data for critical African commodities
 const INITIAL_COMMODITIES = [
-    { id: "CO", title: "COBALT (LME)", price: 59150, unit: "$/MT", trend: "+", change: 0.42 },
-    { id: "LI", title: "LITHIUM CARBONATE", price: 23760, unit: "$/MT", trend: "+", change: 1.12 },
-    { id: "AU", title: "GOLD (SPOT)", price: 5194, unit: "$/OZ", trend: "+", change: 0.45 },
-    { id: "CU", title: "COPPER (COMEX)", price: 5.87, unit: "$/LB", trend: "+", change: 1.37 },
-    { id: "CC", title: "COCOA (ICE)", price: 8649, unit: "$/MT", trend: "+", change: 0.95 },
-    { id: "BR", title: "BRENT CRUDE", price: 92.44, unit: "$/BBL", trend: "+", change: 1.31 },
-    { id: "PT", title: "PLATINUM", price: 898, unit: "$/OZ", trend: "+", change: 0.71 },
-    { id: "UR", title: "URANIUM (U3O8)", price: 98.03, unit: "$/LB", trend: "+", change: 1.69 },
-    { id: "PD", title: "PALLADIUM", price: 1055, unit: "$/OZ", trend: "+", change: 1.25 },
-    { id: "NG", title: "NATURAL GAS", price: 2.47, unit: "$/MMBtu", trend: "+", change: 2.9 }
+    { id: "CO", title: "COBALT (LME)", price: 58901, unit: "$/MT", trend: "+", change: 0.42 },
+    { id: "LI", title: "LITHIUM CARBONATE", price: 23704, unit: "$/MT", trend: "+", change: 1.12 },
+    { id: "AU", title: "GOLD (SPOT)", price: 5208, unit: "$/OZ", trend: "+", change: 0.45 },
+    { id: "CU", title: "COPPER (COMEX)", price: 5.86, unit: "$/LB", trend: "+", change: 1.37 },
+    { id: "CC", title: "COCOA (ICE)", price: 8688, unit: "$/MT", trend: "+", change: 0.95 },
+    { id: "BR", title: "BRENT CRUDE", price: 91.98, unit: "$/BBL", trend: "+", change: 1.31 },
+    { id: "PT", title: "PLATINUM", price: 895, unit: "$/OZ", trend: "+", change: 0.71 },
+    { id: "UR", title: "URANIUM (U3O8)", price: 98.35, unit: "$/LB", trend: "+", change: 1.69 },
+    { id: "PD", title: "PALLADIUM", price: 1051, unit: "$/OZ", trend: "+", change: 1.25 },
+    { id: "NG", title: "NATURAL GAS", price: 2.46, unit: "$/MMBtu", trend: "+", change: 2.9 }
 ];
 
 export default function ContinentalGoalsTicker() {
