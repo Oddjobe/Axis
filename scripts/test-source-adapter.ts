@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 
 import {
+  articleAuthor,
   createProductionIngestionAdapter,
   normalizeRssFeedItems,
 } from "../src/lib/intelligence/ingestion/adapters.server";
@@ -284,9 +285,139 @@ async function main(): Promise<void> {
     globalThis.fetch = originalFetch;
   }
 
+  await assertFirecrawlFeedRecovery();
+  assertArticleAuthorExtraction();
+  await assertDefaultTagFallback();
+
   console.log(
-    "Source adapter fixtures passed (direct RSS recovery and original-page fail-closed behavior).",
+    "Source adapter fixtures passed (direct RSS recovery, Firecrawl feed recovery, article bylines, default tag, and original-page fail-closed behavior).",
   );
+}
+
+/**
+ * Several publishers serve their feed to browsers but return HTTP 403 to CI.
+ * The feed must then be recovered through Firecrawl without changing provenance.
+ */
+async function assertFirecrawlFeedRecovery(): Promise<void> {
+  const afdb = blogSource("African Development Bank Opinion");
+  const originalFetch = globalThis.fetch;
+  let firecrawlCalls = 0;
+  const feed =
+    `<?xml version="1.0"?><rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><item>` +
+    `<title>AfDB recovered post</title>` +
+    `<link>https://blogs.afdb.org/recovered-post</link>` +
+    `<description>An African Development Bank source excerpt with enough detail for deterministic validation.</description>` +
+    `<pubDate>Wed, 29 Jul 2026 12:58:05 GMT</pubDate>` +
+    `<dc:creator>AfDB Author</dc:creator><category>Development finance</category>` +
+    `</item></channel></rss>`;
+  try {
+    globalThis.fetch = async (input) => {
+      const url = String(input);
+      if (url === afdb.rssUrl) {
+        return new Response("blocked", { status: 403, statusText: "Forbidden" });
+      }
+      if (url.startsWith("https://api.firecrawl.dev/")) {
+        firecrawlCalls += 1;
+        assert.match(url, /\/v2\/scrape$/);
+        return Response.json({ success: true, data: { rawHtml: feed } });
+      }
+      throw new Error(`Unexpected fetch ${url}`);
+    };
+    const adapter = createProductionIngestionAdapter({
+      firecrawlApiKey: "fixture-key",
+      deadlineAt: Date.now() + 60_000,
+    });
+    const candidates = await adapter.collectBlog(
+      afdb,
+      new AbortController().signal,
+    );
+    assert.equal(firecrawlCalls > 0, true, "the blocked feed must be retried through Firecrawl");
+    assert.equal(candidates.length, 1);
+    const evidence = candidates[0].sourceEvidence as {
+      canonicalUrl: string | null;
+      sourcePublishedAt: string | null;
+    };
+    // Provenance still comes from the feed document, not from the transport.
+    assert.equal(evidence.canonicalUrl, "https://blogs.afdb.org/recovered-post");
+    assert.equal(evidence.sourcePublishedAt, "2026-07-29T12:58:05.000Z");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+
+  // Without Firecrawl configured, a blocked feed still fails closed.
+  const offline = createProductionIngestionAdapter({ deadlineAt: Date.now() + 60_000 });
+  const blockedFetch = globalThis.fetch;
+  try {
+    globalThis.fetch = async () =>
+      new Response("blocked", { status: 403, statusText: "Forbidden" });
+    await assert.rejects(
+      () => offline.collectBlog(afdb, new AbortController().signal),
+      /exhausted fallbacks/,
+    );
+  } finally {
+    globalThis.fetch = blockedFetch;
+  }
+}
+
+function assertArticleAuthorExtraction(): void {
+  // "By" followed by a profile link on a later line (ISS Africa Today).
+  assert.equal(
+    articleAuthor(
+      "Published on 04 August 2026 in\n[ISS Today](https://issafrica.org/iss-today)\n\nBy\n\n[Ottilia Anna Maunganidze](https://issafrica.org/author/ottilia-anna-maunganidze)",
+    ),
+    "Ottilia Anna Maunganidze",
+  );
+  // Contributor links with no "By" label at all (World Bank Blogs).
+  assert.equal(
+    articleAuthor(
+      "# Five insights\n\n- [Andrew Dabalen](https://blogs.worldbank.org/en/team/a/andrew-dabalen)\n- [Thomas Melonio](https://blogs.worldbank.org/en/team/t/thomas-melonio)\n\nJuly 01, 2026",
+    ),
+    "Andrew Dabalen",
+  );
+  assert.equal(articleAuthor("By Jane Doe wrote this"), "Jane Doe");
+  // Ordinary links must never be mistaken for a byline.
+  assert.equal(
+    articleAuthor("Read [the report](https://example.test/reports/2026) today."),
+    "",
+  );
+}
+
+/**
+ * `tag` is an AXIS display facet with a two-character minimum. Sources that
+ * publish no category fall back to the tag declared in the registry.
+ */
+async function assertDefaultTagFallback(): Promise<void> {
+  const uneca = blogSource("UNECA Blogs");
+  assert.equal(uneca.defaultTag, "development");
+  const originalFetch = globalThis.fetch;
+  try {
+    globalThis.fetch = async (input) => {
+      const url = String(input);
+      if (url === uneca.rssUrl) {
+        return new Response(
+          `<?xml version="1.0"?><rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><item>` +
+            `<title>[Blog] UNECA untagged post</title>` +
+            `<link>https://www.uneca.org/stories/untagged-post</link>` +
+            `<description><![CDATA[<span property="dc:date" content="2026-07-30T00:00:00+03:00">30 July, 2026</span><p>UNECA source excerpt with enough detail for deterministic validation.</p>]]></description>` +
+            `<pubDate>Thu, 30 Jul 2026 10:00:00 GMT</pubDate><dc:creator>UNECA Author</dc:creator>` +
+            `</item></channel></rss>`,
+          { headers: { "Content-Type": "application/rss+xml" } },
+        );
+      }
+      throw new Error(`Unexpected fetch ${url}`);
+    };
+    const adapter = createProductionIngestionAdapter({
+      deadlineAt: Date.now() + 60_000,
+    });
+    const candidates = await adapter.collectBlog(
+      uneca,
+      new AbortController().signal,
+    );
+    assert.equal(candidates.length, 1);
+    assert.equal(candidates[0].tag, "development");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 }
 
 void main().catch((error: unknown) => {

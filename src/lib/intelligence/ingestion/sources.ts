@@ -21,6 +21,7 @@ export interface IntelligenceSource {
   name: string;
   url: string;
   rssUrl?: string;
+  defaultTag?: string;
   role?: SourceRole;
   publisherType?: PublisherType;
   allowedHosts?: readonly string[];
@@ -32,6 +33,11 @@ export interface BlogSource {
   name: string;
   url: string;
   rssUrl?: string;
+  /**
+   * Display tag applied when the feed or article publishes no category of its
+   * own. Declared here so the categorisation stays versioned and reviewable.
+   */
+  defaultTag?: string;
   role?: SourceRole;
   publisherType?: PublisherType;
   allowedHosts?: readonly string[];
@@ -170,6 +176,7 @@ export const BLOG_SOURCES: readonly BlogSource[] = [
   {
     name: "World Bank Africa Can End Poverty",
     url: "https://blogs.worldbank.org/en/africacan",
+    defaultTag: "development",
     ...governed({
       publisherType: "multilateral",
       allowedHosts: ["blogs.worldbank.org"],
@@ -180,6 +187,7 @@ export const BLOG_SOURCES: readonly BlogSource[] = [
     name: "African Development Bank Opinion",
     url: "https://blogs.afdb.org/",
     rssUrl: "https://blogs.afdb.org/rss.xml",
+    defaultTag: "development",
     ...governed({
       publisherType: "multilateral",
       allowedHosts: ["blogs.afdb.org"],
@@ -190,6 +198,7 @@ export const BLOG_SOURCES: readonly BlogSource[] = [
     name: "UNECA Blogs",
     url: "https://www.uneca.org/blogs",
     rssUrl: "https://www.uneca.org/rss.xml",
+    defaultTag: "development",
     ...governed({
       publisherType: "multilateral",
       allowedHosts: ["uneca.org"],
@@ -199,6 +208,7 @@ export const BLOG_SOURCES: readonly BlogSource[] = [
   {
     name: "ISS Africa Today",
     url: "https://issafrica.org/iss-today",
+    defaultTag: "security",
     ...governed({
       publisherType: "market-analysis",
       allowedHosts: ["issafrica.org"],

@@ -127,7 +127,19 @@ function feedAuthor(item: RawCandidate): string {
   return "";
 }
 
-function feedTag(item: RawCandidate): string {
+/**
+ * Resolves the display tag for a feed item.
+ *
+ * `tag` is an AXIS display facet rather than publisher metadata, and the
+ * publication gate requires at least two characters. Feeds that publish no
+ * category fall back to the tag declared for the source in the registry, so the
+ * categorisation stays versioned and reviewable instead of being invented per
+ * record at runtime.
+ */
+function feedTag(
+  item: RawCandidate,
+  source?: IntelligenceSource | BlogSource,
+): string {
   for (const field of ["category", "categories", "tag", "tags"]) {
     const value = item[field];
     if (typeof value === "string" && value.trim()) return value.trim();
@@ -139,7 +151,7 @@ function feedTag(item: RawCandidate): string {
       if (tag) return tag.trim();
     }
   }
-  return "";
+  return source?.defaultTag?.trim() ?? "";
 }
 
 export function normalizeRssFeedItems(
@@ -181,7 +193,7 @@ export function normalizeRssFeedItems(
       summary: excerpt,
       excerpt,
       author: feedAuthor(item),
-      tag: feedTag(item),
+      tag: feedTag(item, source),
       url: canonicalUrl ?? undefined,
       sourcePublishedAt: timestamp?.value,
       sourceEvidence: evidence,
@@ -194,7 +206,9 @@ function arrayAt(value: unknown, key: "articles" | "posts"): RawCandidate[] {
   const record = value as Record<string, unknown>;
   const direct = record[key];
   if (Array.isArray(direct)) return direct as RawCandidate[];
-  for (const nestedKey of ["extract", "data"]) {
+  // `json` is the v2 structured-output key; `extract` is retained so captured v1
+  // fixtures keep parsing.
+  for (const nestedKey of ["json", "extract", "data"]) {
     const nested = record[nestedKey];
     if (typeof nested === "object" && nested !== null) {
       const items = arrayAt(nested, key);
@@ -462,6 +476,32 @@ function pageDateTimestamp(
   });
 }
 
+const AUTHOR_PROFILE_PATH = /\/(?:authors?|team|contributors?|profiles?)\//i;
+
+/**
+ * Extracts the article byline from rendered page text.
+ *
+ * Publishers express authorship differently: some print "By Jane Doe", others
+ * render the name as a markdown link — with or without a "By" label — pointing
+ * at the contributor's profile page. Both forms are page evidence, so both are
+ * read deterministically rather than being inferred.
+ */
+export function articleAuthor(body: string): string {
+  const labelled = body.match(
+    /\bBy\b[ \t:]*(?:\r?\n)*[ \t]*(?:\[([^\]]{2,80})\]\([^)]*\)|([A-Z][\p{L}'’.-]+(?: [A-Z][\p{L}'’.-]+){1,5}))/u,
+  );
+  const named = (labelled?.[1] ?? labelled?.[2] ?? "").trim();
+  if (named) return named;
+
+  for (const match of body.matchAll(/\[([^\]]{2,80})\]\(([^)]+)\)/g)) {
+    const [, text, href] = match;
+    if (AUTHOR_PROFILE_PATH.test(href) && /\p{L}/u.test(text)) {
+      return text.trim();
+    }
+  }
+  return "";
+}
+
 function pageBodyPublicationEvidence(
   source: IntelligenceSource | BlogSource | undefined,
   markdown: string,
@@ -471,15 +511,15 @@ function pageBodyPublicationEvidence(
   }
 
   const body = markdown.slice(0, 12_000);
-  const byline =
-    body.match(/\bBy\s+([A-Z][\p{L}'’.-]+(?: [A-Z][\p{L}'’.-]+){1,5})\b/u)
-      ?.[1] ?? "";
+  const byline = articleAuthor(body);
   if (source.name === "World Bank Africa Can End Poverty") {
     const publisherMarker = /\b(?:World Bank Blogs|Africa Can End Poverty)\b/i
       .test(body);
+    // The article header prints the date on its own line ("July 01, 2026"); an
+    // explicit "Published on" prefix is not used.
     const published = body.match(
       /\bPublished\s+on\s*:?\s*([A-Z][a-z]+\s+\d{1,2},\s+\d{4})\b/i,
-    )?.[1];
+    )?.[1] ?? body.match(/\b([A-Z][a-z]+\s+\d{1,2},\s+\d{4})\b/)?.[1];
     return {
       timestamp: publisherMarker && published
         ? pageDateTimestamp(published)
@@ -639,6 +679,12 @@ function mergePageEvidence(
     return {
       ...candidate,
       modelCandidate: candidate,
+      // The publication gate requires a display tag; fall back to the value
+      // declared for this source when the article exposes no category.
+      ...(source.defaultTag &&
+      !(typeof candidate.tag === "string" && candidate.tag.trim().length >= 2)
+        ? { tag: source.defaultTag }
+        : {}),
       ...(supported
         ? {
             title: pageEvidence.title,
@@ -672,35 +718,91 @@ export function createProductionIngestionAdapter(
         })
       : null;
 
+  /**
+   * Fetches a feed directly, falling back to Firecrawl when the publisher blocks
+   * the request (several return HTTP 403 to CI runners while serving the same
+   * feed to a browser). Firecrawl is only a transport here: the canonical URL,
+   * publisher, and publication date still come from the feed document itself.
+   */
+  async function fetchFeedDocument(
+    source: IntelligenceSource | BlogSource,
+    rssUrl: string,
+    signal: AbortSignal,
+  ): Promise<string> {
+    try {
+      return await fetchWithBoundedRetry(
+        `RSS ${source.name}`,
+        rssUrl,
+        {
+          headers: {
+            Accept: "application/rss+xml, application/xml, text/xml;q=0.9, */*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Cache-Control": "no-cache",
+            Referer: source.url,
+            "User-Agent": "AXIS-Africa-Ingestion/1.0 (+https://axisafrica.co)",
+          },
+        },
+        async (response, attemptSignal) => {
+          const body = await response.text();
+          attemptSignal.throwIfAborted();
+          return body;
+        },
+        {
+          attempts: 3,
+          timeoutMs: 20_000,
+          deadlineAt: options.deadlineAt,
+          signal,
+        },
+      );
+    } catch (error) {
+      signal.throwIfAborted();
+      if (!options.firecrawlApiKey) throw error;
+      const payload = await fetchWithBoundedRetry(
+        `Firecrawl feed ${source.name}`,
+        "https://api.firecrawl.dev/v2/scrape",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${options.firecrawlApiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            url: rssUrl,
+            formats: ["rawHtml"],
+            maxAge: 0,
+            onlyMainContent: false,
+          }),
+        },
+        async (response, attemptSignal) => {
+          const body: unknown = await response.json();
+          attemptSignal.throwIfAborted();
+          return body;
+        },
+        {
+          attempts: 2,
+          timeoutMs: 45_000,
+          deadlineAt: options.deadlineAt,
+          signal,
+        },
+      );
+      signal.throwIfAborted();
+      const document = recordOf(recordOf(payload).data).rawHtml;
+      if (typeof document !== "string" || !document.includes("<item")) {
+        throw error;
+      }
+      logger.warn?.(
+        `RSS ${source.name} was blocked directly; recovered the feed through Firecrawl.`,
+      );
+      return document;
+    }
+  }
+
   async function rss(
     source: IntelligenceSource | BlogSource,
     rssUrl: string,
     signal: AbortSignal,
   ): Promise<FeedCandidate[]> {
-    const text = await fetchWithBoundedRetry(
-      `RSS ${source.name}`,
-      rssUrl,
-      {
-        headers: {
-          Accept: "application/rss+xml, application/xml, text/xml;q=0.9, */*;q=0.8",
-          "Accept-Language": "en-US,en;q=0.9",
-          "Cache-Control": "no-cache",
-          Referer: source.url,
-          "User-Agent": "AXIS-Africa-Ingestion/1.0 (+https://axisafrica.co)",
-        },
-      },
-      async (response, attemptSignal) => {
-        const body = await response.text();
-        attemptSignal.throwIfAborted();
-        return body;
-      },
-      {
-        attempts: 3,
-        timeoutMs: 20_000,
-        deadlineAt: options.deadlineAt,
-        signal,
-      },
-    );
+    const text = await fetchFeedDocument(source, rssUrl, signal);
     signal.throwIfAborted();
     const feed = await parser.parseString(text);
     signal.throwIfAborted();
@@ -796,14 +898,21 @@ export function createProductionIngestionAdapter(
     }
     const payload = await fetchWithBoundedRetry(
       `Firecrawl ${label}`,
-      "https://api.firecrawl.dev/v1/scrape",
+      "https://api.firecrawl.dev/v2/scrape",
       {
         method: "POST",
         headers: {
           Authorization: `Bearer ${options.firecrawlApiKey}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ url, formats: ["markdown"] }),
+        body: JSON.stringify({
+          url,
+          formats: ["markdown"],
+          // Firecrawl serves a cached copy for up to two days by default, which
+          // would let a daily run treat an old page as today's evidence.
+          maxAge: 0,
+          onlyMainContent: false,
+        }),
       },
       async (response, attemptSignal) => {
         const body: unknown = await response.json();
@@ -900,7 +1009,7 @@ export function createProductionIngestionAdapter(
     }
     const payload = await fetchWithBoundedRetry(
       `Firecrawl ${label}`,
-      "https://api.firecrawl.dev/v1/scrape",
+      "https://api.firecrawl.dev/v2/scrape",
       {
         method: "POST",
         headers: {
@@ -909,8 +1018,12 @@ export function createProductionIngestionAdapter(
         },
         body: JSON.stringify({
           url,
-          formats: ["extract", "markdown"],
-          extract: { prompt, schema: firecrawlSafeSchema(schema) as never },
+          formats: [
+            "markdown",
+            { type: "json", prompt, schema: firecrawlSafeSchema(schema) },
+          ],
+          maxAge: 0,
+          onlyMainContent: false,
         }),
       },
       async (response, attemptSignal) => {
