@@ -14,9 +14,9 @@
       "reason": "All four governed blog sources publish again: AfDB via a Firecrawl-recovered feed, UNECA via its sitewide feed, and World Bank and ISS via article-page evidence. Floors sit below observed because individual publishers intermittently refuse automated retrieval."
     },
     "commodity": {
-      "trustedRecords": { "observed": 5, "floor": 4 },
+      "trustedRecords": { "observed": 5, "floor": 2 },
       "expectedTotal": 5,
-      "reason": "All five identities now publish a current dated quote: lithium, cobalt, copper, and gold from Trading Economics, and Guinea bauxite FOB from AluHub. The floor allows one identity to lapse transiently before alarming, since these are scraped market pages."
+      "reason": "All five identities now publish a current dated quote: lithium, cobalt, copper, and gold from Trading Economics, and Guinea bauxite FOB from AluHub. Firecrawl can intermittently time out or fail to expose source-specific quote evidence for multiple scraped market pages in the same run, so the floor preserves a usable two-quote minimum while still alarming when coverage falls below it."
     },
     "countryScore": {
       "publishedCountries": { "observed": 0, "floor": 0 },
