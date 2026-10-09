@@ -109,7 +109,7 @@ const waitForSpeechVoices = () => new Promise<SpeechSynthesisVoice[]>((resolve) 
     const timeoutId = window.setTimeout(() => {
         synth.removeEventListener("voiceschanged", handleVoicesChanged);
         resolve(synth.getVoices());
-    }, 500);
+    }, 1500);
 
     const handleVoicesChanged = () => {
         window.clearTimeout(timeoutId);
@@ -120,19 +120,28 @@ const waitForSpeechVoices = () => new Promise<SpeechSynthesisVoice[]>((resolve) 
 });
 
 const getPreferredSpeechVoice = (voices: SpeechSynthesisVoice[]) => {
+    const englishVoices = voices.filter((voice) => voice.lang.toLowerCase().startsWith("en"));
+    if (englishVoices.length === 0) {
+        return voices[0];
+    }
+
     const scoreVoice = (voice: SpeechSynthesisVoice) => {
         const name = voice.name.toLowerCase();
-        const langScore = voice.lang.toLowerCase().startsWith("en") ? 100 : 0;
+        const langScore = voice.lang.toLowerCase().startsWith("en") ? 120 : 0;
         const qualityScore =
-            (name.includes("natural") || name.includes("neural") || name.includes("online") ? 80 : 0) +
-            (name.includes("microsoft") || name.includes("google") ? 35 : 0) +
-            (name.includes("aria") || name.includes("jenny") || name.includes("guy") || name.includes("samantha") ? 25 : 0) -
-            (name.includes("compact") ? 40 : 0);
+            (name.includes("natural") || name.includes("neural") || name.includes("online") ? 90 : 0) +
+            (name.includes("wave") || name.includes("premium") || name.includes("enhanced") ? 75 : 0) +
+            (name.includes("microsoft") || name.includes("google") || name.includes("apple") ? 30 : 0) +
+            (name.includes("aria") || name.includes("jenny") || name.includes("samantha") || name.includes("ava") || name.includes("olivia") ? 25 : 0) +
+            (voice.default ? 20 : 0) +
+            (voice.localService === false ? 12 : 0) -
+            (name.includes("compact") ? 40 : 0) -
+            (name.includes("desktop") && !name.includes("natural") ? 20 : 0);
 
         return langScore + qualityScore;
     };
 
-    return [...voices].sort((a, b) => scoreVoice(b) - scoreVoice(a))[0];
+    return [...englishVoices].sort((a, b) => scoreVoice(b) - scoreVoice(a) || a.name.localeCompare(b.name))[0];
 };
 
 import { isoToFlag } from "@/lib/flags";
@@ -321,6 +330,8 @@ export default function FrictionEngine({ mode, filterCountries, onSelectCountry,
     }, []);
 
     const speechUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+    const audioElementRef = useRef<HTMLAudioElement | null>(null);
+    const audioUrlRef = useRef<string | null>(null);
 
     const [now, setNow] = useState<number | null>(null);
 
@@ -459,17 +470,30 @@ export default function FrictionEngine({ mode, filterCountries, onSelectCountry,
         );
     });
 
-    const stopAudio = () => {
+    const stopAudio = useCallback(() => {
         if (typeof window !== "undefined" && "speechSynthesis" in window) {
             window.speechSynthesis.cancel();
         }
+
+        if (audioElementRef.current) {
+            audioElementRef.current.pause();
+            audioElementRef.current.currentTime = 0;
+            audioElementRef.current.src = "";
+            audioElementRef.current.load();
+        }
+
+        if (audioUrlRef.current?.startsWith("blob:")) {
+            URL.revokeObjectURL(audioUrlRef.current);
+        }
+
+        audioUrlRef.current = null;
         speechUtteranceRef.current = null;
         setIsPlayingAudio(false);
         setAudioPaused(false);
-    };
+    }, []);
 
     const toggleAudioBrief = useCallback(async () => {
-        const topAlerts = (filteredAlerts || []).slice(0, 5);
+        const topAlerts = (filteredAlerts || []).slice(0, 3);
         if (topAlerts.length === 0) return;
 
         if (isPlayingAudio && !audioPaused) {
@@ -488,25 +512,87 @@ export default function FrictionEngine({ mode, filterCountries, onSelectCountry,
             return;
         }
 
+        const introText = `Axis intelligence briefing for ${mode.toLowerCase()} events.`;
+        const briefing = [
+            introText,
+            ...topAlerts.map((alert, index) => {
+                const summary = (alert.summary || "").replace(/\s+/g, " ").trim();
+                return `Alert ${index + 1}. ${alert.title}. ${summary}`;
+            }),
+        ].join(" ");
+
+        const audioElement = audioElementRef.current ?? new Audio();
+        audioElementRef.current = audioElement;
+        audioElement.pause();
+        audioElement.currentTime = 0;
+        audioElement.src = "";
+        audioElement.load();
+
+        if (typeof window !== "undefined" && "speechSynthesis" in window) {
+            window.speechSynthesis.cancel();
+        }
+
+        try {
+            const response = await fetch("/api/voice/briefing", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    text: briefing,
+                    voice: process.env.NEXT_PUBLIC_FOUNDRY_TTS_VOICE || "ash",
+                }),
+            });
+
+            if (response.ok) {
+                const blob = await response.blob();
+                const audioUrl = URL.createObjectURL(blob);
+                if (audioUrlRef.current?.startsWith("blob:")) {
+                    URL.revokeObjectURL(audioUrlRef.current);
+                }
+                audioUrlRef.current = audioUrl;
+                audioElement.src = audioUrl;
+                audioElement.onended = () => {
+                    speechUtteranceRef.current = null;
+                    setIsPlayingAudio(false);
+                    setAudioPaused(false);
+                    if (audioUrlRef.current?.startsWith("blob:")) {
+                        URL.revokeObjectURL(audioUrlRef.current);
+                    }
+                    audioUrlRef.current = null;
+                };
+                audioElement.onerror = () => {
+                    console.warn("Hosted speech playback failed. Falling back to browser speech.");
+                    if (audioUrlRef.current?.startsWith("blob:")) {
+                        URL.revokeObjectURL(audioUrlRef.current);
+                    }
+                    audioUrlRef.current = null;
+                    audioElement.src = "";
+                    audioElement.load();
+                    throw new Error("Hosted speech playback failed");
+                };
+                speechUtteranceRef.current = null;
+                setIsPlayingAudio(true);
+                setAudioPaused(false);
+                await audioElement.play();
+                return;
+            }
+        } catch (error) {
+            console.warn("Falling back to browser speech synthesis", error);
+        }
+
         if (typeof window === "undefined" || !("speechSynthesis" in window)) {
             console.warn("Speech synthesis is not available in this browser.");
             return;
         }
 
-        const introText = `Commencing Axis Intelligence Briefing for ${mode} events.`;
-        const briefing = [
-            introText,
-            ...topAlerts.map((alert, index) => `Alert ${index + 1}. ${alert.title}. ${alert.summary}`)
-        ].join(" ");
-
-        window.speechSynthesis.cancel();
-
         const utterance = new SpeechSynthesisUtterance(briefing);
         const voice = getPreferredSpeechVoice(await waitForSpeechVoices());
         if (voice) utterance.voice = voice;
         utterance.lang = voice?.lang || "en-US";
-        utterance.rate = 0.88;
-        utterance.pitch = 1;
+        utterance.rate = 0.95;
+        utterance.pitch = 1.02;
+        utterance.volume = 1;
         utterance.onend = () => {
             speechUtteranceRef.current = null;
             setIsPlayingAudio(false);
@@ -529,7 +615,7 @@ export default function FrictionEngine({ mode, filterCountries, onSelectCountry,
         return () => {
             stopAudio();
         };
-    }, []);
+    }, [stopAudio]);
 
     return (
         <aside className="w-full lg:w-96 border-l border-border bg-panel backdrop-blur-sm flex flex-col shrink-0 transition-colors overflow-hidden">
