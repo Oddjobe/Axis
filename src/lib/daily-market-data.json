@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-10-09T00:00:00.000Z",
+  "generatedAt": "2026-10-09T20:27:58.040Z",
   "commodityFallbacks": [
     {
       "id": "lithium",
       "name": "LITHIUM (CARBONATE)",
-      "price": 28648,
+      "price": 28817,
       "unit": "T",
       "currency": "USD",
       "trend": 3.8,
@@ -19,7 +19,7 @@
     {
       "id": "cobalt",
       "name": "COBALT (99.8%)",
-      "price": 64174,
+      "price": 63813,
       "unit": "T",
       "currency": "USD",
       "trend": 0,
@@ -33,7 +33,7 @@
     {
       "id": "copper",
       "name": "COPPER (GRADE A)",
-      "price": 12813,
+      "price": 12865,
       "unit": "T",
       "currency": "USD",
       "trend": 0.35,
@@ -47,7 +47,7 @@
     {
       "id": "gold",
       "name": "GOLD (SPOT)",
-      "price": 4904,
+      "price": 4918,
       "unit": "OZ",
       "currency": "USD",
       "trend": 0.82,
@@ -61,7 +61,7 @@
     {
       "id": "bauxite",
       "name": "BAUXITE (GUINEA FOB)",
-      "price": 62.2,
+      "price": 62.03,
       "unit": "T",
       "currency": "USD",
       "trend": -1.5,
@@ -77,7 +77,7 @@
     {
       "id": "CO",
       "title": "COBALT (LME)",
-      "price": 57224,
+      "price": 57089,
       "unit": "$/MT",
       "trend": "+",
       "change": 0.42
@@ -85,7 +85,7 @@
     {
       "id": "LI",
       "title": "LITHIUM CARBONATE",
-      "price": 23646,
+      "price": 23597,
       "unit": "$/MT",
       "trend": "+",
       "change": 1.12
@@ -93,7 +93,7 @@
     {
       "id": "AU",
       "title": "GOLD (SPOT)",
-      "price": 5287,
+      "price": 5310,
       "unit": "$/OZ",
       "trend": "+",
       "change": 0.45
@@ -101,7 +101,7 @@
     {
       "id": "CU",
       "title": "COPPER (COMEX)",
-      "price": 5.99,
+      "price": 5.98,
       "unit": "$/LB",
       "trend": "+",
       "change": 1.37
@@ -109,7 +109,7 @@
     {
       "id": "CC",
       "title": "COCOA (ICE)",
-      "price": 8632,
+      "price": 8667,
       "unit": "$/MT",
       "trend": "+",
       "change": 0.95
@@ -117,7 +117,7 @@
     {
       "id": "BR",
       "title": "BRENT CRUDE",
-      "price": 93.52,
+      "price": 93.45,
       "unit": "$/BBL",
       "trend": "+",
       "change": 1.31
@@ -125,7 +125,7 @@
     {
       "id": "PT",
       "title": "PLATINUM",
-      "price": 919,
+      "price": 921,
       "unit": "$/OZ",
       "trend": "+",
       "change": 0.71
@@ -133,7 +133,7 @@
     {
       "id": "UR",
       "title": "URANIUM (U3O8)",
-      "price": 94.39,
+      "price": 93.97,
       "unit": "$/LB",
       "trend": "+",
       "change": 1.69
@@ -141,7 +141,7 @@
     {
       "id": "PD",
       "title": "PALLADIUM",
-      "price": 1035,
+      "price": 1031,
       "unit": "$/OZ",
       "trend": "+",
       "change": 1.25
@@ -149,7 +149,7 @@
     {
       "id": "NG",
       "title": "NATURAL GAS",
-      "price": 2.56,
+      "price": 2.55,
       "unit": "$/MMBtu",
       "trend": "+",
       "change": 2.9
