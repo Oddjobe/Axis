@@ -22,83 +22,12 @@ import {
 } from '@/lib/intelligence/ingestion/commodity-sources';
 import { getPublicationPresentation } from '@/lib/intelligence/publication-health';
 import { derivePublicTrustState } from '@/lib/intelligence/trust-health';
+import dailyMarketData from '@/lib/daily-market-data.json';
 
 export const revalidate = 3600; // Revalidate every hour
 
-// Verified benchmark prices as of April 12, 2026
-// Sources: Kitco, LME, TradingEconomics, SunSirs, S&P Global Platts
-const FALLBACK_DATA = [
-    {
-        id: "lithium",
-        name: "LITHIUM (CARBONATE)",
-        price: 28648,
-        unit: "T",
-        currency: "USD",
-        trend: +3.8,
-        source: "SunSirs / Benchmark Mineral",
-        sourceUrl: "https://www.sunsirs.com/uk/prodetail-1162.html",
-        lastUpdated: "2026-10-09",
-        frequency: "weekly",
-        category: "CRITICAL",
-        color: "#3b82f6"
-    },
-    {
-        id: "cobalt",
-        name: "COBALT (99.8%)",
-        price: 64174,
-        unit: "T",
-        currency: "USD",
-        trend: +0.0,
-        source: "LME / TradingEconomics",
-        sourceUrl: "https://tradingeconomics.com/commodity/cobalt",
-        lastUpdated: "2026-10-09",
-        frequency: "weekly",
-        category: "CRITICAL",
-        color: "#10b981"
-    },
-    {
-        id: "copper",
-        name: "COPPER (GRADE A)",
-        price: 12813,
-        unit: "T",
-        currency: "USD",
-        trend: +0.35,
-        source: "LME / Westmetall",
-        sourceUrl: "https://tradingeconomics.com/commodity/copper",
-        lastUpdated: "2026-10-09",
-        frequency: "daily",
-        category: "STRATEGIC",
-        color: "#f59e0b"
-    },
-    {
-        id: "gold",
-        name: "GOLD (SPOT)",
-        price: 4904,
-        unit: "OZ",
-        currency: "USD",
-        trend: +0.82,
-        source: "LBMA / Kitco",
-        sourceUrl: "https://www.kitco.com/gold-price-today-usa/",
-        lastUpdated: "2026-10-09",
-        frequency: "daily",
-        category: "RESERVE",
-        color: "#fbbf24"
-    },
-    {
-        id: "bauxite",
-        name: "BAUXITE (GUINEA FOB)",
-        price: 62.20,
-        unit: "T",
-        currency: "USD",
-        trend: -1.5,
-        source: "S&P Global Platts / IndexBox",
-        sourceUrl: "https://www.spglobal.com/commodityinsights/",
-        lastUpdated: "2026-10-09",
-        frequency: "monthly",
-        category: "REFRACTORY",
-        color: "#ef4444"
-    }
-];
+// Generated benchmark snapshot. Trusted/live records still overlay each identity.
+const FALLBACK_DATA = dailyMarketData.commodityFallbacks;
 
 type CommodityRow = Record<string, unknown>;
 

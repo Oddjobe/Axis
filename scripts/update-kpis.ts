@@ -1,13 +1,17 @@
 import FirecrawlApp from "@mendable/firecrawl-js";
 import fs from "fs";
-import path from "path";
 import * as dotenv from "dotenv";
+
+import {
+    resolveGeneratedDataPath,
+    writeGeneratedJson,
+} from "./generated-data-writer";
 
 dotenv.config({ path: ".env.local" });
 
 const FIRECRAWL_API_KEY = process.env.FIRECRAWL_API_KEY;
 
-const KPI_FILE = path.join(__dirname, "../src/lib/kpi-data.json");
+const KPI_FILE = resolveGeneratedDataPath("src/lib/kpi-data.json");
 
 interface KpiData {
     fdi: string;
@@ -39,7 +43,7 @@ async function main() {
     if (fs.existsSync(KPI_FILE)) {
         try {
             currentKpi = JSON.parse(fs.readFileSync(KPI_FILE, "utf-8"));
-        } catch (e) {
+        } catch {
             console.error("Failed to read existing KPI file, using default.");
         }
     }
@@ -67,7 +71,7 @@ async function main() {
         const topUrl = searchRes.data[0].url as string;
         console.log(`Extracting from: ${topUrl}`);
 
-        const extractRes: any = await firecrawl.scrapeUrl(topUrl, {
+        const extractRes = (await firecrawl.scrapeUrl(topUrl, {
             formats: ["extract"],
             extract: {
                 prompt: "Extract the exact values for total inbound Foreign Direct Investment (FDI) into Africa, and total Capital Flight out of Africa. Return values formatted like '$12.3B'.",
@@ -78,9 +82,12 @@ async function main() {
                         capitalFlight: { type: "string" }
                     },
                     required: ["fdi", "capitalFlight"]
-                } as any
+                } as never
             }
-        });
+        })) as unknown as {
+            success?: boolean;
+            extract?: { fdi?: unknown; capitalFlight?: unknown };
+        };
 
         if (!extractRes.success || !extractRes.extract) {
             throw new Error(`Extraction failed: ${JSON.stringify(extractRes)}`);
@@ -96,11 +103,11 @@ async function main() {
         console.log("Successfully extracted new KPIs via Firecrawl!");
         saveKpis(newKpi);
 
-    } catch (e: any) {
-        console.warn(`\n[FALLBACK TRIGGERED] Firecrawl failed: ${e.message}`);
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.warn(`\n[FALLBACK TRIGGERED] Firecrawl failed: ${message}`);
         console.warn("Credits might be exhausted or API blocked. Retaining last known good data.");
-        
-        // The fallback is simply relying on the previously saved JSON data (or defaults).
+                // The fallback is simply relying on the previously saved JSON data (or defaults).
         // If we needed to fetch using generic RSS, we would do it here. 
         // For macro KPIs, caching the static file is the designated fallback.
         saveKpis({
@@ -111,7 +118,7 @@ async function main() {
 }
 
 function saveKpis(data: KpiData) {
-    fs.writeFileSync(KPI_FILE, JSON.stringify(data, null, 2), "utf-8");
+    writeGeneratedJson("src/lib/kpi-data.json", data);
     console.log("Saved KPI data to src/lib/kpi-data.json");
     console.log(data);
 }

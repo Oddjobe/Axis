@@ -10,6 +10,8 @@ import {
 const complete = {
   PREFLIGHT_OUTCOME: "success",
   KPI_REFRESH_OUTCOME: "success",
+  TRUST_READINESS_OUTCOME: "success",
+  SOURCE_SAFETY_OUTCOME: "success",
   SHADOW_INGESTION_OUTCOME: "success",
   SCORE_REFRESH_OUTCOME: "success",
   DATA_QUALITY_OUTCOME: "success",
@@ -29,6 +31,7 @@ const complete = {
 const successful = evaluateWorkflowSummary(complete);
 assert.equal(successful.status, "success");
 assert.deepEqual(successful.failedRequiredSteps, []);
+assert.deepEqual(successful.degradedSteps, []);
 
 const degraded = evaluateWorkflowSummary({
   ...complete,
@@ -64,20 +67,28 @@ const historyFailed = evaluateWorkflowSummary({
   COMMODITY_HISTORY_STATUS: "failed",
   COMMODITY_HISTORY_UNAVAILABLE: "true",
 });
-assert.equal(historyFailed.status, "failed");
-assert(historyFailed.failedRequiredSteps.includes("commodityHistory"));
+assert.equal(historyFailed.status, "degraded");
+assert(historyFailed.degradedSteps.includes("commodityHistory"));
 
-const failed = evaluateWorkflowSummary({
+const coverageDegraded = evaluateWorkflowSummary({
   ...complete,
   SHADOW_INGESTION_OUTCOME: "failure",
   LIVE_QUALITY_OUTCOME: "skipped",
 });
-assert.equal(failed.status, "failed");
-assert.deepEqual(failed.failedRequiredSteps, [
+assert.equal(coverageDegraded.status, "degraded");
+assert.deepEqual(coverageDegraded.failedRequiredSteps, []);
+assert.deepEqual(coverageDegraded.degradedSteps, [
   "shadowIngestion",
   "liveQuality",
 ]);
-assert(!JSON.stringify(failed).includes("secret"));
+assert(!JSON.stringify(coverageDegraded).includes("secret"));
+
+const requiredFailure = evaluateWorkflowSummary({
+  ...complete,
+  TRUST_READINESS_OUTCOME: "failure",
+});
+assert.equal(requiredFailure.status, "failed");
+assert(requiredFailure.failedRequiredSteps.includes("trustReadiness"));
 
 const kpiFailure = evaluateWorkflowSummary({
   ...complete,
@@ -114,7 +125,7 @@ async function main(): Promise<void> {
   }
 
   console.log(
-    "Workflow summary fixtures passed (success, optional degradation, required failure, report and job summary).",
+    "Workflow summary fixtures passed (success, optional degradation, coverage degradation, required failure, report and job summary).",
   );
 }
 

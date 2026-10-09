@@ -1,0 +1,158 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-10-09T00:00:00.000Z",
+  "commodityFallbacks": [
+    {
+      "id": "lithium",
+      "name": "LITHIUM (CARBONATE)",
+      "price": 28648,
+      "unit": "T",
+      "currency": "USD",
+      "trend": 3.8,
+      "source": "SunSirs / Benchmark Mineral",
+      "sourceUrl": "https://www.sunsirs.com/uk/prodetail-1162.html",
+      "lastUpdated": "2026-10-09",
+      "frequency": "weekly",
+      "category": "CRITICAL",
+      "color": "#3b82f6"
+    },
+    {
+      "id": "cobalt",
+      "name": "COBALT (99.8%)",
+      "price": 64174,
+      "unit": "T",
+      "currency": "USD",
+      "trend": 0,
+      "source": "LME / TradingEconomics",
+      "sourceUrl": "https://tradingeconomics.com/commodity/cobalt",
+      "lastUpdated": "2026-10-09",
+      "frequency": "weekly",
+      "category": "CRITICAL",
+      "color": "#10b981"
+    },
+    {
+      "id": "copper",
+      "name": "COPPER (GRADE A)",
+      "price": 12813,
+      "unit": "T",
+      "currency": "USD",
+      "trend": 0.35,
+      "source": "LME / Westmetall",
+      "sourceUrl": "https://tradingeconomics.com/commodity/copper",
+      "lastUpdated": "2026-10-09",
+      "frequency": "daily",
+      "category": "STRATEGIC",
+      "color": "#f59e0b"
+    },
+    {
+      "id": "gold",
+      "name": "GOLD (SPOT)",
+      "price": 4904,
+      "unit": "OZ",
+      "currency": "USD",
+      "trend": 0.82,
+      "source": "LBMA / Kitco",
+      "sourceUrl": "https://www.kitco.com/gold-price-today-usa/",
+      "lastUpdated": "2026-10-09",
+      "frequency": "daily",
+      "category": "RESERVE",
+      "color": "#fbbf24"
+    },
+    {
+      "id": "bauxite",
+      "name": "BAUXITE (GUINEA FOB)",
+      "price": 62.2,
+      "unit": "T",
+      "currency": "USD",
+      "trend": -1.5,
+      "source": "S&P Global Platts / IndexBox",
+      "sourceUrl": "https://www.spglobal.com/commodityinsights/",
+      "lastUpdated": "2026-10-09",
+      "frequency": "monthly",
+      "category": "REFRACTORY",
+      "color": "#ef4444"
+    }
+  ],
+  "tickerCommodities": [
+    {
+      "id": "CO",
+      "title": "COBALT (LME)",
+      "price": 57224,
+      "unit": "$/MT",
+      "trend": "+",
+      "change": 0.42
+    },
+    {
+      "id": "LI",
+      "title": "LITHIUM CARBONATE",
+      "price": 23646,
+      "unit": "$/MT",
+      "trend": "+",
+      "change": 1.12
+    },
+    {
+      "id": "AU",
+      "title": "GOLD (SPOT)",
+      "price": 5287,
+      "unit": "$/OZ",
+      "trend": "+",
+      "change": 0.45
+    },
+    {
+      "id": "CU",
+      "title": "COPPER (COMEX)",
+      "price": 5.99,
+      "unit": "$/LB",
+      "trend": "+",
+      "change": 1.37
+    },
+    {
+      "id": "CC",
+      "title": "COCOA (ICE)",
+      "price": 8632,
+      "unit": "$/MT",
+      "trend": "+",
+      "change": 0.95
+    },
+    {
+      "id": "BR",
+      "title": "BRENT CRUDE",
+      "price": 93.52,
+      "unit": "$/BBL",
+      "trend": "+",
+      "change": 1.31
+    },
+    {
+      "id": "PT",
+      "title": "PLATINUM",
+      "price": 919,
+      "unit": "$/OZ",
+      "trend": "+",
+      "change": 0.71
+    },
+    {
+      "id": "UR",
+      "title": "URANIUM (U3O8)",
+      "price": 94.39,
+      "unit": "$/LB",
+      "trend": "+",
+      "change": 1.69
+    },
+    {
+      "id": "PD",
+      "title": "PALLADIUM",
+      "price": 1035,
+      "unit": "$/OZ",
+      "trend": "+",
+      "change": 1.25
+    },
+    {
+      "id": "NG",
+      "title": "NATURAL GAS",
+      "price": 2.56,
+      "unit": "$/MMBtu",
+      "trend": "+",
+      "change": 2.9
+    }
+  ]
+}

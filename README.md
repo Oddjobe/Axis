@@ -178,6 +178,10 @@ canonical source URL, an explicit source publication timestamp, and valid units.
 sources cannot currently meet that bar, so the run is measured against a versioned baseline in
 `.github/known-source-gaps.json`:
 
+Daily dashboard refreshes write only generated JSON under `src/lib`: KPI metadata,
+AI narratives, and the versioned commodity/ticker fallback snapshot. The workflow commit
+allowlist excludes TypeScript and TSX source files.
+
 | Outcome | Meaning |
 |---|---|
 | **failed** | A required check broke (credentials, schema, deterministic quality), or coverage fell **below a floor** — a real regression. |

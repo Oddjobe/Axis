@@ -9,19 +9,23 @@ export type WorkflowStepOutcome =
 
 type Environment = Readonly<Record<string, string | undefined>>;
 
-const REQUIRED_STEPS = [
+const CORE_STEPS = [
   "preflight",
   "kpiRefresh",
-  "shadowIngestion",
+  "trustReadiness",
+  "sourceSafety",
   "scoreRefresh",
   "dataQuality",
-  "liveQuality",
 ] as const;
 
+const COVERAGE_STEPS = ["shadowIngestion", "liveQuality"] as const;
+type WorkflowStep =
+  | (typeof CORE_STEPS)[number]
+  | (typeof COVERAGE_STEPS)[number];
 export interface WorkflowSummaryReport {
-  schemaVersion: 2;
+  schemaVersion: 3;
   status: "success" | "degraded" | "failed";
-  steps: Record<(typeof REQUIRED_STEPS)[number], WorkflowStepOutcome>;
+  steps: Record<WorkflowStep, WorkflowStepOutcome>;
   optional: {
     foundry: "available" | "degraded_missing" | "degraded_partial";
     metadataEnrichment: "success" | "skipped" | "failure";
@@ -36,6 +40,7 @@ export interface WorkflowSummaryReport {
   };
   scorePromotion: "published" | "retained" | "unknown";
   failedRequiredSteps: string[];
+  degradedSteps: string[];
 }
 
 function outcome(
@@ -56,15 +61,20 @@ function timestamp(value: string | undefined): string | null {
 export function evaluateWorkflowSummary(
   environment: Environment,
 ): WorkflowSummaryReport {
-  const steps = {
+  const steps: WorkflowSummaryReport["steps"] = {
     preflight: outcome(environment.PREFLIGHT_OUTCOME),
     kpiRefresh: outcome(environment.KPI_REFRESH_OUTCOME),
-    shadowIngestion: outcome(environment.SHADOW_INGESTION_OUTCOME),
+    trustReadiness: outcome(environment.TRUST_READINESS_OUTCOME),
+    sourceSafety: outcome(environment.SOURCE_SAFETY_OUTCOME),
     scoreRefresh: outcome(environment.SCORE_REFRESH_OUTCOME),
     dataQuality: outcome(environment.DATA_QUALITY_OUTCOME),
+    shadowIngestion: outcome(environment.SHADOW_INGESTION_OUTCOME),
     liveQuality: outcome(environment.LIVE_QUALITY_OUTCOME),
   };
-  const failedRequiredSteps = REQUIRED_STEPS.filter(
+  const failedRequiredSteps = CORE_STEPS.filter(
+    (step) => steps[step] !== "success",
+  ) as string[];
+  const degradedSteps = COVERAGE_STEPS.filter(
     (step) => steps[step] !== "success",
   ) as string[];
   const foundry = ["available", "degraded_missing", "degraded_partial"].includes(
@@ -72,26 +82,22 @@ export function evaluateWorkflowSummary(
   )
     ? (environment.FOUNDRY_STATUS as WorkflowSummaryReport["optional"]["foundry"])
     : "degraded_missing";
+  const metadataOutcome = outcome(environment.METADATA_OUTCOME);
   const metadataEnrichment =
-    outcome(environment.METADATA_OUTCOME) === "success"
+    metadataOutcome === "success"
       ? "success"
-      : outcome(environment.METADATA_OUTCOME) === "failure"
+      : metadataOutcome === "failure"
         ? "failure"
         : "skipped";
   const scorePromotion = ["published", "retained"].includes(
     environment.SCORE_PROMOTION_STATUS ?? "",
   )
-    ? (environment.SCORE_PROMOTION_STATUS as
-        | "published"
-        | "retained")
+    ? (environment.SCORE_PROMOTION_STATUS as "published" | "retained")
     : "unknown";
   const commodityHistoryStatus = ["loaded", "bootstrap", "failed"].includes(
     environment.COMMODITY_HISTORY_STATUS ?? "",
   )
-    ? (environment.COMMODITY_HISTORY_STATUS as
-        | "loaded"
-        | "bootstrap"
-        | "failed")
+    ? (environment.COMMODITY_HISTORY_STATUS as "loaded" | "bootstrap" | "failed")
     : "unknown";
   const commodityHistory: WorkflowSummaryReport["commodityHistory"] = {
     status: commodityHistoryStatus,
@@ -115,32 +121,35 @@ export function evaluateWorkflowSummary(
   };
   if (
     commodityHistory.status === "failed" &&
-    !failedRequiredSteps.includes("commodityHistory")
+    !degradedSteps.includes("commodityHistory")
   ) {
-    failedRequiredSteps.push("commodityHistory");
+    degradedSteps.push("commodityHistory");
   }
+
+  const status: WorkflowSummaryReport["status"] =
+    failedRequiredSteps.length > 0
+      ? "failed"
+      : degradedSteps.length === 0 &&
+          foundry === "available" &&
+          metadataEnrichment === "success" &&
+          scorePromotion === "published" &&
+          commodityHistory.status === "loaded"
+        ? "success"
+        : "degraded";
+
   return {
-    schemaVersion: 2,
-    status:
-      failedRequiredSteps.length > 0
-        ? "failed"
-        : foundry === "available" &&
-            metadataEnrichment === "success" &&
-            scorePromotion === "published" &&
-            commodityHistory.status === "loaded"
-          ? "success"
-          : "degraded",
+    schemaVersion: 3,
+    status,
     steps,
     optional: { foundry, metadataEnrichment },
     commodityHistory,
     scorePromotion,
     failedRequiredSteps,
+    degradedSteps,
   };
 }
 
-export function formatWorkflowSummary(
-  report: WorkflowSummaryReport,
-): string {
+export function formatWorkflowSummary(report: WorkflowSummaryReport): string {
   const rows = Object.entries(report.steps)
     .map(([step, status]) => `| ${step} | ${status} |`)
     .join("\n");
@@ -149,7 +158,7 @@ export function formatWorkflowSummary(
     "",
     `**Status:** ${report.status}`,
     "",
-    "| Required step | Outcome |",
+    "| Workflow step | Outcome |",
     "| --- | --- |",
     rows,
     "",
@@ -158,6 +167,9 @@ export function formatWorkflowSummary(
     `Commodity history: ${report.commodityHistory.status}; bootstrap=${report.commodityHistory.bootstrap}; historyUnavailable=${report.commodityHistory.historyUnavailable}; loaded identities=${report.commodityHistory.loadedIdentityCount}; latest source=${report.commodityHistory.latestSourcePublishedAt ?? "none"}; latest approval=${report.commodityHistory.latestPublishedAt ?? "none"}.`,
     "",
     `Foundry: ${report.optional.foundry}; metadata enrichment: ${report.optional.metadataEnrichment}.`,
+    "",
+    `Hard failures: ${report.failedRequiredSteps.join(", ") || "none"}.`,
+    `Coverage degradation: ${report.degradedSteps.join(", ") || "none"}.`,
     "",
   ].join("\n");
 }

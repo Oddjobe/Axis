@@ -56,6 +56,7 @@ jobs:
         id: source_safety
         if: steps.preflight.outcome == 'success' && steps.trust_readiness.outcome == 'success'
         run: |
+          npx tsx scripts/test-daily-automation-boundaries.ts
           npm run test:source-governance
           npm run test:source-adapter
           npm run test:trusted-snapshot-selection
@@ -126,6 +127,8 @@ jobs:
         env:
           PREFLIGHT_OUTCOME: ${{ steps.preflight.outcome }}
           KPI_REFRESH_OUTCOME: ${{ steps.kpis.outcome }}
+          TRUST_READINESS_OUTCOME: ${{ steps.trust_readiness.outcome }}
+          SOURCE_SAFETY_OUTCOME: ${{ steps.source_safety.outcome }}
           SHADOW_INGESTION_OUTCOME: ${{ steps.shadow_ingestion.outcome }}
           SCORE_REFRESH_OUTCOME: ${{ steps.score_refresh.outcome }}
           DATA_QUALITY_OUTCOME: ${{ steps.data_quality.outcome }}
@@ -147,6 +150,7 @@ jobs:
         with:
           commit_message: "chore: daily dashboard metadata update [skip ci]"
           branch: main
+          file_pattern: "src/lib/daily-market-data.json src/lib/dynamic-narratives.json src/lib/kpi-data.json"
 
       - name: Enforce required workflow outcomes
         if: always()
