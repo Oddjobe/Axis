@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
                 {score && (
                     <div style={{ display: "flex", gap: 30, marginTop: 10 }}>
                         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "20px 40px", border: "2px solid rgba(37,99,235,0.5)", borderRadius: 12, background: "rgba(37,99,235,0.1)" }}>
-                            <div style={{ fontSize: 18, color: "#94a3b8", display: "flex" }}>AXIS SCORE</div>
+                            <div style={{ fontSize: 18, color: "#94a3b8", display: "flex" }}>INDEX 2024</div>
                             <div style={{ fontSize: 48, fontWeight: "bold", color: "#2563eb", display: "flex" }}>{score}/100</div>
                         </div>
                         {status && (

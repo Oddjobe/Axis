@@ -2,7 +2,6 @@ import fs from "node:fs";
 import path from "node:path";
 
 export const GENERATED_DATA_FILES = [
-    "src/lib/daily-market-data.json",
     "src/lib/dynamic-narratives.json",
     "src/lib/kpi-data.json",
 ] as const;

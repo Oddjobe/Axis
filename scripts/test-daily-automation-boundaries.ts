@@ -56,15 +56,25 @@ assert.doesNotMatch(
     "Daily workflow commit allowlist must exclude TypeScript source",
 );
 
-const marketData = JSON.parse(
+const fallbackData = JSON.parse(
     fs.readFileSync(
-        resolveGeneratedDataPath("src/lib/daily-market-data.json"),
+        path.join(root, "src/lib/commodity-fallback-data.json"),
         "utf8",
     ),
 );
-assert.equal(marketData.schemaVersion, 1);
-assert.equal(marketData.commodityFallbacks.length, 5);
-assert.equal(marketData.tickerCommodities.length, 10);
+assert.equal(fallbackData.schemaVersion, 1);
+assert.equal(fallbackData.commodityFallbacks.length, 5);
+assert.ok(fallbackData.snapshotAsOf, "Fallback snapshot must retain a source date");
+
+const automation = fs.readFileSync(
+    path.join(root, "scripts/automate-daily-metadata.ts"),
+    "utf8",
+);
+assert.doesNotMatch(
+    automation,
+    /commodity-fallback-data|Math\.random|lastUpdated/,
+    "Daily automation must never mutate or re-date fallback market values",
+);
 
 const commodityRoute = fs.readFileSync(
     path.join(root, "src/app/api/commodities/route.ts"),
@@ -74,9 +84,9 @@ const ticker = fs.readFileSync(
     path.join(root, "src/components/continental-goals-ticker.tsx"),
     "utf8",
 );
-assert.match(commodityRoute, /daily-market-data\.json/);
-assert.match(ticker, /daily-market-data\.json/);
-
+assert.match(commodityRoute, /commodity-fallback-data\.json/);
+assert.match(ticker, /fetch\("\/api\/commodities"/);
+assert.doesNotMatch(ticker, /Math\.random|daily-market-data\.json/);
 console.log(
     "Daily automation boundaries passed (generated JSON only; TS/TSX writes rejected).",
 );

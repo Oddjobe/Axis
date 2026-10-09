@@ -22,7 +22,7 @@ import {
 } from '@/lib/intelligence/ingestion/commodity-sources';
 import { getPublicationPresentation } from '@/lib/intelligence/publication-health';
 import { derivePublicTrustState } from '@/lib/intelligence/trust-health';
-import dailyMarketData from '@/lib/daily-market-data.json';
+import dailyMarketData from '@/lib/commodity-fallback-data.json';
 
 export const revalidate = 3600; // Revalidate every hour
 

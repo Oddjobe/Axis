@@ -499,7 +499,7 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
                                             <span className="text-7xl sm:text-8xl font-black bg-clip-text text-transparent bg-gradient-to-br from-black to-slate-500 dark:from-white dark:to-zinc-500">
                                                 {countryData.axisScore}
                                             </span>
-                                            <span className="text-[10px] font-mono text-slate-light font-bold mt-1 tracking-widest uppercase">/ 100 Axis Score</span>
+                                            <span className="text-[10px] font-mono text-slate-light font-bold mt-1 tracking-widest uppercase">/ 100 · Index 2024</span>
                                         </div>
                                         <div className="space-y-4 font-mono text-[11px] border-t border-black/5 dark:border-white/5 pt-4">
                                             <div className="flex justify-between items-center group"><span className="text-slate-light group-hover:text-foreground transition-colors">Infrastructure Control</span> <span className={`font-bold ${countryData.infrastructureControl >= 60 ? 'text-green-600 dark:text-green-400' : countryData.infrastructureControl >= 40 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400'}`}>{countryData.infrastructureControl}/100</span></div>
@@ -516,14 +516,14 @@ export default function CountryDossierModal({ isOpen, onClose, countryData }: Co
                                         </button>
                                         {showScoreExplainer && (
                                             <div className="mt-2 p-3 bg-cobalt/5 border border-cobalt/20 rounded-lg text-[10px] font-mono text-slate-light/80 space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
-                                                <p className="font-bold text-cobalt tracking-wider">AXIS SCORE METHODOLOGY</p>
+                                                <p className="font-bold text-cobalt tracking-wider">AXIS SOVEREIGNTY INDEX 2024</p>
                                                 <p>The Composite Capability score (0–100) aggregates three pillars weighted by strategic impact:</p>
                                                 <ul className="space-y-1 ml-3">
                                                     <li>• <span className="text-foreground font-semibold">Infrastructure Control</span> — domestic ownership of transport, energy, and digital corridors</li>
                                                     <li>• <span className="text-foreground font-semibold">Policy Independence</span> — legislative autonomy, trade policy freedom, debt-to-GDP exposure</li>
                                                     <li>• <span className="text-foreground font-semibold">Currency Stability</span> — exchange rate volatility, reserve adequacy, monetary policy independence</li>
                                                 </ul>
-                                                <p className="text-slate-light/50 pt-1">Data sourced from UNCTAD, World Bank, AfDB, and national statistics offices. Scores are modeled estimates updated periodically.</p>
+                                                <p className="text-slate-light/50 pt-1">Data sourced from UNCTAD, World Bank, AfDB, and national statistics offices. This 2024 structural release is updated periodically; live intelligence and market signals are shown separately.</p>
                                                 <a href="/methodology" className="inline-flex items-center gap-1 text-cobalt hover:underline mt-1">
                                                     Full methodology →
                                                 </a>

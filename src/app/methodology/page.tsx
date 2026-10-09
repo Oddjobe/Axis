@@ -37,13 +37,13 @@ export default function MethodologyPage() {
       <div className="mx-auto max-w-5xl space-y-14 px-4 py-12 sm:px-8 sm:py-20">
         <section className="max-w-3xl space-y-4">
           <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            How the <span className="text-cobalt">AXIS Score</span> Works
+            How the <span className="text-cobalt">AXIS Sovereignty Index 2024</span> Works
           </h1>
           <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-cobalt">
             {AXIS_TAGLINE}
           </p>
           <p className="font-mono text-sm leading-relaxed text-slate-light sm:text-base">
-            The AXIS Score is a reproducible 0–100 composite of eight named
+            The AXIS Sovereignty Index 2024 is a reproducible 0–100 composite of eight named
             World Bank indicators. It measures infrastructure capacity, fiscal
             and policy capacity, monetary resilience, and resource endowment
             with domestic value capture. It is not an AI-generated score.

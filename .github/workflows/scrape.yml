@@ -150,7 +150,7 @@ jobs:
         with:
           commit_message: "chore: daily dashboard metadata update [skip ci]"
           branch: main
-          file_pattern: "src/lib/daily-market-data.json src/lib/dynamic-narratives.json src/lib/kpi-data.json"
+          file_pattern: "src/lib/dynamic-narratives.json src/lib/kpi-data.json"
 
       - name: Enforce required workflow outcomes
         if: always()

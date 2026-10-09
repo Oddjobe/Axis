@@ -109,7 +109,7 @@ export default function AfcftaMatrix({ selectedCodes }: AfcftaMatrixProps) {
                 {legendOpen && (
                     <div className="px-4 pb-3 space-y-3 text-[9px] font-mono animate-in fade-in slide-in-from-top-2 duration-300">
                         <div>
-                            <span className="text-foreground font-bold">AXIS SCORE</span>
+                            <span className="text-foreground font-bold">SOVEREIGNTY INDEX 2024</span>
                             <p className="text-slate-light mt-0.5 leading-relaxed">Composite 0–100 metric measuring a nation&apos;s control over its own resources, policy independence, infrastructure ownership, and financial sovereignty.</p>
                         </div>
                         <div className="space-y-1">
@@ -153,7 +153,7 @@ export default function AfcftaMatrix({ selectedCodes }: AfcftaMatrixProps) {
                             className="w-full appearance-none bg-background border border-border rounded-lg pl-3 pr-9 py-1.5 text-xs font-mono text-slate-light focus:outline-none cursor-pointer hover:bg-white/5 transition-colors"
                         >
                             <option value="name">SORT: A-Z</option>
-                            <option value="score">SORT: AXIS SCORE</option>
+                            <option value="score">SORT: SOVEREIGNTY INDEX 2024</option>
                             <option value="wealth">SORT: RESOURCE WEALTH</option>
                         </select>
                     </div>
@@ -219,7 +219,7 @@ export default function AfcftaMatrix({ selectedCodes }: AfcftaMatrixProps) {
                         </div>
 
                         <div className="flex justify-between items-center text-[10px] mb-1">
-                            <span>AXIS SCORE</span>
+                            <span>SOVEREIGNTY INDEX 2024</span>
                             <span className="font-mono text-xs">{data.axisScore}/100</span>
                         </div>
                         <div className="h-1.5 bg-border rounded-full overflow-hidden mb-1.5 sm:mb-2 relative">

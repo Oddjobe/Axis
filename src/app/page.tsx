@@ -46,6 +46,7 @@ import MissionModal from "@/components/mission-modal";
 import AiBriefingModal from "@/components/ai-briefing-modal";
 import SearchCommand from "@/components/search-command";
 import CommodityTicker from "@/components/commodity-ticker";
+import DataStatusPanel from "@/components/data-status-panel";
 import { ALL_SOVEREIGN_DATA } from "@/lib/mock-data";
 import { Language, useTranslation } from "@/lib/i18n";
 import { isoToFlag } from "@/lib/flags";
@@ -63,7 +64,6 @@ import {
 import { mergeAuthoritativeCountryScores } from "@/lib/intelligence/score-selection";
 import type { LegacyRecord } from "@/lib/intelligence/trust-rollout";
 import {
-  getPresentationTone,
   getPublicationPresentation,
   isPublicationDisplayState,
   type PublicationDisplayState,
@@ -144,7 +144,6 @@ export default function Home() {
     observedAt: dashboardFreshness.observedAt,
     generatedAt: dashboardFreshness.generatedAt,
   });
-  const scorePublicationTone = getPresentationTone(scorePublication.state);
   const openTool = useCallback((action: string) => {
     switch (action) {
       case "mission": setMissionOpen(true); break;
@@ -358,7 +357,7 @@ export default function Home() {
               </div>
               <div className="group relative flex h-20 min-w-0 flex-col justify-between overflow-hidden rounded-2xl border border-amber-500/25 bg-amber-500/10 px-3 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
                 <p className="text-[8px] font-mono font-bold uppercase leading-tight tracking-[0.11em] text-amber-500/70">
-                  Axis Index
+                  AXIS Sovereignty Index 2024
                 </p>
                 <p className="relative z-10 whitespace-nowrap pr-7 text-xl font-black leading-none tracking-tight text-amber-400 tabular-nums">{axisIndex || "--"}/100</p>
                 <Activity className="absolute bottom-2.5 right-2.5 h-8 w-8 text-amber-500/20 transition-transform group-hover:scale-110" />
@@ -424,17 +423,7 @@ export default function Home() {
                   {mounted && theme === "dark" ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
                 </button>
               </div>
-
-              <div
-                className={`hidden min-w-[10rem] flex-col justify-center gap-1 rounded-2xl border px-3 py-2 font-mono text-[9px] font-bold tracking-wider lg:flex ${scorePublicationTone.border} ${scorePublicationTone.bg} ${scorePublicationTone.text}`}
-                title={scorePublication.tooltip}
-              >
-                <span className="uppercase tracking-[0.22em] opacity-70">Data Source</span>
-                <span className="flex items-center gap-2 text-xs">
-                  <span className={`h-1.5 w-1.5 rounded-full ${scorePublicationTone.dot}`} />
-                  {scorePublication.label}
-                </span>
-              </div>
+              <DataStatusPanel />
 
               <button
                 onClick={() => setSearchOpen(true)}
@@ -471,7 +460,7 @@ export default function Home() {
                   <div className={`hidden items-center gap-1.5 rounded-lg border px-2 py-1 font-mono text-[10px] shadow-sm sm:flex lg:px-3 lg:py-1.5 lg:text-xs ${indexColor}`}>
                     <Activity className="h-3 w-3 lg:h-3.5 lg:w-3.5" />
                     <div className="flex flex-col leading-none">
-                      <span className="text-[7px] font-bold uppercase tracking-tighter opacity-60 lg:text-[8px]">AXIS INDEX</span>
+                      <span className="text-[7px] font-bold uppercase tracking-tighter opacity-60 lg:text-[8px]">INDEX 2024</span>
                       <span className="font-bold leading-tight">{axisIndex}/100</span>
                     </div>
                   </div>
