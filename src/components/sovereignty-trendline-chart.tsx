@@ -11,7 +11,10 @@ interface SovereigntyTrendlineChartProps {
 
 interface TooltipProps {
     active?: boolean;
-    payload?: any[];
+    payload?: Array<{
+        color?: string;
+        value?: number;
+    }>;
     label?: string | number;
 }
 

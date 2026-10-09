@@ -39,9 +39,6 @@ export async function GET() {
         const source = fallbackUsed ? "fallback" : "supabase";
 
         const highSeverityCount = effectiveAlerts.filter(a => a.severity === 'HIGH').length;
-        const outsideInfluenceCount = effectiveAlerts.filter(a => a.category === 'OUTSIDE INFLUENCE').length;
-        const mainActors = Array.from(new Set(effectiveAlerts.map(a => a.actor).filter(Boolean)));
-
         // 4. Afro-centric Strategic Synthesis
         const growthPosture = highSeverityCount > 3 ? "navigating complex external dynamics" : "strengthening continental autonomy";
 
@@ -130,15 +127,16 @@ export async function GET() {
             disclaimer: "Continental situatonal analysis derived from vetted Pan-African datasets."
         });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         const updatedAt = new Date().toISOString();
+        const message = error instanceof Error ? error.message : "Unexpected briefing error";
         return NextResponse.json(
             {
                 success: false,
                 source: "error",
                 fallbackUsed: true,
                 updatedAt,
-                error: error.message
+                error: message
             },
             { status: 500 }
         );
@@ -217,16 +215,18 @@ Use a professional, analytical tone. Focus on African agency, sovereignty, and i
             briefing
         });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('AI Brief POST error:', error);
-        const isQuota = error?.message?.includes('quota') || error?.message?.includes('429') || error?.status === 429;
+        const message = error instanceof Error ? error.message : 'Brief generation failed';
+        const status = typeof error === 'object' && error !== null && 'status' in error ? error.status : undefined;
+        const isQuota = message.includes('quota') || message.includes('429') || status === 429;
         return NextResponse.json(
             {
                 success: false,
                 source: 'error',
                 fallbackUsed: true,
                 updatedAt: new Date().toISOString(),
-                error: isQuota ? 'AI quota exceeded. Please try again later.' : (error.message || 'Brief generation failed')
+                error: isQuota ? 'AI quota exceeded. Please try again later.' : message
             },
             { status: isQuota ? 429 : 500 }
         );

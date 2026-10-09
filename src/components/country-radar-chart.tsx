@@ -29,7 +29,7 @@ export default function CountryRadarChart({ countries }: CountryRadarChartProps)
     ];
 
     const data = metrics.map(m => {
-        const item: any = { subject: m.subject, fullMark: m.fullMark };
+        const item: Record<string, string | number> = { subject: m.subject, fullMark: m.fullMark };
         countries.forEach(country => {
             let value = 0;
             switch (m.subject) {

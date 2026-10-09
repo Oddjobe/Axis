@@ -25,11 +25,45 @@ const MEDIUM_SOURCES = [
 
 const ISO_CODES = ["NGA", "ZAF", "EGY", "KEN", "ETH", "MAR", "DZA", "COD", "GHA", "AGO"];
 
-async function scrapeFromRSS(sourceName: string, rssUrl: string, type: 'intel' | 'blog'): Promise<any[]> {
+interface RssItem {
+    title?: string;
+    contentSnippet?: string;
+    summary?: string;
+    content?: string;
+    creator?: string;
+    author?: string;
+    link?: string;
+}
+
+interface IntelligenceAlert {
+    title?: string;
+    summary: string;
+    source: string;
+    severity: string;
+    category: string;
+    isoCode: string;
+    timeAgo: string;
+    actor: null;
+    url?: string;
+    created_at: string;
+}
+
+interface BlogPost {
+    title?: string;
+    summary: string;
+    author: string;
+    tag: string;
+    url?: string;
+    created_at: string;
+}
+
+async function scrapeFromRSS(sourceName: string, rssUrl: string, type: 'intel'): Promise<IntelligenceAlert[]>;
+async function scrapeFromRSS(sourceName: string, rssUrl: string, type: 'blog'): Promise<BlogPost[]>;
+async function scrapeFromRSS(sourceName: string, rssUrl: string, type: 'intel' | 'blog'): Promise<Array<IntelligenceAlert | BlogPost>> {
     try {
         console.log(`Fetching RSS: ${sourceName}...`);
         const feed = await parser.parseURL(rssUrl);
-        return feed.items.slice(0, 5).map((item: any, idx: number) => {
+        return feed.items.slice(0, 5).map((item: RssItem, idx: number) => {
             if (type === 'intel') {
                 return {
                     title: item.title,
@@ -54,8 +88,8 @@ async function scrapeFromRSS(sourceName: string, rssUrl: string, type: 'intel' |
                 };
             }
         });
-    } catch (e: any) {
-        console.error(`RSS failed: ${sourceName}`, e.message);
+    } catch (error: unknown) {
+        console.error(`RSS failed: ${sourceName}`, error instanceof Error ? error.message : error);
         return [];
     }
 }
@@ -64,7 +98,7 @@ async function main() {
     if (!supabase) { console.error("Supabase not set"); return; }
     console.log("Starting fast RSS insert...");
 
-    let allIntel: any[] = [];
+    let allIntel: IntelligenceAlert[] = [];
     for (const source of INTEL_SOURCES) {
         const items = await scrapeFromRSS(source.name, source.rssUrl, 'intel');
         allIntel = [...allIntel, ...items];
@@ -78,7 +112,7 @@ async function main() {
         console.log(`Upserted ${uniqueIntel.length} alerts. Error:`, error);
     }
 
-    let allBlogs: any[] = [];
+    let allBlogs: BlogPost[] = [];
     for (const source of MEDIUM_SOURCES) {
         const items = await scrapeFromRSS(source.name, source.rssUrl, 'blog');
         allBlogs = [...allBlogs, ...items];

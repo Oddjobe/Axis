@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useMemo } from 'react';
+import React from 'react';
 import { ScatterChart, Scatter, XAxis, YAxis, ZAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceLine } from 'recharts';
 import { useTheme } from 'next-themes';
 import type { CountryData } from './country-dossier-modal';
@@ -11,7 +11,15 @@ interface WealthVsSovereigntyChartProps {
 
 interface TooltipProps {
     active?: boolean;
-    payload?: any[];
+    payload?: Array<{
+        payload: {
+            name: string;
+            wealth: number;
+            sovereignty: number;
+            trendStr: string;
+            resources?: string[];
+        };
+    }>;
 }
 
 const CustomTooltip = ({ active, payload }: TooltipProps) => {
@@ -52,8 +60,7 @@ export default function WealthVsSovereigntyChart({ data }: WealthVsSovereigntyCh
     const isDark = theme === "dark" || theme === "system" || !theme;
 
     // Process data for the chart
-    const chartData = useMemo(() => {
-        return data.map(country => {
+    const chartData = data.map(country => {
             const trendStr = typeof country.trend === 'string' ? country.trend : "0";
             return {
                 name: country.name,
@@ -71,7 +78,6 @@ export default function WealthVsSovereigntyChart({ data }: WealthVsSovereigntyCh
                 color: getSeverityColor(country.axisScore, isDark)
             }
         }).filter(d => d.wealth !== undefined && d.sovereignty !== undefined);
-    }, [data, isDark]);
 
     function getSeverityColor(score: number, dark: boolean) {
         if (score >= 70) return dark ? "rgba(34, 197, 94, 0.8)" : "rgba(34, 197, 94, 0.9)"; // Green

@@ -1,8 +1,9 @@
-import { Activity, TrendingUp, Pickaxe, ChevronDown, Info, Search, Filter, Star } from "lucide-react";
-import { useState, useMemo, useEffect } from "react";
+import { Activity, TrendingUp, Pickaxe, ChevronDown, Info, Search, Star } from "lucide-react";
+import { useState, useMemo } from "react";
 import CountryDossierModal, { CountryData } from "./country-dossier-modal";
 
 import { ALL_SOVEREIGN_DATA } from "@/lib/mock-data";
+import { useWatchlist } from "@/lib/use-watchlist";
 
 interface AfcftaMatrixProps {
     selectedCodes: string[];
@@ -14,26 +15,12 @@ export default function AfcftaMatrix({ selectedCodes }: AfcftaMatrixProps) {
     const [searchQuery, setSearchQuery] = useState("");
     const [sortBy, setSortBy] = useState<"name" | "score" | "wealth">("name");
     const [filterStatus, setFilterStatus] = useState<string>("ALL");
-    const [watchlist, setWatchlist] = useState<string[]>([]);
-
-    useEffect(() => {
-        const saved = localStorage.getItem("axisWatchlist");
-        if (saved) {
-            try { setWatchlist(JSON.parse(saved)); } catch (e) { }
-        }
-    }, []);
+    const { watchlist, togglePin } = useWatchlist();
 
     const toggleWatchlist = (e: React.MouseEvent, countryCode: string) => {
         e.stopPropagation();
-        setWatchlist(prev => {
-            const newWatchlist = prev.includes(countryCode)
-                ? prev.filter(c => c !== countryCode)
-                : [...prev, countryCode];
-            localStorage.setItem("axisWatchlist", JSON.stringify(newWatchlist));
-            return newWatchlist;
-        });
+        togglePin(countryCode);
     };
-
     const filterOptions = ["ALL", "OPTIMAL", "STABLE", "IMPROVING", "EXTRACTIVE"];
     const statusCounts = useMemo(() => {
         const counts: Record<string, number> = { ALL: ALL_SOVEREIGN_DATA.length, OPTIMAL: 0, STABLE: 0, IMPROVING: 0, EXTRACTIVE: 0 };
@@ -123,7 +110,7 @@ export default function AfcftaMatrix({ selectedCodes }: AfcftaMatrixProps) {
                     <div className="px-4 pb-3 space-y-3 text-[9px] font-mono animate-in fade-in slide-in-from-top-2 duration-300">
                         <div>
                             <span className="text-foreground font-bold">AXIS SCORE</span>
-                            <p className="text-slate-light mt-0.5 leading-relaxed">Composite 0–100 metric measuring a nation's control over its own resources, policy independence, infrastructure ownership, and financial sovereignty.</p>
+                            <p className="text-slate-light mt-0.5 leading-relaxed">Composite 0–100 metric measuring a nation&apos;s control over its own resources, policy independence, infrastructure ownership, and financial sovereignty.</p>
                         </div>
                         <div className="space-y-1">
                             <span className="text-foreground font-bold">STATUS TAGS</span>
@@ -162,7 +149,7 @@ export default function AfcftaMatrix({ selectedCodes }: AfcftaMatrixProps) {
                         <ChevronDown className="absolute right-2.5 top-2 w-4 h-4 text-slate-light pointer-events-none" />
                         <select
                             value={sortBy}
-                            onChange={(e) => setSortBy(e.target.value as any)}
+                            onChange={(e) => setSortBy(e.target.value as "name" | "score" | "wealth")}
                             className="w-full appearance-none bg-background border border-border rounded-lg pl-3 pr-9 py-1.5 text-xs font-mono text-slate-light focus:outline-none cursor-pointer hover:bg-white/5 transition-colors"
                         >
                             <option value="name">SORT: A-Z</option>

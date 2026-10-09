@@ -3,7 +3,6 @@ import { NextRequest, NextResponse } from 'next/server';
 export const runtime = 'nodejs';
 
 interface TelegramAlertPayload {
-    id?: string;
     isoCode: string;
     title: string;
     summary: string;
@@ -102,7 +101,7 @@ export async function POST(request: NextRequest) {
         }
 
         return NextResponse.json({ sent, total: highAlerts.length });
-    } catch (error) {
+    } catch {
         return NextResponse.json(
             { error: 'Failed to process webhook' },
             { status: 500 }

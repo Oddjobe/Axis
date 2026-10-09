@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Hammer, Zap, Train, Building2, Factory, Ship, Cpu } from "lucide-react";
+import { Hammer, Zap, Building2, Factory, Ship, Cpu } from "lucide-react";
 
 type ProjectSector = "ENERGY" | "INFRASTRUCTURE" | "MINING" | "TECH" | "INDUSTRIAL";
 

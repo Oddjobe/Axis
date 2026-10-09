@@ -9,9 +9,9 @@ const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_KEY!);
 
 async function check() {
-    const { count: intelCount, error: err1 } = await supabase.from('intelligence_alerts').select('*', { count: 'exact', head: true });
-    const { count: blogCount, error: err2 } = await supabase.from('blog_posts').select('*', { count: 'exact', head: true });
-    const { count: countryCount, error: err3 } = await supabase.from('countries').select('*', { count: 'exact', head: true });
+    const { count: intelCount } = await supabase.from('intelligence_alerts').select('*', { count: 'exact', head: true });
+    const { count: blogCount } = await supabase.from('blog_posts').select('*', { count: 'exact', head: true });
+    const { count: countryCount } = await supabase.from('countries').select('*', { count: 'exact', head: true });
 
     const { data: alerts } = await supabase.from('intelligence_alerts').select('*').order('created_at', { ascending: false }).limit(3);
     const { data: blogs } = await supabase.from('blog_posts').select('*').order('created_at', { ascending: false }).limit(3);

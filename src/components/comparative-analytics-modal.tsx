@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { X, Combine, Search, Check, AlertCircle, Info, BarChart3, TrendingUp, TrendingDown } from "lucide-react"
+import { X, Combine, Search, Check, AlertCircle, Info, BarChart3, TrendingUp } from "lucide-react"
 import CountryRadarChart from "./country-radar-chart"
 import type { CountryData } from "./country-dossier-modal"
 
@@ -29,17 +29,23 @@ export default function ComparativeAnalyticsModal({
             const timer = setTimeout(() => setRenderCharts(true), 400);
             return () => clearTimeout(timer);
         } else {
-            setRenderCharts(false);
-            setSearchQuery("");
+            const timer = setTimeout(() => {
+                setRenderCharts(false);
+                setSearchQuery("");
+            }, 0);
+            return () => clearTimeout(timer);
         }
     }, [isOpen]);
 
     useEffect(() => {
         if (isOpen && initialSelectedCodes.length > 0) {
-            setSelectedCodes(prev => {
-                if (JSON.stringify(prev) === JSON.stringify(initialSelectedCodes)) return prev;
-                return initialSelectedCodes;
-            });
+            const timer = setTimeout(() => {
+                setSelectedCodes(prev => {
+                    if (JSON.stringify(prev) === JSON.stringify(initialSelectedCodes)) return prev;
+                    return initialSelectedCodes;
+                });
+            }, 0);
+            return () => clearTimeout(timer);
         }
     }, [isOpen, initialSelectedCodes]);
 
@@ -145,7 +151,7 @@ export default function ComparativeAnalyticsModal({
                                         <span className="text-[10px] font-mono font-bold text-slate-light tracking-widest uppercase truncate whitespace-nowrap">STRATEGIC ANOMALY RADAR</span>
                                     </div>
                                     <div className="flex -space-x-2">
-                                        {selectedCountries.map((c, i) => (
+                                        {selectedCountries.map(c => (
                                             <div key={c.country} className="w-6 h-6 rounded-full border border-background bg-slate-800 flex items-center justify-center text-[8px] font-bold text-white shadow-lg" title={c.name}>
                                                 {c.country.substring(0, 2)}
                                             </div>
@@ -181,7 +187,7 @@ export default function ComparativeAnalyticsModal({
                                                     </h3>
                                                     <div className="space-y-4">
                                                         <p className="text-[10px] text-slate-light leading-relaxed italic">
-                                                            Currently comparing {selectedCountries.length} tactical nodes. High variance detected in "FOREIGN INFLUENCE" vs "SOVEREIGNTY" metrics across the selection.
+                                                            Currently comparing {selectedCountries.length} tactical nodes. High variance detected in &quot;FOREIGN INFLUENCE&quot; vs &quot;SOVEREIGNTY&quot; metrics across the selection.
                                                         </p>
                                                         <hr className="border-border/30" />
                                                         <div className="grid grid-cols-1 gap-3 font-mono text-[9px]">
@@ -222,21 +228,21 @@ export default function ComparativeAnalyticsModal({
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    {[
+                                                    {([
                                                         { label: "AXIS SCORE (SOVEREIGNTY)", key: "axisScore" },
                                                         { label: "RESOURCE WEALTH (VALUATION)", key: "resourceWealth" },
                                                         { label: "INFRASTRUCTURE CONTROL", key: "infrastructureControl" },
                                                         { label: "POLICY INDEPENDENCE", key: "policyIndependence" },
                                                         { label: "CURRENCY STABILITY index", key: "currencyStability" }
-                                                    ].map((row, rIdx) => (
+                                                    ] satisfies Array<{ label: string; key: keyof CountryData }>).map((row, rIdx) => (
                                                         <tr key={row.key} className={rIdx % 2 === 0 ? "bg-white/5" : "bg-transparent"}>
                                                             <td className="p-4 border-b border-border uppercase font-bold text-slate-light">{row.label}</td>
                                                             {selectedCountries.map(c => (
                                                                 <td key={c.country} className="p-4 border-b border-border border-l border-border text-center">
-                                                                    <span className={`text-[11px] font-bold ${(c as any)[row.key] > 75 ? 'text-emerald-500' :
-                                                                        (c as any)[row.key] < 50 ? 'text-red-500' : 'text-foreground'
+                                                                    <span className={`text-[11px] font-bold ${Number(c[row.key]) > 75 ? 'text-emerald-500' :
+                                                                        Number(c[row.key]) < 50 ? 'text-red-500' : 'text-foreground'
                                                                         }`}>
-                                                                        {(c as any)[row.key]}%
+                                                                        {String(c[row.key])}%
                                                                     </span>
                                                                 </td>
                                                             ))}

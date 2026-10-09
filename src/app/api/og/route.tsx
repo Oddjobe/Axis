@@ -1,12 +1,10 @@
 import { ImageResponse } from "next/og";
 import { NextRequest } from "next/server";
 
-// Edge is the idiomatic runtime for next/og ImageResponse. This route reads
-// searchParams (country/score/status), so it is inherently render-on-demand and
-// can never be statically generated. The Next.js build note "Using edge runtime
-// on a page currently disables static generation for that page" is therefore
-// expected and harmless here — do not treat it as a regression.
-export const runtime = "edge";
+// Next.js 16.3 deprecates the Edge runtime. ImageResponse is supported by the
+// Node.js runtime, and this route is render-on-demand because it reads query
+// parameters, so no static-generation behavior is lost.
+export const runtime = "nodejs";
 
 export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);

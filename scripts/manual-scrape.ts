@@ -72,7 +72,61 @@ const EXTRACT_SCHEMA = {
     required: ["articles"]
 };
 
-async function scrapeWithPhi(url: string, prompt: string, schema: any, inputContent?: string): Promise<any> {
+type FirecrawlScrapeOptions = NonNullable<Parameters<FirecrawlApp["scrapeUrl"]>[1]>;
+type FirecrawlExtractOptions = NonNullable<FirecrawlScrapeOptions["extract"]>;
+
+interface ExtractedArticle {
+    title?: string;
+    summary?: string;
+    severity?: string;
+    category?: string;
+    isoCode?: string;
+    actor?: string | null;
+    url?: string;
+    source?: string;
+    created_at?: string;
+}
+
+interface BlogPost {
+    title?: string;
+    summary?: string;
+    author?: string;
+    tag?: string;
+    url?: string;
+    created_at?: string;
+}
+
+interface RssArticle {
+    title?: string;
+    summary: string;
+    url?: string;
+    source: string;
+}
+
+interface IntelligenceSource {
+    url: string;
+    name: string;
+    rssUrl?: string;
+}
+
+interface ArticleExtraction {
+    articles?: ExtractedArticle[];
+}
+
+interface BlogExtraction {
+    posts?: BlogPost[];
+}
+
+function errorMessage(error: unknown): string {
+    return error instanceof Error ? error.message : String(error);
+}
+
+async function scrapeWithPhi<T>(
+    url: string,
+    prompt: string,
+    schema: Record<string, unknown>,
+    inputContent?: string
+): Promise<T> {
     if (!foundry || !FOUNDRY_MODEL) throw new Error("Foundry / Phi-4 not initialized.");
 
     let content = inputContent;
@@ -82,9 +136,9 @@ async function scrapeWithPhi(url: string, prompt: string, schema: any, inputCont
             const jinaResponse = await fetch(jinaUrl, { headers: { "X-No-Cache": "true" } });
             if (!jinaResponse.ok) throw new Error(`Jina Reader failed: ${jinaResponse.statusText}`);
             content = await jinaResponse.text();
-        } catch (e) {
-            console.error(`Jina failed for ${url}`, e);
-            throw e;
+        } catch (error: unknown) {
+            console.error(`Jina failed for ${url}`, error);
+            throw error;
         }
     }
 
@@ -103,27 +157,27 @@ async function scrapeWithPhi(url: string, prompt: string, schema: any, inputCont
     const jsonMatch = responseText.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
     if (!jsonMatch) throw new Error("Failed to extract valid JSON from Phi response.");
 
-    return JSON.parse(jsonMatch[0]);
+    return JSON.parse(jsonMatch[0]) as T;
 }
 
-async function scrapeFromRSS(sourceName: string, rssUrl: string): Promise<any[]> {
+async function scrapeFromRSS(sourceName: string, rssUrl: string): Promise<RssArticle[]> {
     try {
         const feed = await parser.parseURL(rssUrl);
-        return feed.items.slice(0, 3).map((item: any) => ({
+        return feed.items.slice(0, 3).map(item => ({
             title: item.title,
             summary: (item.contentSnippet || item.summary || item.content || "").substring(0, 300),
             url: item.link,
             source: sourceName
         }));
-    } catch (e: any) {
+    } catch {
         return [];
     }
 }
 
-async function scrapeIntelligenceSource(source: any) {
+async function scrapeIntelligenceSource(source: IntelligenceSource) {
     console.log(`Scraping Intelligence: ${source.name}...`);
-    let extracted: any[] = [];
-    let rssItems: any[] = [];
+    let extracted: ExtractedArticle[] = [];
+    let rssItems: RssArticle[] = [];
 
     const ISO_LIST = Array.from(VALID_ISO_CODES).join(", ");
     const isoInstructions = `IMPORTANT: For isoCode, you MUST use exactly one of these 3-letter codes: ${ISO_LIST}.`;
@@ -134,45 +188,48 @@ async function scrapeIntelligenceSource(source: any) {
             const rssContent = rssItems.map(item => `TITLE: ${item.title}\nSUMMARY: ${item.summary}`).join("\n---\n");
             try {
                 const prompt = `Classify these news items.\n${isoInstructions}`;
-                const result = await scrapeWithPhi(source.url, prompt, EXTRACT_SCHEMA, rssContent);
-                extracted = (result.articles || []).map((c: any, i: number) => ({
-                    ...c,
+                const result = await scrapeWithPhi<ArticleExtraction>(source.url, prompt, EXTRACT_SCHEMA, rssContent);
+                extracted = (result.articles || []).map((article, i: number) => ({
+                    ...article,
                     source: source.name,
-                    url: c.url || rssItems[i]?.url || source.url
+                    url: article.url || rssItems[i]?.url || source.url
                 }));
-            } catch (e) { console.error(`Phi failed for RSS ${source.name}`); }
+            } catch (error: unknown) { console.error(`Phi failed for RSS ${source.name}: ${errorMessage(error)}`); }
         }
     }
 
     if (extracted.length === 0) {
         try {
             const prompt = `Extract top 3 articles.\n${isoInstructions}`;
-            const result = await scrapeWithPhi(source.url, prompt, EXTRACT_SCHEMA);
+            const result = await scrapeWithPhi<ArticleExtraction>(source.url, prompt, EXTRACT_SCHEMA);
             extracted = result.articles || [];
-        } catch (e) { console.error(`Phi failed for direct scrape ${source.name}`); }
+        } catch (error: unknown) { console.error(`Phi failed for direct scrape ${source.name}: ${errorMessage(error)}`); }
     }
 
     if (extracted.length === 0 && firecrawl) {
         try {
-            const response: any = await firecrawl.scrapeUrl(source.url, {
+            const response = await firecrawl.scrapeUrl(source.url, {
                 formats: ["extract"],
-                extract: { prompt: `Extract top 3 articles.`, schema: EXTRACT_SCHEMA as any }
+                extract: {
+                    prompt: "Extract top 3 articles.",
+                    schema: EXTRACT_SCHEMA as unknown as FirecrawlExtractOptions["schema"]
+                }
             });
-            extracted = response?.extract?.articles || [];
-        } catch (e) { console.error(`Firecrawl failed for ${source.name}`); }
+            extracted = (response as { extract?: ArticleExtraction }).extract?.articles || [];
+        } catch (error: unknown) { console.error(`Firecrawl failed for ${source.name}: ${errorMessage(error)}`); }
     }
 
     return extracted
-        .map((a: any) => ({
-            ...a,
+        .map(article => ({
+            ...article,
             source: source.name,
-            isoCode: (a.isoCode || "").toUpperCase().trim(),
-            category: ["SOVEREIGNTY RISK", "OUTSIDE INFLUENCE"].includes(a.category) ? a.category : "SOVEREIGNTY RISK",
-            severity: ["HIGH", "MEDIUM", "LOW"].includes(a.severity) ? a.severity : "MEDIUM",
-            actor: a.actor === "N/A" || a.actor === "NONE" ? null : (a.actor || null),
+            isoCode: (article.isoCode || "").toUpperCase().trim(),
+            category: ["SOVEREIGNTY RISK", "OUTSIDE INFLUENCE"].includes(article.category || "") ? article.category : "SOVEREIGNTY RISK",
+            severity: ["HIGH", "MEDIUM", "LOW"].includes(article.severity || "") ? article.severity : "MEDIUM",
+            actor: article.actor === "N/A" || article.actor === "NONE" ? null : (article.actor || null),
             created_at: new Date().toISOString()
         }))
-        .filter((a: any) => VALID_ISO_CODES.has(a.isoCode));
+        .filter(article => VALID_ISO_CODES.has(article.isoCode));
 }
 
 async function scrapeBlogSource(url: string) {
@@ -198,7 +255,7 @@ async function scrapeBlogSource(url: string) {
         required: ["posts"]
     };
 
-    let extracted: any[] = [];
+    let extracted: BlogPost[] = [];
     const tag = url.split('/').slice(-2, -1)[0] || 'africa';
     const rssUrl = `https://medium.com/feed/tag/${tag}`;
     const rssItems = await scrapeFromRSS("Medium", rssUrl);
@@ -206,19 +263,19 @@ async function scrapeBlogSource(url: string) {
     if (rssItems.length > 0) {
         const rssContent = rssItems.map(item => `TITLE: ${item.title}\nSUMMARY: ${item.summary}`).join("\n---\n");
         try {
-            const result = await scrapeWithPhi(url, "Classify blog posts.", blogSchema, rssContent);
-            extracted = (result.posts || []).map((p: any, i: number) => ({ ...p, url: rssItems[i]?.url || url }));
-        } catch (e) { console.error(`Phi failed for Blog RSS ${url}`); }
+            const result = await scrapeWithPhi<BlogExtraction>(url, "Classify blog posts.", blogSchema, rssContent);
+            extracted = (result.posts || []).map((post, i: number) => ({ ...post, url: rssItems[i]?.url || url }));
+        } catch (error: unknown) { console.error(`Phi failed for Blog RSS ${url}: ${errorMessage(error)}`); }
     }
 
     if (extracted.length === 0) {
         try {
-            const result = await scrapeWithPhi(url, "Extract blog posts.", blogSchema);
-            extracted = (result.posts || []).map((p: any) => ({ ...p, url: p.url || url }));
-        } catch (e) { console.error(`Phi failed for Blog direct ${url}`); }
+            const result = await scrapeWithPhi<BlogExtraction>(url, "Extract blog posts.", blogSchema);
+            extracted = (result.posts || []).map(post => ({ ...post, url: post.url || url }));
+        } catch (error: unknown) { console.error(`Phi failed for Blog direct ${url}: ${errorMessage(error)}`); }
     }
 
-    return extracted.map((p: any) => ({ ...p, created_at: new Date().toISOString() }));
+    return extracted.map(post => ({ ...post, created_at: new Date().toISOString() }));
 }
 
 async function main() {
@@ -227,9 +284,9 @@ async function main() {
     console.log("Starting manual scrape...");
 
     const intelResults = await Promise.allSettled(INTEL_SOURCES.map(scrapeIntelligenceSource));
-    const allIntel = intelResults
-        .filter((r): r is PromiseFulfilledResult<any[]> => r.status === 'fulfilled')
-        .flatMap(r => r.value);
+    const allIntel = intelResults.flatMap(result =>
+        result.status === 'fulfilled' ? result.value : []
+    );
 
     const uniqueIntel = Array.from(new Map(allIntel.map(item => [item.title, item])).values());
     if (uniqueIntel.length > 0) {
@@ -240,9 +297,9 @@ async function main() {
     }
 
     const blogResults = await Promise.allSettled(MEDIUM_SOURCES.map(scrapeBlogSource));
-    const allBlogs = blogResults
-        .filter((r): r is PromiseFulfilledResult<any[]> => r.status === 'fulfilled')
-        .flatMap(r => r.value);
+    const allBlogs = blogResults.flatMap(result =>
+        result.status === 'fulfilled' ? result.value : []
+    );
 
     const uniqueBlogs = Array.from(new Map(allBlogs.map(item => [item.url, item])).values());
     if (uniqueBlogs.length > 0) {

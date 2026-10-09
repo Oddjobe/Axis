@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect, useRef, useCallback } from "react"
-import { Search, Globe, BarChart3, ShieldAlert, Share2, Combine, ArrowUpRight, Info, X, Command } from "lucide-react"
+import { useState, useEffect, useRef } from "react"
+import { Search, Globe, BarChart3, ShieldAlert, Share2, Combine, ArrowUpRight, Info, Command } from "lucide-react"
 import { AnimatePresence, motion } from "framer-motion"
 import { isoToFlag } from "@/lib/flags"
 
@@ -67,7 +67,7 @@ export default function SearchCommand({ isOpen, onClose, onSelectCountry, onOpen
     ...filteredTools.map(t => ({ type: "tool" as const, id: t.id, name: t.name, description: t.description, icon: t.icon, action: t.action })),
   ]
 
-  const handleSelect = useCallback((index: number) => {
+  const handleSelect = (index: number) => {
     const item = results[index]
     if (!item) return
     if (item.type === "country") {
@@ -77,29 +77,29 @@ export default function SearchCommand({ isOpen, onClose, onSelectCountry, onOpen
     }
     onClose()
     setQuery("")
-  }, [results, onSelectCountry, onOpenTool, onClose])
+  }
 
   // Reset on open
   useEffect(() => {
     if (isOpen) {
-      setQuery("")
-      setSelectedIndex(0)
-      setTimeout(() => inputRef.current?.focus(), 50)
+      const timer = setTimeout(() => {
+        setQuery("")
+        setSelectedIndex(0)
+        inputRef.current?.focus()
+      }, 50)
+      return () => clearTimeout(timer)
     }
   }, [isOpen])
 
-  // Clamp selected index when results change
-  useEffect(() => {
-    setSelectedIndex(prev => Math.min(prev, Math.max(0, results.length - 1)))
-  }, [results.length])
+  const activeIndex = Math.min(selectedIndex, Math.max(0, results.length - 1))
 
   // Scroll selected item into view
   useEffect(() => {
-    const el = listRef.current?.querySelector(`[data-index="${selectedIndex}"]`)
+    const el = listRef.current?.querySelector(`[data-index="${activeIndex}"]`)
     if (el) el.scrollIntoView({ block: "nearest" })
-  }, [selectedIndex])
+  }, [activeIndex])
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "ArrowDown") {
       e.preventDefault()
       setSelectedIndex(prev => Math.min(prev + 1, results.length - 1))
@@ -108,11 +108,11 @@ export default function SearchCommand({ isOpen, onClose, onSelectCountry, onOpen
       setSelectedIndex(prev => Math.max(prev - 1, 0))
     } else if (e.key === "Enter" && results.length > 0) {
       e.preventDefault()
-      handleSelect(selectedIndex)
+      handleSelect(activeIndex)
     } else if (e.key === "Escape") {
       onClose()
     }
-  }, [results.length, selectedIndex, handleSelect, onClose])
+  }
 
   if (!isOpen) return null
 
@@ -140,7 +140,10 @@ export default function SearchCommand({ isOpen, onClose, onSelectCountry, onOpen
               ref={inputRef}
               type="text"
               value={query}
-              onChange={e => setQuery(e.target.value)}
+              onChange={e => {
+                setQuery(e.target.value)
+                setSelectedIndex(0)
+              }}
               placeholder="Search countries, tools..."
               className="flex-1 bg-transparent text-sm font-mono text-foreground placeholder:text-slate-light/40 outline-none"
               autoComplete="off"
@@ -173,7 +176,7 @@ export default function SearchCommand({ isOpen, onClose, onSelectCountry, onOpen
                       onClick={() => handleSelect(globalIdx)}
                       onMouseEnter={() => setSelectedIndex(globalIdx)}
                       className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${
-                        selectedIndex === globalIdx ? "bg-cobalt/10 text-cobalt" : "text-foreground hover:bg-background/80"
+                        activeIndex === globalIdx ? "bg-cobalt/10 text-cobalt" : "text-foreground hover:bg-background/80"
                       }`}
                     >
                       <span className="text-lg leading-none shrink-0">{isoToFlag(country.c)}</span>
@@ -181,7 +184,7 @@ export default function SearchCommand({ isOpen, onClose, onSelectCountry, onOpen
                         <span className="text-sm font-semibold">{country.n}</span>
                         <span className="ml-2 text-[10px] font-mono text-slate-light/50">{country.c}</span>
                       </div>
-                      {selectedIndex === globalIdx && (
+                      {activeIndex === globalIdx && (
                         <span className="text-[9px] font-mono text-slate-light/40">↵ select</span>
                       )}
                     </button>
@@ -205,7 +208,7 @@ export default function SearchCommand({ isOpen, onClose, onSelectCountry, onOpen
                       onClick={() => handleSelect(globalIdx)}
                       onMouseEnter={() => setSelectedIndex(globalIdx)}
                       className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${
-                        selectedIndex === globalIdx ? "bg-cobalt/10 text-cobalt" : "text-foreground hover:bg-background/80"
+                        activeIndex === globalIdx ? "bg-cobalt/10 text-cobalt" : "text-foreground hover:bg-background/80"
                       }`}
                     >
                       <Icon className="w-4 h-4 shrink-0 opacity-60" />
@@ -213,7 +216,7 @@ export default function SearchCommand({ isOpen, onClose, onSelectCountry, onOpen
                         <span className="text-sm font-semibold">{tool.name}</span>
                         <span className="ml-2 text-[10px] text-slate-light/50 hidden sm:inline">{tool.description}</span>
                       </div>
-                      {selectedIndex === globalIdx && (
+                      {activeIndex === globalIdx && (
                         <span className="text-[9px] font-mono text-slate-light/40">↵ open</span>
                       )}
                     </button>

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { X, Maximize2, Share2, Network, Cpu, Database, Zap } from "lucide-react"
+import { X, Maximize2, Share2, Cpu, Database, Zap } from "lucide-react"
 import AiResourceGraph from "./ai-resource-graph"
 
 interface AiNexusModalProps {
@@ -17,8 +17,11 @@ export default function AiNexusModal({ isOpen, onClose, selectedResource }: AiNe
 
     useEffect(() => {
         if (!isOpen) {
-            setContentReady(false);
-            setIsFullscreen(false);
+            const reset = window.setTimeout(() => {
+                setContentReady(false);
+                setIsFullscreen(false);
+            }, 0);
+            return () => window.clearTimeout(reset);
         }
     }, [isOpen]);
 

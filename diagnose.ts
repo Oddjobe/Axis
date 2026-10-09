@@ -41,6 +41,9 @@ const EXTRACT_SCHEMA = {
     required: ["articles"]
 };
 
+type FirecrawlScrapeOptions = NonNullable<Parameters<FirecrawlApp["scrapeUrl"]>[1]>;
+type FirecrawlExtractOptions = NonNullable<FirecrawlScrapeOptions["extract"]>;
+
 const VALID_ISO_CODES = new Set([
     "DZA", "AGO", "BEN", "BWA", "BFA", "BDI", "CPV", "CMR", "CAF", "TCD", "COM", "COD", "COG", "CIV",
     "DJI", "EGY", "GNQ", "ERI", "SWZ", "ETH", "GAB", "GMB", "GHA", "GIN", "GNB", "KEN", "LSO", "LBR",
@@ -48,7 +51,46 @@ const VALID_ISO_CODES = new Set([
     "SYC", "SLE", "SOM", "ZAF", "SSD", "SDN", "TZA", "TGO", "TUN", "UGA", "ZMB", "ZWE"
 ]);
 
-async function scrapeWithPhi(url: string, prompt: string, schema: any, inputContent?: string): Promise<any> {
+interface ExtractedArticle {
+    title?: string;
+    summary?: string;
+    severity?: string;
+    category?: string;
+    isoCode?: string;
+    actor?: string | null;
+    timeAgo?: string;
+    url?: string;
+    imageUrl?: string;
+    source?: string;
+}
+
+interface ArticleExtraction {
+    articles?: ExtractedArticle[];
+}
+
+interface IntelligenceSource {
+    url: string;
+    name: string;
+    rssUrl?: string;
+}
+
+interface RssArticle {
+    title?: string;
+    summary: string;
+    url?: string;
+    source: string;
+}
+
+function errorMessage(error: unknown): string {
+    return error instanceof Error ? error.message : String(error);
+}
+
+async function scrapeWithPhi(
+    url: string,
+    prompt: string,
+    schema: Record<string, unknown>,
+    inputContent?: string
+): Promise<ArticleExtraction> {
     if (!foundry || !FOUNDRY_MODEL) throw new Error("Foundry / Phi-4 not initialized.");
 
     let content = inputContent;
@@ -81,28 +123,28 @@ async function scrapeWithPhi(url: string, prompt: string, schema: any, inputCont
     const jsonMatch = responseText.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
     if (!jsonMatch) throw new Error("Failed to extract valid JSON from Phi response.");
 
-    return JSON.parse(jsonMatch[0]);
+    return JSON.parse(jsonMatch[0]) as ArticleExtraction;
 }
 
-async function scrapeFromRSS(sourceName: string, rssUrl: string): Promise<any[]> {
+async function scrapeFromRSS(sourceName: string, rssUrl: string): Promise<RssArticle[]> {
     try {
         console.log(`[RSS] Fetching ${rssUrl}`);
         const feed = await parser.parseURL(rssUrl);
-        return feed.items.slice(0, 10).map((item: any) => ({
+        return feed.items.slice(0, 10).map(item => ({
             title: item.title,
             summary: (item.contentSnippet || item.summary || item.content || "").substring(0, 300),
             url: item.link,
             source: sourceName
         }));
-    } catch (e: any) {
-        console.log(`[RSS] Error: ${e.message}`);
+    } catch (error: unknown) {
+        console.log(`[RSS] Error: ${errorMessage(error)}`);
         return [];
     }
 }
 
-async function diagnoseSource(source: any) {
-    let extracted: any[] = [];
-    let rssItems: any[] = [];
+async function diagnoseSource(source: IntelligenceSource) {
+    let extracted: ExtractedArticle[] = [];
+    let rssItems: RssArticle[] = [];
 
     if (source.rssUrl) {
         rssItems = await scrapeFromRSS(source.name, source.rssUrl);
@@ -113,11 +155,11 @@ async function diagnoseSource(source: any) {
             try {
                 const prompt = `Classify these ${rssItems.length} news items. For each, determine severity (HIGH/MEDIUM/LOW), category (SOVEREIGNTY RISK/OUTSIDE INFLUENCE), and country ISO code.`;
                 const result = await scrapeWithPhi(source.url, prompt, EXTRACT_SCHEMA, rssContent);
-                extracted = (result.articles || []).map((c: any) => ({ ...c, source: source.name }));
+                extracted = (result.articles || []).map(article => ({ ...article, source: source.name }));
                 console.log(`[Diagnose] Phi-4 extracted ${extracted.length} from RSS`);
                 console.log(JSON.stringify(extracted, null, 2));
-            } catch (e: any) {
-                console.error(`[Diagnose] Phi-4 RSS error:`, e.message);
+            } catch (error: unknown) {
+                console.error(`[Diagnose] Phi-4 RSS error:`, errorMessage(error));
             }
         }
     }
@@ -129,43 +171,48 @@ async function diagnoseSource(source: any) {
             const result = await scrapeWithPhi(source.url, prompt, EXTRACT_SCHEMA);
             extracted = result.articles || [];
             console.log(`[Diagnose] Phi-4 extracted ${extracted.length} from Jina`);
-        } catch (e: any) {
-            console.error(`[Diagnose] Foundry error:`, e.message);
+        } catch (error: unknown) {
+            console.error(`[Diagnose] Foundry error:`, errorMessage(error));
         }
     }
 
     if (extracted.length === 0 && firecrawl) {
         try {
             console.log(`[Diagnose] Trying Firecrawl Backup for ${source.name}`);
-            const response: any = await firecrawl.scrapeUrl(source.url, {
+            const response = await firecrawl.scrapeUrl(source.url, {
                 formats: ["extract"],
                 extract: {
                     prompt: `Extract top 10 articles about African geopolitics. Classify severity, category, and country. Translate to English.`,
-                    schema: EXTRACT_SCHEMA as any
+                    schema: EXTRACT_SCHEMA as unknown as FirecrawlExtractOptions["schema"]
                 }
             });
-            const extractedArticles = response?.extract?.articles || response?.data?.articles || response?.articles;
+            const payload = response as {
+                extract?: ArticleExtraction;
+                data?: ArticleExtraction;
+                articles?: ExtractedArticle[];
+            };
+            const extractedArticles = payload.extract?.articles || payload.data?.articles || payload.articles;
             if (Array.isArray(extractedArticles) && extractedArticles.length > 0) {
                 extracted = extractedArticles;
                 console.log(`[Diagnose] Firecrawl extracted ${extracted.length}`);
             } else {
                 console.log(`[Diagnose] Firecrawl returned empty or error: ${JSON.stringify(response)}`);
             }
-        } catch (fireErr: any) {
-            console.error(`[Diagnose] Firecrawl error:`, fireErr.message);
+        } catch (fireError: unknown) {
+            console.error(`[Diagnose] Firecrawl error:`, errorMessage(fireError));
         }
     }
 
     const filtered = extracted
-        .map((a: any) => ({
-            ...a,
+        .map(article => ({
+            ...article,
             source: source.name,
-            isoCode: (a.isoCode || "").toUpperCase().trim(),
-            actor: a.actor || null
+            isoCode: (article.isoCode || "").toUpperCase().trim(),
+            actor: article.actor || null
         }))
-        .filter((a: any) => {
-            const valid = VALID_ISO_CODES.has(a.isoCode);
-            if (!valid) console.log(`[Diagnose] Filtered out ${a.title} because isoCode ${a.isoCode} is invalid`);
+        .filter(article => {
+            const valid = VALID_ISO_CODES.has(article.isoCode);
+            if (!valid) console.log(`[Diagnose] Filtered out ${article.title} because isoCode ${article.isoCode} is invalid`);
             return valid;
         });
 

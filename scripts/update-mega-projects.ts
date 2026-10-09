@@ -14,6 +14,52 @@ if (!FIRECRAWL_API_KEY) {
 
 const firecrawl = new FirecrawlApp({ apiKey: FIRECRAWL_API_KEY });
 
+interface SearchResult {
+  url?: string;
+}
+
+interface MegaProject {
+  name: string;
+  country: string;
+  isoCode?: string;
+  value: string;
+  sector: string;
+  status: string;
+}
+
+interface MegaProjectExtraction {
+  success: boolean;
+  extract?: {
+    projects?: MegaProject[];
+  };
+}
+
+type FirecrawlScrapeOptions = NonNullable<Parameters<FirecrawlApp["scrapeUrl"]>[1]>;
+type FirecrawlExtractOptions = NonNullable<FirecrawlScrapeOptions["extract"]>;
+
+const MEGA_PROJECT_SCHEMA = {
+  type: "object",
+  properties: {
+    projects: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          id: { type: "string" },
+          name: { type: "string" },
+          country: { type: "string" },
+          isoCode: { type: "string" },
+          value: { type: "string" },
+          sector: { type: "string", enum: ["ENERGY", "INFRASTRUCTURE", "MINING", "TECH", "INDUSTRIAL"] },
+          status: { type: "string", enum: ["ACTIVE", "COMPLETED", "PLANNED", "CONSTRUCTION"] }
+        },
+        required: ["id", "name", "country", "isoCode", "value", "sector", "status"]
+      }
+    }
+  },
+  required: ["projects"]
+};
+
 async function main() {
   console.log("Searching for recent African Mega Projects...");
   // Let's search for a good article that is NOT Facebook or YouTube
@@ -26,8 +72,8 @@ async function main() {
   
   // Filter out youtube, facebook, cnn gallery which are notoriously hard to scrape
   const validUrls = searchResult.data
-      .map((r: any) => r.url)
-      .filter((url: string) => !url.includes("youtube") && !url.includes("facebook") && !url.includes("twitter") && !url.includes("instagram"));
+      .map((result: SearchResult) => result.url)
+      .filter((url): url is string => typeof url === "string" && !url.includes("youtube") && !url.includes("facebook") && !url.includes("twitter") && !url.includes("instagram"));
   
   if (validUrls.length === 0) {
       console.error("No valid text-based URLs found.");
@@ -37,34 +83,13 @@ async function main() {
   const targetUrl = validUrls[0];
   console.log(`Extracting data via Firecrawl from best text source: ${targetUrl}`);
   
-  const scrapeResult: any = await firecrawl.scrapeUrl(targetUrl, {
+  const scrapeResult = await firecrawl.scrapeUrl(targetUrl, {
       formats: ["extract"],
       extract: {
         prompt: "Extract the top 20 largest infrastructure or energy mega-projects in Africa currently active, planned, or recently completed. Return exactly 20 if possible. Focus on cost/value, sector, and status.",
-        schema: {
-          type: "object",
-          properties: {
-            projects: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  id: { type: "string" },
-                  name: { type: "string" },
-                  country: { type: "string" },
-                  isoCode: { type: "string", description: "3-letter ISO code for the country" },
-                  value: { type: "string", description: "e.g. $15B or Multi" },
-                  sector: { type: "string", enum: ["ENERGY", "INFRASTRUCTURE", "MINING", "TECH", "INDUSTRIAL"] },
-                  status: { type: "string", enum: ["ACTIVE", "COMPLETED", "PLANNED", "CONSTRUCTION"] }
-                },
-                required: ["id", "name", "country", "isoCode", "value", "sector", "status"]
-              }
-            }
-          },
-          required: ["projects"]
-        } as any
+        schema: MEGA_PROJECT_SCHEMA as unknown as FirecrawlExtractOptions["schema"]
       }
-  });
+  }) as MegaProjectExtraction;
   
   if (!scrapeResult.success) {
       console.error("Extraction failed", scrapeResult);
@@ -78,7 +103,7 @@ async function main() {
       const tsxPath = path.join(__dirname, "../src/components/mega-projects-ticker.tsx");
       let content = fs.readFileSync(tsxPath, "utf-8");
       
-      const newProjectsFormatted = projects.map((p: any, i: number) => {
+      const newProjectsFormatted = projects.map((p, i: number) => {
           return `  { id: "${i + 1}", name: "${p.name.substring(0, 40)}", country: "${p.country.substring(0, 20)}", isoCode: "${(p.isoCode || "UNK").substring(0,3).toUpperCase()}", value: "${p.value}", sector: "${p.sector}", status: "${p.status}" },`;
       }).join("\n");
       

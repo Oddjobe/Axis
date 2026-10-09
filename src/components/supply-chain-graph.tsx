@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { useTheme } from 'next-themes';
+import type { ForceGraphMethods, LinkObject, NodeObject } from 'react-force-graph-2d';
 
 const ForceGraph2D = dynamic(() => import('react-force-graph-2d'), { ssr: false });
 
@@ -20,11 +21,17 @@ interface GraphNode {
 }
 
 interface GraphLink {
-    source: string;
-    target: string;
+    source: string | GraphNode;
+    target: string | GraphNode;
     mineral: string;
     status: LinkStatus;
 }
+
+const endpointId = (endpoint: string | GraphNode) =>
+    typeof endpoint === 'string' ? endpoint : endpoint.id;
+
+const asGraphLink = (link: LinkObject): GraphLink =>
+    link as unknown as GraphLink;
 
 const SUPPLY_CHAIN_DATA: { nodes: GraphNode[]; links: GraphLink[] } = {
     nodes: [
@@ -122,8 +129,7 @@ export default function SupplyChainGraph() {
     const [hoverNode, setHoverNode] = useState<GraphNode | null>(null);
     const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const fgRef = useRef<any>(null);
+    const fgRef = useRef<ForceGraphMethods | undefined>(undefined);
 
     useEffect(() => {
         const updateSize = () => {
@@ -146,7 +152,7 @@ export default function SupplyChainGraph() {
             (statusFilter === 'all' || l.status === statusFilter)
         );
         const ids = new Set<string>();
-        links.forEach(l => { ids.add(l.source); ids.add(l.target); });
+        links.forEach(l => { ids.add(endpointId(l.source)); ids.add(endpointId(l.target)); });
         const nodes = SUPPLY_CHAIN_DATA.nodes.filter(n => ids.has(n.id));
         return { nodes: nodes.map(n => ({ ...n })), links: links.map(l => ({ ...l })) };
     }, [selectedMineral, statusFilter]);
@@ -162,15 +168,15 @@ export default function SupplyChainGraph() {
     const isConnected = useCallback((nodeId: string) => {
         if (!focusNode) return false;
         return filteredData.links.some(l => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const s = typeof l.source === 'string' ? l.source : (l.source as any).id;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const t = typeof l.target === 'string' ? l.target : (l.target as any).id;
+            const s = endpointId(l.source);
+            const t = endpointId(l.target);
             return (s === focusNode.id && t === nodeId) || (t === focusNode.id && s === nodeId);
         });
     }, [focusNode, filteredData.links]);
 
-    const nodeCanvasObject = useCallback((node: any, ctx: CanvasRenderingContext2D) => {
+    const nodeCanvasObject = useCallback((rawNode: NodeObject, ctx: CanvasRenderingContext2D) => {
+        const node = rawNode as GraphNode;
+        if (typeof node.x !== 'number' || typeof node.y !== 'number') return;
         const size = node.type === 'mine' ? 6 : node.type === 'product' ? 8 : 5;
         const color = NODE_COLORS[node.type as NodeKind] || '#71717a';
         const focused = focusNode?.id === node.id;
@@ -217,18 +223,19 @@ export default function SupplyChainGraph() {
         ctx.globalAlpha = 1;
     }, [focusNode, selectedNode, isConnected, isDark]);
 
-    const linkColor = useCallback((link: any) => {
+    const linkColor = useCallback((rawLink: LinkObject) => {
+        const link = asGraphLink(rawLink);
         const base = link.status === 'flagged' ? '#ef4444' : link.status === 'verified' ? '#22c55e' : '#71717a';
         if (focusNode) {
-            const s = typeof link.source === 'string' ? link.source : link.source.id;
-            const t = typeof link.target === 'string' ? link.target : link.target.id;
+            const s = endpointId(link.source);
+            const t = endpointId(link.target);
             const touches = s === focusNode.id || t === focusNode.id;
             return `${base}${touches ? 'cc' : '14'}`;
         }
         return `${base}${link.status === 'flagged' ? '80' : link.status === 'verified' ? '60' : '40'}`;
     }, [focusNode]);
 
-    const handleNodeClick = useCallback((node: any) => {
+    const handleNodeClick = useCallback((node: GraphNode) => {
         setSelectedNode(prev => (prev && prev.id === node.id) ? null : node);
         if (fgRef.current && Number.isFinite(node.x) && Number.isFinite(node.y)) {
             fgRef.current.centerAt(node.x, node.y, 400);
@@ -304,15 +311,20 @@ export default function SupplyChainGraph() {
                     backgroundColor="transparent"
                     nodeCanvasObject={nodeCanvasObject}
                     linkColor={linkColor}
-                    linkWidth={(link: any) => {
-                        const touches = focusNode && ((typeof link.source === 'string' ? link.source : link.source.id) === focusNode.id || (typeof link.target === 'string' ? link.target : link.target.id) === focusNode.id);
+                    linkWidth={(rawLink: LinkObject) => {
+                        const link = asGraphLink(rawLink);
+                        const touches = focusNode && (endpointId(link.source) === focusNode.id || endpointId(link.target) === focusNode.id);
                         return touches ? 3 : link.status === 'flagged' ? 2 : 1;
                     }}
-                    linkLineDash={(link: any) => link.status === 'flagged' ? [4, 2] : link.status === 'unknown' ? [2, 2] : []}
+                    linkLineDash={(rawLink: LinkObject) => {
+                        const link = asGraphLink(rawLink);
+                        return link.status === 'flagged' ? [4, 2] : link.status === 'unknown' ? [2, 2] : [];
+                    }}
                     linkDirectionalArrowLength={4}
                     linkDirectionalArrowRelPos={0.8}
-                    linkDirectionalParticles={(link: any) => {
-                        const touches = focusNode && ((typeof link.source === 'string' ? link.source : link.source.id) === focusNode.id || (typeof link.target === 'string' ? link.target : link.target.id) === focusNode.id);
+                    linkDirectionalParticles={(rawLink: LinkObject) => {
+                        const link = asGraphLink(rawLink);
+                        const touches = focusNode && (endpointId(link.source) === focusNode.id || endpointId(link.target) === focusNode.id);
                         return touches ? 4 : 0;
                     }}
                     linkDirectionalParticleWidth={2}
@@ -321,11 +333,11 @@ export default function SupplyChainGraph() {
                     d3VelocityDecay={0.3}
                     enableZoomInteraction={true}
                     enablePanInteraction={true}
-                    onNodeHover={(node: any) => {
-                        setHoverNode(node || null);
+                    onNodeHover={(node: NodeObject | null) => {
+                        setHoverNode(node as GraphNode | null);
                         if (containerRef.current) containerRef.current.style.cursor = node ? 'pointer' : 'default';
                     }}
-                    onNodeClick={handleNodeClick}
+                    onNodeClick={(node: NodeObject) => handleNodeClick(node as GraphNode)}
                     onBackgroundClick={() => setSelectedNode(null)}
                 />
 

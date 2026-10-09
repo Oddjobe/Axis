@@ -53,7 +53,7 @@ async function seedData() {
     }));
 
     // The 'upsert' command inserts new rows or updates existing ones matching the primary 'id' key
-    const { data, error } = await supabase
+    const { error } = await supabase
         .from('countries')
         .upsert(formattedData, { onConflict: 'id' });
 

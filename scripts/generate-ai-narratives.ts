@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 import * as dotenv from "dotenv";
-import fs from "fs";
-import path from "path";
+
+import { writeGeneratedJson } from "./generated-data-writer";
 
 dotenv.config({ path: ".env.local" });
 
@@ -71,7 +71,7 @@ async function generateBatch(nations: { c: string, n: string }[]) {
 async function main() {
     console.log("Starting full AI Narrative Generation for 54 nations...");
     const batchSize = 5;
-    const results: Record<string, any> = {};
+    const results: Record<string, unknown> = {};
 
     for (let i = 0; i < AFRICAN_NATIONS.length; i += batchSize) {
         const batch = AFRICAN_NATIONS.slice(i, i + batchSize);
@@ -85,9 +85,8 @@ async function main() {
         }
     }
 
-    const outputPath = path.join(process.cwd(), 'src/lib/dynamic-narratives.json');
-    fs.writeFileSync(outputPath, JSON.stringify(results, null, 2));
-    console.log(`Successfully written 54-nation narratives to ${outputPath}`);
+    writeGeneratedJson("src/lib/dynamic-narratives.json", results);
+    console.log("Successfully written 54-nation narratives to src/lib/dynamic-narratives.json");
 }
 
 main().catch(console.error);

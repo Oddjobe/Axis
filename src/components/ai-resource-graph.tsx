@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import { useTheme } from "next-themes";
 import { BrainCircuit, Pickaxe, Cpu, Globe } from "lucide-react";
 import * as d3 from 'd3-force';
+import type { ForceGraphMethods, LinkObject, NodeObject } from 'react-force-graph-2d';
 import { ALL_SOVEREIGN_DATA } from "@/lib/mock-data";
 
 // Dynamically import to avoid SSR issues with canvas
@@ -28,20 +29,23 @@ interface GraphNode {
 }
 
 interface GraphLink {
-    source: string;
-    target: string;
+    source: string | GraphNode;
+    target: string | GraphNode;
     value: number;
     label?: string;
     color?: string;
 }
 
-// Column assignments for left-to-right flow
-const COLUMN_MAP: Record<NodeType, number> = {
-    country: 0,
-    resource: 1,
-    component: 2,
-    endProduct: 3,
-};
+interface ResolvedGraphLink extends Omit<GraphLink, 'source' | 'target'> {
+    source: GraphNode;
+    target: GraphNode;
+}
+
+const endpointId = (endpoint: string | GraphNode) =>
+    typeof endpoint === 'string' ? endpoint : endpoint.id;
+
+const asGraphLink = (link: LinkObject): GraphLink =>
+    link as unknown as GraphLink;
 
 // Critical minerals layer — single source of truth for both the graph nodes
 // and the interactive filter chips. `id` must match the dynamic link targets below.
@@ -83,11 +87,10 @@ export default function AiResourceGraph({ selectedResource = null }: { selectedR
     const [isStabilized, setIsStabilized] = useState(false);
     // Removed forcesReady gate to allow immediate rendering
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const fgRef = useRef<any>(null);
+    const fgRef = useRef<ForceGraphMethods | undefined>(undefined);
 
     useEffect(() => {
-        setMounted(true);
+        const mountedFrame = requestAnimationFrame(() => setMounted(true));
 
         const currentContainer = containerRef.current;
         if (!currentContainer) return;
@@ -111,6 +114,7 @@ export default function AiResourceGraph({ selectedResource = null }: { selectedR
         resizeObserver.observe(currentContainer);
 
         return () => {
+            cancelAnimationFrame(mountedFrame);
             resizeObserver.unobserve(currentContainer);
             resizeObserver.disconnect();
         };
@@ -132,16 +136,18 @@ export default function AiResourceGraph({ selectedResource = null }: { selectedR
 
         // X-axis: rigidly lock nodes into their columns with high strength
         const spread = dimensions.width * 0.35;
-        fg.d3Force('x', d3.forceX((node: any) => {
-            return -spread + ((node.column || 0) / 3) * spread * 2;
+        fg.d3Force('x', d3.forceX((node) => {
+            const graphNode = node as GraphNode;
+            return -spread + ((graphNode.column || 0) / 3) * spread * 2;
         }).strength(2.0));
 
         // Y-axis: medium centering to maintain a neat horizontal band
         fg.d3Force('y', d3.forceY(0).strength(0.6));
 
         // Strict collision to prevent any overlap
-        fg.d3Force('collision', d3.forceCollide((node: any) => {
-            return Math.sqrt(node.val || 10) * 3 + 25;
+        fg.d3Force('collision', d3.forceCollide((node) => {
+            const graphNode = node as GraphNode;
+            return Math.sqrt(graphNode.val || 10) * 3 + 25;
         }).iterations(4));
 
         // Important: Reheat to apply these changes to the internal simulation state
@@ -314,17 +320,17 @@ export default function AiResourceGraph({ selectedResource = null }: { selectedR
                 : null);
 
         // Split base links into resource->component and the downstream pipeline.
-        const resourceLinks = baseLinks.filter(l => RESOURCE_IDS.has(l.source));
-        const downstreamLinks = baseLinks.filter(l => !RESOURCE_IDS.has(l.source));
+        const resourceLinks = baseLinks.filter(l => RESOURCE_IDS.has(endpointId(l.source)));
+        const downstreamLinks = baseLinks.filter(l => !RESOURCE_IDS.has(endpointId(l.source)));
 
         if (mineralIds && mineralIds.length > 0) {
             const mineralSet = new Set(mineralIds);
-            const keptCountryLinks = dynamicCountryLinks.filter(l => mineralSet.has(l.target));
-            const keptCountryIds = new Set(keptCountryLinks.map(l => l.source));
+            const keptCountryLinks = dynamicCountryLinks.filter(l => mineralSet.has(endpointId(l.target)));
+            const keptCountryIds = new Set(keptCountryLinks.map(l => endpointId(l.source)));
 
             const finalCountryNodes = countryNodes.filter(n => keptCountryIds.has(n.id));
             const finalResourceNodes = allResourceNodes.filter(n => mineralSet.has(n.id));
-            const keptResourceLinks = resourceLinks.filter(l => mineralSet.has(l.source));
+            const keptResourceLinks = resourceLinks.filter(l => mineralSet.has(endpointId(l.source)));
 
             return {
                 nodes: [...finalCountryNodes, ...finalResourceNodes, ...componentNodes, ...productNodes],
@@ -338,12 +344,6 @@ export default function AiResourceGraph({ selectedResource = null }: { selectedR
         };
     }, [colors, selectedResource, activeMinerals]);
 
-    // X-position target for each column (fraction of width, centered around 0)
-    const getColumnX = useCallback((column: number) => {
-        const spread = dimensions.width * 0.35; // Spread across 70% of width
-        return -spread + (column / 3) * spread * 2;
-    }, [dimensions.width]);
-
     const handleNodeHover = useCallback((node: GraphNode | null) => {
         setHoverNode(node);
         if (containerRef.current) {
@@ -351,8 +351,7 @@ export default function AiResourceGraph({ selectedResource = null }: { selectedR
         }
     }, []);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const handleNodeClick = useCallback((node: any) => {
+    const handleNodeClick = useCallback((node: GraphNode) => {
         setSelectedNode(prev => (prev && prev.id === node.id) ? null : node);
         if (fgRef.current && Number.isFinite(node.x) && Number.isFinite(node.y)) {
             fgRef.current.centerAt(node.x, node.y, 500);
@@ -382,16 +381,16 @@ export default function AiResourceGraph({ selectedResource = null }: { selectedR
     // priority, but hovering temporarily previews a different node.
     const focusNode = hoverNode || selectedNode;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const paintNode = useCallback((node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
-        const { id, x, y, val, color, name, group } = node as GraphNode & { x: number, y: number };
+    const paintNode = useCallback((rawNode: NodeObject, ctx: CanvasRenderingContext2D, globalScale: number) => {
+        const node = rawNode as GraphNode;
+        const { id, x, y, val, color, name } = node;
 
-        if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+        if (typeof x !== 'number' || typeof y !== 'number' || !Number.isFinite(x) || !Number.isFinite(y)) return;
 
         const isHovered = focusNode?.id === id;
         const isConnected = focusNode ? graphData.links.some(l => {
-            const src = typeof l.source === 'string' ? l.source : (l.source as any).id;
-            const tgt = typeof l.target === 'string' ? l.target : (l.target as any).id;
+            const src = endpointId(l.source);
+            const tgt = endpointId(l.target);
             return (src === focusNode.id && tgt === id) || (tgt === focusNode.id && src === id);
         }) : false;
         const isFaded = focusNode && !isHovered && !isConnected;
@@ -472,11 +471,20 @@ export default function AiResourceGraph({ selectedResource = null }: { selectedR
         ctx.globalAlpha = 1;
     }, [focusNode, selectedNode, isDark, graphData.links]);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const paintLink = useCallback((link: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
+    const paintLink = useCallback((rawLink: LinkObject, ctx: CanvasRenderingContext2D, globalScale: number) => {
+        const link = rawLink as unknown as ResolvedGraphLink;
         const source = link.source;
         const target = link.target;
-        if (!source || !target || !Number.isFinite(source.x) || !Number.isFinite(source.y) || !Number.isFinite(target.x) || !Number.isFinite(target.y)) return;
+        if (
+            typeof source.x !== 'number' ||
+            typeof source.y !== 'number' ||
+            typeof target.x !== 'number' ||
+            typeof target.y !== 'number' ||
+            !Number.isFinite(source.x) ||
+            !Number.isFinite(source.y) ||
+            !Number.isFinite(target.x) ||
+            !Number.isFinite(target.y)
+        ) return;
 
         const isConnected = focusNode && (source.id === focusNode.id || target.id === focusNode.id);
         const isFaded = focusNode && !isConnected;
@@ -618,26 +626,29 @@ export default function AiResourceGraph({ selectedResource = null }: { selectedR
                             nodeCanvasObjectMode={() => 'replace'}
                             linkCanvasObject={paintLink}
                             linkCanvasObjectMode={() => 'replace'}
-                            linkDirectionalParticles={(link: any) => {
-                                if (focusNode && (link.source.id === focusNode.id || link.target.id === focusNode.id)) return 5;
+                            linkDirectionalParticles={(rawLink: LinkObject) => {
+                                const link = asGraphLink(rawLink);
+                                if (focusNode && (endpointId(link.source) === focusNode.id || endpointId(link.target) === focusNode.id)) return 5;
                                 return 1;
                             }}
-                            linkDirectionalParticleWidth={(link: any) => {
-                                if (focusNode && (link.source.id === focusNode.id || link.target.id === focusNode.id)) return 3;
+                            linkDirectionalParticleWidth={(rawLink: LinkObject) => {
+                                const link = asGraphLink(rawLink);
+                                if (focusNode && (endpointId(link.source) === focusNode.id || endpointId(link.target) === focusNode.id)) return 3;
                                 return 1.2;
                             }}
-                            linkDirectionalParticleColor={(link: any) => {
-                                return link.source?.color || colors.text;
+                            linkDirectionalParticleColor={(rawLink: LinkObject) => {
+                                const link = asGraphLink(rawLink);
+                                return typeof link.source === 'string' ? colors.text : link.source.color || colors.text;
                             }}
                             linkDirectionalParticleSpeed={0.005}
                             d3AlphaDecay={0.1} // Settle even faster
                             d3VelocityDecay={0.92} // Maximum friction, zero bouncing
                             warmupTicks={40} // Show graph much sooner (was 200)
                             cooldownTicks={50} // Settle physics faster (was 100)
-                            onNodeHover={(node: any) => handleNodeHover(node)}
-                            onNodeClick={(node: any) => handleNodeClick(node)}
+                            onNodeHover={(node: NodeObject | null) => handleNodeHover(node as GraphNode | null)}
+                            onNodeClick={(node: NodeObject) => handleNodeClick(node as GraphNode)}
                             onBackgroundClick={handleBackgroundClick}
-                            onNodeDragEnd={(node: any) => {
+                            onNodeDragEnd={(node: NodeObject) => {
                                 // Pin node where user drops it but allow a little elastic settling
                                 node.fx = node.x;
                                 node.fy = node.y;

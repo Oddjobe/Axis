@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useTheme } from 'next-themes';
 import { TRADE_CATEGORIES, type TradeCategory } from '@/lib/trade-categories';
 
@@ -87,13 +87,13 @@ export default function TradeFlowMap({ initialCategory }: { initialCategory?: Tr
     const [trendFilter, setTrendFilter] = useState<Set<Trend>>(new Set());
 
     // A route passes the filter if it matches the category and (no trend filter or matching trend)
-    const isVisible = (route: TradeRoute) =>
+    const isVisible = useCallback((route: TradeRoute) =>
         (categoryFilter === 'all' || route.category === categoryFilter) &&
-        (trendFilter.size === 0 || trendFilter.has(route.trend));
+        (trendFilter.size === 0 || trendFilter.has(route.trend)), [categoryFilter, trendFilter]);
 
     const visibleIndices = useMemo(
         () => TRADE_ROUTES.map((rt, i) => (isVisible(rt) ? i : -1)).filter(i => i >= 0),
-        [categoryFilter, trendFilter]
+        [isVisible]
     );
 
     const focusIdx = hoveredRoute ?? selectedRoute;
