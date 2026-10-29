@@ -1,1027 +1,1027 @@
 {
   "DZA": {
     "highlights": [
-      "Gas leverage over Europe",
-      "State-led hydrocarbons and minerals"
+      "Gas Leverage",
+      "Strategic Autonomy"
     ],
     "status": "OPTIMAL",
     "frictionVectors": [
       {
-        "title": "European gas dependence",
+        "title": "European Energy Dependence",
         "severity": "MEDIUM",
-        "details": "Algeria retains strong control over gas exports, but European buyers are pressing for favorable pricing and long-term access as they diversify away from Russian supply."
+        "details": "Europe remains dependent on Algerian gas while pressing for investment and market access. Algeria retains strong state control but faces pressure to expand exports and attract foreign technology."
       },
       {
-        "title": "Sahel security spillover",
+        "title": "Sahel Border Volatility",
         "severity": "MEDIUM",
-        "details": "Instability across Mali, Niger, and Libya threatens border security and could disrupt energy infrastructure while increasing pressure for foreign security cooperation."
+        "details": "Instability across Mali, Niger, and Libya strains Algeria's southern security perimeter. External military competition in the Sahel complicates Algiers' non-interventionist posture."
       }
     ]
   },
   "AGO": {
     "highlights": [
-      "Lobito Corridor competition",
-      "Oil dependence limits autonomy"
+      "Lobito Corridor Race",
+      "Oil-Led Vulnerability"
     ],
     "status": "EXTRACTIVE",
     "frictionVectors": [
       {
-        "title": "External control of oil value chains",
+        "title": "External Corridor Competition",
         "severity": "HIGH",
-        "details": "Angola retains formal sovereignty over petroleum resources but remains heavily dependent on foreign operators, imported technology, and external finance for production and infrastructure."
+        "details": "The Lobito Corridor has drawn competing US, European, Chinese, and Gulf interest because of its access to Central African critical minerals. Angola gains infrastructure leverage but risks becoming a transit platform shaped by outside capital."
       },
       {
-        "title": "Lobito Corridor strategic contest",
-        "severity": "MEDIUM",
-        "details": "The corridor is attracting US, European, and Chinese interest because of its links to Congolese and Zambian minerals, creating leverage but also intensifying competition over infrastructure access."
+        "title": "Debt and Oil Exposure",
+        "severity": "HIGH",
+        "details": "Hydrocarbon revenues remain central to fiscal stability while Chinese-linked financing and international oil firms retain substantial influence. Production decline and debt-service pressures constrain Luanda's room for maneuver."
       }
     ]
   },
   "BEN": {
     "highlights": [
-      "Port-centered regional gateway",
-      "Energy corridor under pressure"
+      "Pipeline Gateway",
+      "Northern Security Strain"
     ],
-    "status": "IMPROVING",
+    "status": "NEUTRAL",
     "frictionVectors": [
       {
-        "title": "Niger pipeline dispute",
+        "title": "Niger Export Dispute",
         "severity": "HIGH",
-        "details": "Relations with Niger remain strained over oil exports through Benin, exposing Cotonou to transit risks and political pressure from neighboring military governments."
+        "details": "The Niger-Benin oil export route remains vulnerable to political tension and border restrictions between the two governments. Benin's role as a coastal energy gateway brings revenue but also exposes it to upstream diplomatic pressure."
       },
       {
-        "title": "Foreign infrastructure dependence",
+        "title": "Gulf of Guinea Pressure",
         "severity": "MEDIUM",
-        "details": "Chinese-backed construction and regional port competition support growth, but reliance on external capital limits Benin's control over logistics and strategic infrastructure."
+        "details": "Northern Benin faces spillover from militant networks operating across the Sahel. Foreign security assistance and port investment are expanding, creating dependence alongside stronger state capacity."
       }
     ]
   },
   "BWA": {
     "highlights": [
-      "Diamond sovereignty remains strong",
-      "Critical-mineral diversification"
+      "Diamond Bargaining Power",
+      "Diversification Imperative"
     ],
-    "status": "OPTIMAL",
+    "status": "IMPROVING",
     "frictionVectors": [
       {
-        "title": "Diamond market exposure",
-        "severity": "MEDIUM",
-        "details": "Botswana exercises unusually strong control through its state partnership with De Beers, but weaker global diamond demand could reduce fiscal room and bargaining power."
+        "title": "De Beers Dependence",
+        "severity": "HIGH",
+        "details": "Botswana retains significant negotiating power through its diamond reserves and state participation, but sales and marketing remain closely tied to De Beers and global demand. A prolonged diamond downturn would weaken fiscal sovereignty."
       },
       {
-        "title": "Mineral competition",
-        "severity": "LOW",
-        "details": "Interest in copper, nickel, and other minerals is increasing, bringing investment opportunities alongside pressure to offer concessions and infrastructure access to foreign firms."
+        "title": "Water and Energy Constraints",
+        "severity": "MEDIUM",
+        "details": "Dependence on imported electricity, regional grids, and scarce water limits industrial diversification. New solar and minerals initiatives could improve autonomy but require foreign capital and technical partnerships."
       }
     ]
   },
   "BFA": {
     "highlights": [
-      "Junta asserts mining control",
-      "Security crisis erodes capacity"
+      "Gold Nationalism",
+      "Security-State Consolidation"
     ],
     "status": "IMPROVING",
     "frictionVectors": [
       {
-        "title": "Gold-sector renegotiation",
+        "title": "Mining Contract Pressure",
         "severity": "HIGH",
-        "details": "Authorities are seeking a larger state role in gold production and tighter oversight of foreign operators, but weak institutions and informal extraction complicate enforcement."
+        "details": "The junta is seeking greater state participation, local processing, and revenue capture from gold while renegotiating the role of foreign operators. This strengthens formal sovereignty but risks reduced investment and production."
       },
       {
-        "title": "Russian security dependence",
+        "title": "Russian Security Alignment",
         "severity": "HIGH",
-        "details": "Expanded security ties with Russia reduce reliance on former Western partners but may exchange one form of external dependence for another while increasing sanctions and reputational risks."
+        "details": "Expanded security ties with Russia provide the government an alternative to Western partners but increase dependence on an external military patron. Persistent jihadist violence continues to disrupt mining zones, roads, and state access."
       }
     ]
   },
   "BDI": {
     "highlights": [
-      "Mineral sovereignty under pressure",
-      "Regional access remains constrained"
+      "Mining ambitions constrained by weak governance",
+      "Regional tensions limit strategic autonomy"
     ],
     "status": "EXTRACTIVE",
     "frictionVectors": [
       {
-        "title": "Critical-mineral licensing",
+        "title": "MINERAL GOVERNANCE",
         "severity": "HIGH",
-        "details": "Burundi is seeking greater state control over nickel, rare-earth and gold projects, but limited capital and regulatory capacity leave room for opaque foreign-linked concessions."
+        "details": "Gold and nickel prospects attract foreign operators while opaque licensing and limited state capacity restrict Burundi’s ability to capture value. Informal mining remains difficult to regulate."
       },
       {
-        "title": "Rwanda-DRC security spillover",
+        "title": "RWANDA BORDER PRESSURE",
         "severity": "MEDIUM",
-        "details": "Tensions around eastern DRC and cross-border armed networks complicate trade routes and reduce Burundi's leverage over regional infrastructure and mineral corridors."
+        "details": "Relations with Rwanda remain tense, complicating trade, security coordination, and regional infrastructure connectivity. Burundi’s dependence on external aid and transit routes narrows its negotiating space."
       }
     ]
   },
   "CPV": {
     "highlights": [
-      "Maritime hub consolidates",
-      "Tourism dependence persists"
+      "Stable maritime gateway",
+      "Tourism and logistics drive external dependence"
     ],
     "status": "IMPROVING",
     "frictionVectors": [
       {
-        "title": "Foreign-backed port infrastructure",
+        "title": "MARITIME SECURITY",
         "severity": "MEDIUM",
-        "details": "Expansion of ports, logistics and maritime-security facilities brings investment and strategic value, but also increases dependence on external financiers and security partners."
+        "details": "Cabo Verde’s Atlantic position gives it strategic value for fisheries enforcement, migration monitoring, and transoceanic logistics. European and U.S. security partnerships strengthen capacity but also increase outside influence over maritime priorities."
       },
       {
-        "title": "Tourism and energy exposure",
-        "severity": "MEDIUM",
-        "details": "The economy remains vulnerable to external tourism demand, imported fuel and climate shocks, limiting domestic control over critical revenue and energy systems."
+        "title": "INFRASTRUCTURE FINANCE",
+        "severity": "LOW",
+        "details": "Ports, airports, energy, and digital infrastructure rely heavily on foreign capital and concessional finance. Debt management remains the main constraint on fully autonomous development planning."
       }
     ]
   },
   "CMR": {
     "highlights": [
-      "Resource state under strain",
-      "Ports and pipelines are strategic chokepoints"
+      "Oil, gas, and timber remain externally exposed",
+      "Conflict fragments national infrastructure"
     ],
     "status": "EXTRACTIVE",
     "frictionVectors": [
       {
-        "title": "Oil, gas and mining concessions",
+        "title": "RESOURCE CONTRACTS",
         "severity": "HIGH",
-        "details": "Foreign firms remain central to hydrocarbon and mining development, while governance weaknesses and opaque contracting limit Cameroon's ability to capture full sovereign value."
+        "details": "Chinese, European, and other foreign firms remain important in oil, mining, timber, and infrastructure projects. Weak transparency and limited local processing reduce Cameroon’s sovereign share of resource value."
       },
       {
-        "title": "Conflict-linked infrastructure",
+        "title": "ANGLOPHONE CONFLICT",
         "severity": "HIGH",
-        "details": "The Anglophone conflict and instability near the Far North threaten transport corridors, plantations and energy infrastructure, increasing reliance on external finance and security support."
+        "details": "Insurgency in the Northwest and Southwest disrupts roads, agricultural supply chains, and public investment. Security spending and fragmented territorial control continue to weaken infrastructure sovereignty."
       }
     ]
   },
   "CAF": {
     "highlights": [
-      "Mining sovereignty contested",
-      "Security dependence deepens"
+      "Russian security partnership shapes the state",
+      "Mining sovereignty remains highly contested"
     ],
     "status": "EXTRACTIVE",
     "frictionVectors": [
       {
-        "title": "Russian-linked security and mining",
+        "title": "RUSSIAN MINING ACCESS",
         "severity": "HIGH",
-        "details": "The government's security relationship with Russian-linked forces has expanded its room for maneuver but is associated with opaque access to gold and diamond resources."
+        "details": "The government’s security relationship with Russian personnel and associated commercial networks is closely linked to access to gold and diamond opportunities. Weak oversight raises concerns that security dependence is being exchanged for opaque resource concessions."
       },
       {
-        "title": "Corridor and border insecurity",
+        "title": "LOGISTICS BOTTLENECKS",
         "severity": "HIGH",
-        "details": "Weak control over borderlands and transport routes leaves mineral exports dependent on neighboring states and armed-group dynamics, sharply limiting effective sovereignty."
+        "details": "Poor roads, insecurity, and reliance on neighboring transit corridors leave the country vulnerable to external control over trade and aid routes. Limited state reach outside Bangui continues to constrain resource governance."
       }
     ]
   },
   "TCD": {
     "highlights": [
-      "Oil revenues remain externally exposed",
-      "Security autonomy is limited"
+      "Oil finances the state but limits diversification",
+      "Security partnerships remain strategically decisive"
     ],
     "status": "EXTRACTIVE",
     "frictionVectors": [
       {
-        "title": "Oil-sector dependence",
+        "title": "OIL DEPENDENCE",
         "severity": "HIGH",
-        "details": "Chad's fiscal position remains tied to oil production, export infrastructure and foreign operators, constraining domestic control over pricing, technology and revenue stability."
+        "details": "Hydrocarbon revenue remains central to public finance, while foreign operators and volatile prices constrain fiscal sovereignty. Refining, pipeline, and export infrastructure keep Chad dependent on external technical and commercial networks."
       },
       {
-        "title": "Competing external security ties",
+        "title": "EXTERNAL SECURITY LEVERAGE",
         "severity": "HIGH",
-        "details": "The government is balancing relations with France, Russia-linked actors and regional partners as it manages border threats, creating leverage for outsiders over strategic infrastructure and policy."
+        "details": "Instability along the Sudan and Libya frontiers and pressure from regional insurgencies preserve the importance of foreign military and intelligence relationships. These partnerships provide regime support but limit independent strategic maneuver."
       }
     ]
   },
   "COM": {
     "highlights": [
-      "Mayotte dispute remains unresolved",
-      "Maritime resources face capacity limits"
+      "Mayotte sovereignty dispute persists",
+      "External financing remains decisive"
     ],
-    "status": "EXTRACTIVE",
+    "status": "NEUTRAL",
     "frictionVectors": [
       {
         "title": "French control of Mayotte",
         "severity": "HIGH",
-        "details": "France retains effective control of Mayotte, limiting Comoros' territorial claims and access to surrounding maritime resources. The dispute continues to shape migration, security, and diplomatic relations."
+        "details": "France retains effective control over Mayotte, making the territorial dispute a central constraint on Comorian sovereignty and regional diplomacy."
       },
       {
-        "title": "External dependence and fisheries oversight",
+        "title": "Aid and infrastructure dependence",
         "severity": "MEDIUM",
-        "details": "Limited enforcement capacity leaves Comorian waters vulnerable to foreign fishing and informal exploitation. Budget support and infrastructure finance from external partners constrain policy autonomy."
+        "details": "Comoros relies heavily on foreign aid, remittances, and externally financed infrastructure, limiting its ability to set independent development priorities."
       }
     ]
   },
   "COD": {
     "highlights": [
-      "Critical minerals draw intense competition",
-      "Eastern insecurity undermines state control"
+      "Critical minerals face sovereignty pressure",
+      "Eastern insecurity disrupts state authority"
     ],
     "status": "EXTRACTIVE",
     "frictionVectors": [
       {
-        "title": "Conflict-linked mineral networks",
+        "title": "Mineral supply-chain competition",
         "severity": "HIGH",
-        "details": "Armed groups and cross-border trading networks continue to challenge Kinshasa's control over mineral-rich areas in the east. Rwanda-related tensions and regional security operations complicate efforts to formalize supply chains."
+        "details": "Cobalt, copper, and other strategic minerals attract intense Chinese, Western, and regional competition, while weak enforcement limits public capture of value."
       },
       {
-        "title": "Strategic-minerals bargaining",
+        "title": "Conflict and border interference",
         "severity": "HIGH",
-        "details": "Chinese firms remain deeply embedded in copper and cobalt production, while Western actors seek diversified access to critical minerals. The government has greater leverage than before but still struggles to capture value through processing and transparent contracts."
+        "details": "Armed groups and cross-border involvement around the eastern provinces continue to undermine territorial control, mining governance, and infrastructure security."
       }
     ]
   },
   "COG": {
     "highlights": [
-      "Oil remains the fiscal backbone",
-      "Chinese infrastructure role stays prominent"
+      "Oil remains the fiscal anchor",
+      "Chinese infrastructure influence deepens"
     ],
     "status": "EXTRACTIVE",
     "frictionVectors": [
       {
         "title": "Hydrocarbon dependence",
         "severity": "HIGH",
-        "details": "Foreign oil operators and volatile prices continue to shape state revenues, limiting diversification and bargaining autonomy. Production and fiscal management remain central points of external influence."
+        "details": "The state remains heavily dependent on oil revenues, exposing national policy and public finances to foreign operators, price volatility, and opaque contracting."
       },
       {
-        "title": "Infrastructure-for-finance exposure",
+        "title": "Debt-linked infrastructure exposure",
         "severity": "MEDIUM",
-        "details": "Chinese firms retain a major role in roads, public works, and commercial infrastructure. These ties deliver strategic assets but raise concerns over debt exposure, contract transparency, and domestic value capture."
+        "details": "Chinese-financed roads, public works, and resource relationships expand connectivity but raise concerns over debt, procurement transparency, and strategic leverage."
       }
     ]
   },
   "CIV": {
     "highlights": [
-      "Abidjan is consolidating regional leverage",
-      "Commodity growth is broadening"
+      "Abidjan consolidates regional influence",
+      "Cocoa sovereignty remains incomplete"
     ],
     "status": "IMPROVING",
     "frictionVectors": [
       {
-        "title": "External capital concentration",
-        "severity": "MEDIUM",
-        "details": "Foreign investment remains central to ports, energy, mining, and transport expansion, giving international firms substantial influence over strategic infrastructure. Abidjan is mitigating this through regional integration and stronger domestic institutions."
+        "title": "Cocoa value-chain dependence",
+        "severity": "HIGH",
+        "details": "Cote d'Ivoire is strengthening regulation and processing capacity, but foreign traders and global price-setting still capture substantial value from its cocoa sector."
       },
       {
-        "title": "Northern security spillover",
+        "title": "Competing external partnerships",
         "severity": "MEDIUM",
-        "details": "Militant activity and instability in the Sahel continue to pressure border regions and transport corridors. Security spending and reliance on regional and international partners could constrain fiscal and strategic autonomy."
+        "details": "French, Chinese, Gulf, and multilateral actors compete for influence in ports, energy, transport, and digital infrastructure, creating leverage as well as investment."
       }
     ]
   },
   "DJI": {
     "highlights": [
-      "Military-base rents underpin the state",
-      "Port competition raises strategic stakes"
+      "Strategic bases fund state capacity",
+      "Port leverage carries debt risk"
     ],
     "status": "EXTRACTIVE",
     "frictionVectors": [
       {
-        "title": "Foreign base dependence",
+        "title": "Foreign military-base dependence",
         "severity": "HIGH",
-        "details": "Djibouti leverages its position near the Bab el-Mandeb to host major foreign military facilities, but the resulting revenue model makes sovereignty dependent on external security patrons. Rival powers' presence increases diplomatic exposure and escalation risk."
+        "details": "Djibouti monetizes its position at the Bab el-Mandeb through foreign military facilities, but this creates enduring dependence on external security rents and rival power competition."
       },
       {
-        "title": "Port and debt exposure",
+        "title": "Port and rail exposure",
         "severity": "HIGH",
-        "details": "Chinese-backed port and logistics projects remain central to Djibouti's development strategy and debt profile. Competition with neighboring Somaliland and Ethiopia adds pressure over corridor access, concessions, and control of critical infrastructure."
+        "details": "Chinese-linked port and logistics infrastructure strengthens Djibouti's regional role while exposing the state to debt, refinancing, and strategic-control concerns."
       }
     ]
   },
   "EGY": {
     "highlights": [
-      "Suez leverage under pressure",
-      "Gulf and IMF capital deepens"
+      "Nile security remains strategic priority",
+      "Gulf and IMF capital deepen leverage"
     ],
-    "status": "EXTRACTIVE",
+    "status": "NEUTRAL",
     "frictionVectors": [
       {
-        "title": "External financing dependence",
+        "title": "NILE WATER DISPUTE",
         "severity": "HIGH",
-        "details": "Debt-service pressures and IMF-linked reforms increase the influence of Gulf investors and international lenders over strategic assets, ports, and state-owned enterprises."
+        "details": "Egypt continues to oppose unilateral Ethiopian management of the GERD, viewing Nile flows as an existential sovereignty issue. Negotiations remain vulnerable to regional escalation and shifting Sudanese alignments."
       },
       {
-        "title": "Red Sea and Nile security",
-        "severity": "HIGH",
-        "details": "Attacks and instability around the Red Sea threaten Suez revenues, while the GERD dispute with Ethiopia remains an unresolved constraint on long-term water security."
+        "title": "EXTERNAL FINANCING DEPENDENCE",
+        "severity": "MEDIUM",
+        "details": "IMF programs, Gulf investment, and foreign currency support stabilize Egypt but increase outside influence over strategic assets, fiscal policy, and infrastructure priorities."
       }
     ]
   },
   "GNQ": {
     "highlights": [
-      "Oil wealth continues to contract",
-      "Malabo preserves tight control"
+      "Oil wealth remains tightly state-controlled",
+      "Hydrocarbon decline pressures diversification"
     ],
     "status": "EXTRACTIVE",
     "frictionVectors": [
       {
-        "title": "Hydrocarbon decline",
+        "title": "HYDROCARBON DEPENDENCE",
         "severity": "HIGH",
-        "details": "Maturing oil fields and weak diversification reduce fiscal room, increasing dependence on foreign technical partners and opaque production-sharing arrangements."
+        "details": "The state retains formal control over oil and gas revenues, but declining production and dependence on foreign operators constrain long-term sovereign bargaining power. Infrastructure and fiscal capacity remain exposed to commodity volatility."
       },
       {
-        "title": "China-linked infrastructure exposure",
+        "title": "GULF AND CHINESE CAPITAL",
         "severity": "MEDIUM",
-        "details": "Major infrastructure ties with Chinese contractors provide strategic capacity but also leave the state exposed to concentrated external financing and repayment risks."
+        "details": "External partners remain important for ports, construction, and energy projects, creating financing leverage while enabling the government to preserve centralized political control."
       }
     ]
   },
   "ERI": {
     "highlights": [
-      "Strategic coastline remains sovereign",
-      "Mining anchors external ties"
+      "Asmara preserves exceptional policy autonomy",
+      "Mining revenues drive external exposure"
     ],
     "status": "NEUTRAL",
     "frictionVectors": [
       {
-        "title": "Red Sea militarization",
-        "severity": "HIGH",
-        "details": "Eritrea's coastline and proximity to the Bab el-Mandeb attract competing regional and international security interests, limiting Asmara's room for maneuver."
+        "title": "MINING CONCESSION DEPENDENCE",
+        "severity": "MEDIUM",
+        "details": "Gold and base-metal projects provide scarce foreign exchange but give outside firms significant influence over extraction, logistics, and technical capacity. Transparency and sanctions risks complicate sovereign oversight."
       },
       {
-        "title": "Mining-sector dependence",
-        "severity": "MEDIUM",
-        "details": "Foreign mining partnerships provide scarce export revenue but create pressure over transparency, labor practices, and the distribution of resource rents."
+        "title": "RED SEA STRATEGIC PRESSURE",
+        "severity": "HIGH",
+        "details": "Eritrea's coastline and proximity to Yemen and Ethiopia attract competing regional security interests. Port access and military diplomacy could narrow Asmara's room for maneuver despite its strong preference for autonomy."
       }
     ]
   },
   "SWZ": {
     "highlights": [
-      "South African dependence persists",
-      "Royal control limits reform space"
+      "South African dependence shapes economic sovereignty",
+      "Sugar and textiles anchor vulnerable exports"
     ],
     "status": "EXTRACTIVE",
     "frictionVectors": [
       {
-        "title": "Economic dependence on South Africa",
+        "title": "SOUTH AFRICAN ECONOMIC LEVERAGE",
         "severity": "HIGH",
-        "details": "Trade, customs revenue, energy, and transport links remain heavily tied to South Africa, leaving Eswatini vulnerable to external economic conditions and policy spillovers."
+        "details": "Eswatini depends heavily on South African trade routes, customs revenue, investment, and electricity interconnections. This limits independent control over supply chains and macroeconomic policy."
       },
       {
-        "title": "Political legitimacy pressure",
+        "title": "EXPORT-PROCESSING FRAGILITY",
         "severity": "MEDIUM",
-        "details": "Political restrictions and periodic unrest complicate efforts to attract diversified investment beyond sugar, textiles, and South African-linked supply chains."
+        "details": "Textile and sugar industries rely on preferential market access and foreign-owned production networks. Changes in trade preferences or regional logistics could quickly reduce fiscal and employment stability."
       }
     ]
   },
   "ETH": {
     "highlights": [
       "GERD strengthens energy sovereignty",
-      "Debt and ports constrain autonomy"
+      "Conflict and debt constrain state capacity"
     ],
     "status": "IMPROVING",
     "frictionVectors": [
       {
-        "title": "Nile basin confrontation",
+        "title": "GERD AND NILE DIPLOMACY",
         "severity": "HIGH",
-        "details": "The GERD increases Ethiopia's control over electricity generation but remains a major source of tension with Egypt and Sudan over dam operations and downstream water security."
+        "details": "The Grand Ethiopian Renaissance Dam improves Ethiopia's control over electricity generation and water infrastructure, but remains a major source of tension with Egypt and Sudan. Regional distrust raises risks around dam operations and future Nile projects."
       },
       {
-        "title": "Port-access vulnerability",
+        "title": "DEBT AND INFRASTRUCTURE FINANCE",
         "severity": "HIGH",
-        "details": "As a landlocked state, Ethiopia depends on external corridors, especially through Djibouti, while tensions involving Somaliland and regional actors complicate efforts to diversify maritime access."
+        "details": "Debt restructuring, foreign exchange shortages, and reliance on external lenders limit Addis Ababa's freedom to set infrastructure and resource policy independently. Chinese, Gulf, and Western partners compete for influence over transport, energy, and telecommunications."
       }
     ]
   },
   "GAB": {
     "highlights": [
-      "Military-led transition consolidates",
-      "Oil and manganese remain strategic assets"
+      "Military transition tightens state control over oil and manganese",
+      "Libreville seeks diversified partners beyond France"
     ],
     "status": "IMPROVING",
     "frictionVectors": [
       {
-        "title": "Foreign control of extractives",
+        "title": "Resource Contract Renegotiation",
         "severity": "MEDIUM",
-        "details": "Gabon is seeking greater state participation and local value addition in oil and manganese, but Chinese, French and other foreign firms remain central to financing, operations and export logistics."
+        "details": "The transitional government is reviewing mining, oil, and infrastructure agreements to increase domestic value capture. Tensions with established French and Asian commercial interests could rise as concessions are rebalanced."
       },
       {
-        "title": "Port and rail dependence",
+        "title": "Port and Rail Dependence",
         "severity": "MEDIUM",
-        "details": "Resource exports depend heavily on the Owendo port and the Transgabon railway, leaving national revenue vulnerable to infrastructure bottlenecks and external project financing."
+        "details": "Manganese and other exports remain dependent on strategic rail and port infrastructure. Foreign financing and operators retain significant leverage over logistics and export pricing."
       }
     ]
   },
   "GMB": {
     "highlights": [
-      "River access shapes sovereignty",
-      "Fishing and tourism face external pressure"
+      "Senegal remains the decisive economic and security partner",
+      "Small-state autonomy constrained by aid and port dependence"
     ],
     "status": "NEUTRAL",
     "frictionVectors": [
       {
-        "title": "Senegal-linked trade dependence",
+        "title": "Senegalese Corridor Dependence",
         "severity": "MEDIUM",
-        "details": "The Gambia relies heavily on Senegal for surrounding-market access, transport corridors and energy connectivity, limiting policy autonomy despite formal sovereignty."
+        "details": "The Gambia relies heavily on Senegal for overland trade, energy links, and regional security. Border and transit disruptions can quickly affect food prices, fuel availability, and government revenues."
       },
       {
-        "title": "Foreign fishing pressure",
-        "severity": "HIGH",
-        "details": "Industrial fishing by foreign fleets and weak monitoring threaten coastal livelihoods and food security, while licensing revenues remain difficult to capture transparently."
+        "title": "Fisheries and Maritime Control",
+        "severity": "MEDIUM",
+        "details": "Foreign fishing fleets and limited enforcement capacity threaten national control over coastal resources. Illegal or opaque licensing remains a persistent sovereignty concern."
       }
     ]
   },
   "GHA": {
     "highlights": [
-      "Gold governance under pressure",
-      "Debt reform narrows strategic room"
+      "Debt restructuring limits policy space but preserves strategic autonomy",
+      "Gold and energy sectors face pressure from illicit extraction"
     ],
-    "status": "EXTRACTIVE",
+    "status": "IMPROVING",
     "frictionVectors": [
       {
-        "title": "Illegal mining and environmental loss",
+        "title": "Illegal Gold Mining",
         "severity": "HIGH",
-        "details": "Unregulated small-scale gold mining is damaging watersheds and agricultural land, while political and commercial networks complicate enforcement and formalization."
+        "details": "Unregulated mining damages water systems, agricultural land, and state revenue collection. Foreign-backed trading networks and domestic political ties complicate efforts to restore formal control."
       },
       {
-        "title": "Critical-mineral competition",
+        "title": "Critical Infrastructure Financing",
         "severity": "MEDIUM",
-        "details": "Ghana is attracting external interest in lithium, bauxite and manganese, but fiscal constraints and investor-led project structures could limit domestic value capture."
+        "details": "Debt constraints have increased reliance on IMF support and external capital for energy, transport, and digital infrastructure. Accra is seeking diversification while avoiding excessive dependence on any single creditor or investor."
       }
     ]
   },
   "GIN": {
     "highlights": [
-      "Bauxite dominance expands",
-      "Simandou transforms the strategic map"
+      "Junta accelerates bauxite and Simandou-driven resource nationalism",
+      "Mining infrastructure is becoming the core strategic battleground"
     ],
     "status": "EXTRACTIVE",
     "frictionVectors": [
       {
-        "title": "Mining corridor dependency",
+        "title": "Simandou Foreign Leverage",
         "severity": "HIGH",
-        "details": "The Simandou rail-and-port system and major bauxite operations are financed and operated through large foreign consortia, creating leverage over Guinea's export routes and fiscal receipts."
+        "details": "The Simandou iron-ore project offers major state revenue but depends on foreign capital, operators, railways, and port construction. Concession terms and local-content enforcement will determine whether gains translate into durable sovereignty."
       },
       {
-        "title": "Junta legitimacy and contract risk",
+        "title": "Junta Legitimacy and Contracts",
         "severity": "HIGH",
-        "details": "The military government is using mining projects to secure revenue and legitimacy, but opaque renegotiations and political uncertainty raise concerns over sovereignty, labor rights and long-term state control."
+        "details": "The military government uses mining negotiations to build legitimacy while resisting a rapid return to civilian rule. Political uncertainty raises investor risk and could trigger disputes over permits, taxation, and project timelines."
       }
     ]
   },
   "GNB": {
     "highlights": [
-      "Fragile state capacity persists",
-      "Cocaine route eclipses resource policy"
+      "Cashew dependence leaves the economy exposed to external buyers",
+      "Political instability weakens control of ports and maritime resources"
     ],
     "status": "EXTRACTIVE",
     "frictionVectors": [
       {
-        "title": "Transnational narcotics networks",
+        "title": "Cashew Value-Chain Dependence",
         "severity": "HIGH",
-        "details": "Weak institutions and porous maritime borders leave Guinea-Bissau exposed to cocaine trafficking networks, which can distort politics and undermine control of ports and customs."
+        "details": "Raw cashew exports provide vital income but leave producers dependent on foreign traders and processors. Limited domestic processing reduces bargaining power and concentrates value outside the country."
       },
       {
-        "title": "Externalized infrastructure and fisheries",
-        "severity": "MEDIUM",
-        "details": "Chinese-backed infrastructure and foreign fishing activity provide essential capacity and revenue, but limited oversight weakens domestic bargaining power and local economic benefits."
+        "title": "Port and Maritime Governance",
+        "severity": "HIGH",
+        "details": "Weak institutions and recurring political crises create openings for foreign commercial networks and illicit trafficking through maritime infrastructure. Fisheries enforcement and port oversight remain especially vulnerable."
       }
     ]
   },
   "KEN": {
     "highlights": [
-      "Debt diplomacy tightens policy space",
-      "Regional logistics hub under pressure"
+      "Infrastructure Deals Under Review",
+      "Debt Pressure Meets Strategic Autonomy"
     ],
     "status": "NEUTRAL",
     "frictionVectors": [
       {
-        "title": "External debt and infrastructure financing",
+        "title": "External Debt and Fiscal Conditionality",
         "severity": "HIGH",
-        "details": "Kenya balances IMF-linked fiscal reforms with significant Chinese and other foreign financing obligations. Debt-service pressures constrain domestic control over infrastructure and public spending priorities."
+        "details": "IMF-linked fiscal reforms and large repayments constrain Nairobi's policy space. Public resistance to taxation and austerity complicates efforts to preserve sovereign control over infrastructure and public assets."
       },
       {
-        "title": "Port and corridor competition",
+        "title": "Foreign Competition for Strategic Infrastructure",
         "severity": "MEDIUM",
-        "details": "Mombasa remains strategically important for East African trade, while competition from Tanzania and instability along regional corridors challenge Kenya's leverage over transit infrastructure."
+        "details": "China, Gulf investors, Western lenders, and regional partners compete for influence over ports, railways, energy, and logistics. Kenya's scrutiny of major foreign-backed concessions reflects growing sensitivity to sovereignty risks."
       }
     ]
   },
   "LSO": {
     "highlights": [
-      "Water exports anchor sovereignty debate",
-      "South Africa remains indispensable"
+      "Water Leverage, South African Dependence",
+      "Phase II Infrastructure Strain"
     ],
     "status": "EXTRACTIVE",
     "frictionVectors": [
       {
         "title": "Lesotho Highlands Water Project",
         "severity": "HIGH",
-        "details": "Water revenues and dam construction provide vital income, but the project deepens Lesotho's dependence on South African financing, markets, and infrastructure arrangements."
+        "details": "Water exports to South Africa provide essential revenue but lock Lesotho into a highly asymmetric bilateral relationship. Construction costs, procurement disputes, and dependence on South African infrastructure limit domestic control over the resource."
       },
       {
-        "title": "Maseru's economic vulnerability",
+        "title": "Economic Dependence on External Capital",
         "severity": "MEDIUM",
-        "details": "Reliance on South African trade, remittances, and supply chains limits policy autonomy and leaves Lesotho exposed to decisions made outside its borders."
+        "details": "Mining, textiles, remittances, and customs revenues remain vulnerable to outside market and policy decisions. South African commercial dominance and periodic political instability reduce Lesotho's bargaining power."
       }
     ]
   },
   "LBR": {
     "highlights": [
-      "Mining revival tests state capacity",
-      "Ports and concessions remain strategic"
+      "Iron Ore Expansion, Limited Local Capture",
+      "Concession State Under Reform Pressure"
     ],
     "status": "EXTRACTIVE",
     "frictionVectors": [
       {
-        "title": "Iron-ore concession dependence",
+        "title": "Mining Concessions and Revenue Control",
         "severity": "HIGH",
-        "details": "Large foreign-led mining operations dominate export prospects, while the government faces pressure to secure better local processing, revenue collection, and community benefits."
+        "details": "Iron ore projects led by foreign firms remain central to growth, but weak local processing and infrastructure dependence limit Liberia's share of value creation. Contract renegotiation and environmental oversight remain politically sensitive."
       },
       {
-        "title": "Port and corridor concessions",
+        "title": "Port and Maritime Influence",
         "severity": "MEDIUM",
-        "details": "Control of Monrovia-area logistics and mining corridors is central to Liberia's resource security, with foreign operators retaining substantial influence over infrastructure and trade flows."
+        "details": "Foreign operators and investors retain significant influence over ports, shipping, and logistics corridors. Liberia's maritime registry generates revenue but leaves the country exposed to external regulatory and commercial pressures."
       }
     ]
   },
   "LBY": {
     "highlights": [
-      "Oil wealth remains politically fragmented",
-      "Foreign patrons shape energy security"
+      "Oil Wealth Without Unified Authority",
+      "Foreign Bases, Rival Security Patrons"
     ],
     "status": "EXTRACTIVE",
     "frictionVectors": [
       {
-        "title": "Competing control of oil infrastructure",
+        "title": "Fragmented Control of Oil Infrastructure",
         "severity": "HIGH",
-        "details": "Rival political and armed networks can disrupt fields, ports, and export terminals, preventing a unified national authority from exercising reliable control over hydrocarbons."
+        "details": "Competing political and armed factions can disrupt production, exports, and central revenue distribution. Foreign energy interests benefit from access while Libya struggles to establish a unified sovereign framework for managing its principal resource."
       },
       {
-        "title": "Foreign military and commercial influence",
+        "title": "Turkey-Russia and Regional Security Competition",
         "severity": "HIGH",
-        "details": "External actors support competing Libyan power centers and seek leverage over energy, reconstruction, and security arrangements, limiting Libya's strategic autonomy."
+        "details": "Turkish security support in western Libya and Russian-linked networks in the east and south entrench external influence. Rival foreign partnerships complicate reunification, border control, and protection of energy corridors."
       }
     ]
   },
   "MDG": {
     "highlights": [
-      "Critical minerals attract competing investors",
-      "Infrastructure lags behind resource ambitions"
+      "Critical Minerals, Foreign-Controlled Value Chains",
+      "Mining Growth Meets Resource Nationalism"
     ],
     "status": "EXTRACTIVE",
     "frictionVectors": [
       {
-        "title": "Nickel and cobalt project dependence",
+        "title": "Nickel, Cobalt, and Ilmenite Dependence",
         "severity": "HIGH",
-        "details": "Large foreign-backed mining projects provide export earnings but leave Madagascar exposed to external ownership, commodity-price swings, and disputes over taxation and environmental costs."
+        "details": "Large mining operations linked to foreign investors dominate critical-mineral exports, while Madagascar captures limited downstream value. Fiscal gains are vulnerable to commodity prices, project financing conditions, and concession disputes."
       },
       {
-        "title": "Energy and transport bottlenecks",
+        "title": "Land, Environment, and Infrastructure Conflict",
         "severity": "MEDIUM",
-        "details": "Unreliable power and weak roads constrain domestic processing, reinforcing reliance on foreign capital and imported infrastructure for resource extraction and export."
+        "details": "Mining corridors, roads, ports, and energy projects generate recurring disputes over land rights, ecological damage, and compensation. Chinese, Australian, European, and regional commercial interests compete for influence around strategic resources."
       }
     ]
   },
   "MWI": {
     "highlights": [
-      "IMF-led fiscal reset",
-      "Critical import bottlenecks"
+      "Mining Reform Meets Fiscal Stress",
+      "Fuel and Foreign-Exchange Vulnerability"
     ],
     "status": "NEUTRAL",
     "frictionVectors": [
       {
-        "title": "Debt and infrastructure dependence",
-        "severity": "HIGH",
-        "details": "Malawi's debt restructuring and foreign-exchange shortages limit policy autonomy, while roads, energy, and agricultural financing remain reliant on external lenders and donors."
+        "title": "Critical-Mineral Concessions",
+        "severity": "MEDIUM",
+        "details": "Malawi is courting foreign capital for uranium, rare-earth and graphite projects while trying to strengthen licensing and local-benefit rules. Limited state capacity risks leaving the government with weak leverage over operators and export revenues."
       },
       {
-        "title": "Energy and mining leverage",
-        "severity": "MEDIUM",
-        "details": "Power shortages and prospective uranium and rare-earth projects create openings for foreign investors, with limited domestic capacity to capture value or enforce stringent local-content rules."
+        "title": "Energy and Debt Dependence",
+        "severity": "HIGH",
+        "details": "Fuel shortages, unreliable electricity and heavy external debt constrain policy autonomy. IMF-backed reforms and creditor negotiations improve macroeconomic discipline but narrow room for independent infrastructure choices."
       }
     ]
   },
   "MLI": {
     "highlights": [
-      "Resource nationalism deepens",
-      "Sahel security remains volatile"
+      "Gold Nationalism Under Junta Rule",
+      "Russian Security Reliance Deepens"
     ],
-    "status": "IMPROVING",
+    "status": "EXTRACTIVE",
     "frictionVectors": [
       {
-        "title": "Gold-sector renegotiation",
+        "title": "Mining-State Confrontation",
         "severity": "HIGH",
-        "details": "The junta is seeking larger state stakes, tax revenues, and local processing from multinational gold producers, increasing confrontation risk with foreign mining companies."
+        "details": "The transitional authorities are demanding greater state participation and revenue from industrial gold mining, creating recurring tension with foreign operators. Weak transparency and legal uncertainty may deter investment while encouraging politically connected concessions."
       },
       {
-        "title": "Russian security dependence",
+        "title": "Security and Infrastructure Dependence",
         "severity": "HIGH",
-        "details": "Reliance on Russian-linked security support has displaced Western influence but has not resolved insurgency, while insecurity threatens transport corridors and mining operations."
+        "details": "Reliance on Russian security assistance has expanded as relations with France and regional institutions deteriorated. Persistent jihadist violence threatens transport corridors, mining logistics and the government's ability to control resource-producing areas."
       }
     ]
   },
   "MRT": {
     "highlights": [
-      "Gas exports enter strategic phase",
-      "Iron and green-energy ambitions"
+      "Gas Exporter Seeking Bargaining Power",
+      "Iron Ore and Green-Hydrogen Push"
     ],
     "status": "IMPROVING",
     "frictionVectors": [
       {
-        "title": "GTA gas project exposure",
-        "severity": "HIGH",
-        "details": "The Senegal-Mauritania offshore gas project offers major export leverage but leaves Nouakchott exposed to partner coordination, revenue-sharing disputes, and foreign operator control."
+        "title": "Foreign-Led Energy Infrastructure",
+        "severity": "MEDIUM",
+        "details": "The Greater Tortue Ahmeyim gas project and proposed green-hydrogen investments bring revenue and infrastructure but remain dependent on foreign developers, finance and export markets. Mauritania is trying to secure stronger domestic-content and fiscal terms without slowing project execution."
       },
       {
-        "title": "Mineral corridor vulnerability",
+        "title": "Mining Corridor Exposure",
         "severity": "MEDIUM",
-        "details": "Iron-ore exports and proposed green-hydrogen projects depend on port, rail, and transmission infrastructure financed or operated with substantial outside participation."
+        "details": "Iron-ore exports depend heavily on the state railway and external buyers, leaving the economy exposed to price cycles and logistics disruption. Expansion plans could improve state leverage, but financing and regional security remain constraints."
       }
     ]
   },
   "MUS": {
     "highlights": [
-      "Stable maritime gateway",
-      "Chagos sovereignty transition"
+      "Strategic Maritime Autonomy Expands",
+      "Chagos Sovereignty Remains Unsettled"
     ],
     "status": "OPTIMAL",
     "frictionVectors": [
       {
-        "title": "Diego Garcia settlement",
+        "title": "Chagos and Diego Garcia",
         "severity": "HIGH",
-        "details": "Mauritius's sovereignty claim over the Chagos Archipelago remains tied to negotiations over the strategic Diego Garcia base and the terms of any long-term foreign military presence."
+        "details": "Mauritius continues to pursue sovereignty over the Chagos Archipelago while balancing strategic and economic ties with the United Kingdom, United States and India. Any settlement must reconcile Mauritian territorial claims with the military value of Diego Garcia."
       },
       {
-        "title": "External economic exposure",
+        "title": "Port and Blue-Economy Competition",
         "severity": "MEDIUM",
-        "details": "The island's finance, tourism, food, and fuel systems remain sensitive to global market shifts and dependence on external shipping and investment networks."
+        "details": "Mauritius is positioning Port Louis as a regional logistics and maritime-services hub amid growing Indian Ocean competition. External investment offers infrastructure gains but requires careful screening to prevent strategic dependence or loss of regulatory control."
       }
     ]
   },
   "MAR": {
     "highlights": [
-      "Industrial sovereignty expands",
-      "Western Sahara remains strategic"
+      "Phosphate and Renewable Sovereignty",
+      "Atlantic Corridor Gains Strategic Weight"
     ],
-    "status": "IMPROVING",
+    "status": "OPTIMAL",
     "frictionVectors": [
       {
-        "title": "Western Sahara resource diplomacy",
+        "title": "Western Sahara Resource Legitimacy",
         "severity": "HIGH",
-        "details": "Phosphates, fisheries, ports, and renewable projects in Western Sahara generate diplomatic and legal friction with Algeria, the Polisario Front, and some international stakeholders."
+        "details": "Morocco is consolidating control over phosphate, fisheries, ports and renewable projects in Western Sahara, while facing continued legal and diplomatic challenges from the Polisario Front and Algeria. Foreign partners must balance commercial access with contested-territory risks."
       },
       {
-        "title": "External capital and water stress",
+        "title": "External Technology and Energy Dependence",
         "severity": "MEDIUM",
-        "details": "Morocco is building domestic value chains in automotive, aerospace, fertilizers, and renewables, but major projects still rely on European, Gulf, and Chinese capital amid severe water constraints."
+        "details": "Large-scale renewables, desalination, automotive and port projects strengthen Morocco's strategic autonomy but rely on European, Gulf, Chinese and other external capital and technology. Rabat is diversifying partnerships to preserve bargaining power and avoid alignment with any single bloc."
       }
     ]
   },
   "MOZ": {
     "highlights": [
-      "LNG Revival Under Security Pressure",
-      "Critical Minerals Draw External Capital"
+      "Cabo Delgado LNG remains stalled by insecurity",
+      "External security and energy capital shape recovery"
     ],
     "status": "EXTRACTIVE",
     "frictionVectors": [
       {
-        "title": "Cabo Delgado Insurgency",
+        "title": "LNG SECURITY DEPENDENCE",
         "severity": "HIGH",
-        "details": "Insurgent violence continues to threaten LNG infrastructure and local sovereignty, despite support from regional and foreign security forces. Project security remains heavily dependent on outside partners."
+        "details": "Mozambique relies on foreign energy companies and external security support to restart major LNG projects in Cabo Delgado. Insurgent activity and local grievances continue to limit state control over the resource corridor."
       },
       {
-        "title": "Resource-Contract Dependence",
+        "title": "RESOURCE-LED DEBT PRESSURE",
         "severity": "MEDIUM",
-        "details": "Gas, graphite, and other mineral projects rely on foreign operators and financing, limiting domestic value capture and increasing exposure to contract disputes."
+        "details": "Gas revenues remain delayed while debt, infrastructure costs, and revenue-sharing disputes constrain fiscal sovereignty. Foreign lenders and investors retain substantial leverage over project sequencing."
       }
     ]
   },
   "NAM": {
     "highlights": [
-      "Green Hydrogen State-Building",
-      "Oil and Uranium Leverage Expands"
+      "Critical minerals and green hydrogen attract strategic capital",
+      "Windfall ambitions test local-content capacity"
     ],
     "status": "IMPROVING",
     "frictionVectors": [
       {
-        "title": "Foreign-Controlled Energy Investment",
+        "title": "FOREIGN CONTROL OF NEW ENERGY",
         "severity": "MEDIUM",
-        "details": "Large hydrogen, oil, and renewable projects could strengthen state revenues but remain dependent on European, Chinese, and Gulf capital, technology, and offtake markets."
+        "details": "International firms and state-backed investors are positioning for dominance in green hydrogen, uranium, lithium, and offshore oil. Namibia is strengthening local-content and ownership frameworks, but domestic financing and technical capacity remain limited."
       },
       {
-        "title": "Water and Grid Constraints",
+        "title": "INFRASTRUCTURE BOTTLENECKS",
         "severity": "MEDIUM",
-        "details": "Limited water supplies, transmission capacity, and port logistics constrain efforts to convert resource wealth into domestically controlled industrial growth."
+        "details": "Ports, electricity generation, water supply, and rail capacity may not keep pace with extractive and hydrogen ambitions. Dependence on external infrastructure finance could dilute national bargaining power."
       }
     ]
   },
   "NER": {
     "highlights": [
-      "Uranium Sovereignty Confrontation",
-      "Sahel Security Realignment"
+      "Junta pushes strategic break with former partners",
+      "Oil and uranium sovereignty remain constrained by logistics"
     ],
     "status": "IMPROVING",
     "frictionVectors": [
       {
-        "title": "Mining Disputes with Former Partners",
+        "title": "RUSSIAN SECURITY ALIGNMENT",
         "severity": "HIGH",
-        "details": "The junta is seeking greater control over uranium and other extractive assets, creating legal and operational friction with foreign companies and potential export disruption."
+        "details": "The military government has reduced Western security cooperation and expanded ties with Russia, trading one form of external dependence for another. Security assistance has not eliminated insurgent pressure or restored reliable control across the territory."
       },
       {
-        "title": "Russian and Regional Security Dependence",
+        "title": "RESOURCE EXPORT BOTTLENECKS",
         "severity": "HIGH",
-        "details": "The shift away from Western military partnerships has increased reliance on alternative security providers while insurgent groups continue to pressure transport corridors and state infrastructure."
+        "details": "Oil exports, uranium production, and mining revenues are vulnerable to sanctions, border disruptions, and dependence on neighboring transport corridors. The state has greater negotiating leverage rhetorically than it currently has infrastructure to exercise."
       }
     ]
   },
   "NGA": {
     "highlights": [
-      "Oil Reform Meets Production Insecurity",
-      "Gas and Infrastructure Bottlenecks"
+      "Oil-sector reform seeks stronger state and investor discipline",
+      "Power and pipeline insecurity erode resource sovereignty"
     ],
     "status": "EXTRACTIVE",
     "frictionVectors": [
       {
-        "title": "Upstream Control and Theft",
+        "title": "OIL INFRASTRUCTURE INSECURITY",
         "severity": "HIGH",
-        "details": "Pipeline sabotage, crude theft, and aging infrastructure undermine national control over petroleum revenues and keep production dependent on foreign operators and technical capital."
+        "details": "Pipeline theft, sabotage, illegal refining, and militant pressure continue to reduce public capture of hydrocarbon value. International operators remain important, while the state struggles to secure production and enforce environmental obligations."
       },
       {
-        "title": "Power and Gas Supply Fragility",
+        "title": "POWER AND FINANCE DEPENDENCE",
         "severity": "HIGH",
-        "details": "Unreliable electricity and weak gas-processing infrastructure limit industrial sovereignty, while pricing reforms continue to generate domestic political friction."
+        "details": "Electricity shortages, foreign-exchange constraints, and reliance on external capital limit Nigeria's ability to process resources domestically. Large infrastructure and energy projects remain exposed to international lenders, contractors, and currency volatility."
       }
     ]
   },
   "RWA": {
     "highlights": [
-      "Mineral Governance Under Scrutiny",
-      "Regional Security Leverage"
+      "State-led mineral governance remains highly organized",
+      "Regional security posture raises diplomatic and supply-chain risk"
     ],
     "status": "OPTIMAL",
     "frictionVectors": [
       {
-        "title": "Conflict-Linked Mineral Allegations",
+        "title": "EASTERN DRC MINERALS",
         "severity": "HIGH",
-        "details": "Rwanda's role in regional supply chains, particularly for minerals associated with eastern Democratic Republic of the Congo, remains a major source of diplomatic and sanctions risk."
+        "details": "Rwanda faces sustained international scrutiny over alleged support for armed actors in eastern DRC and the movement of conflict-linked minerals through regional networks. Diplomatic pressure could affect mineral access, aid relationships, and investment confidence."
       },
       {
-        "title": "External Aid and Security Exposure",
+        "title": "EXTERNAL FINANCE DEPENDENCE",
         "severity": "MEDIUM",
-        "details": "Strong state coordination improves control over domestic resources, but the economy remains exposed to donor financing, foreign export markets, and regional security backlash."
+        "details": "Rwanda retains strong administrative control over domestic assets and infrastructure, but its development model depends heavily on foreign aid, concessional finance, and strategic investors. Fiscal autonomy remains vulnerable to shifts in donor and creditor policy."
       }
     ]
   },
   "STP": {
     "highlights": [
-      "Offshore Energy Still Speculative",
-      "Gulf of Guinea Partnerships Deepen"
+      "Offshore oil remains prospective, not transformative",
+      "Maritime partnerships widen strategic options"
     ],
-    "status": "NEUTRAL",
+    "status": "IMPROVING",
     "frictionVectors": [
       {
-        "title": "Offshore Oil Dependence",
+        "title": "Offshore Licensing Uncertainty",
         "severity": "MEDIUM",
-        "details": "Exploration interest remains significant, but commercial discoveries and state revenue are still uncertain. Limited administrative capacity increases reliance on foreign operators and external technical support."
+        "details": "Sao Tome and Principe is seeking credible offshore exploration partners while protecting state participation and avoiding dependence on speculative oil revenues. Limited institutional capacity increases exposure to opaque licensing terms."
       },
       {
-        "title": "Strategic External Competition",
+        "title": "External Maritime Influence",
         "severity": "LOW",
-        "details": "Portugal, China, and other partners compete for influence through infrastructure, finance, and maritime cooperation. São Tomé seeks to preserve flexibility while avoiding excessive dependence on any single sponsor."
+        "details": "Portugal, China, and other partners compete for diplomatic and maritime-security access. The government benefits from diversification but must prevent infrastructure and security cooperation from becoming strategic dependency."
       }
     ]
   },
   "SEN": {
     "highlights": [
-      "First Oil Strengthens Bargaining Power",
-      "Resource Nationalism Meets Fiscal Pressure"
+      "New leadership pushes resource sovereignty",
+      "Oil and gas revenues face delivery risks"
     ],
     "status": "IMPROVING",
     "frictionVectors": [
       {
-        "title": "Foreign Energy Contract Review",
+        "title": "Hydrocarbon Contract Renegotiation",
         "severity": "HIGH",
-        "details": "The government is seeking greater national participation and transparency in offshore oil and gas projects operated with international companies. Renegotiation risks investor uncertainty and delays in revenue realization."
+        "details": "The government is under pressure to increase domestic value capture from the Sangomar and Greater Tortue Ahmeyim projects without triggering costly disputes with international operators. Production delays, financing terms, and revenue transparency remain sensitive."
       },
       {
-        "title": "GTA Gas Governance",
-        "severity": "MEDIUM",
-        "details": "The Senegal-Mauritania Greater Tortue Ahmeyim project requires close coordination over cross-border production, local-content rules, and revenue sharing. External operators retain major technical and financial leverage."
+        "title": "Debt and Infrastructure Dependence",
+        "severity": "HIGH",
+        "details": "Fiscal stress constrains Dakar's ability to fund strategic infrastructure independently, increasing reliance on multilateral lenders, Gulf capital, China, and European partners. Renegotiation efforts risk slowing transport and energy investment."
       }
     ]
   },
   "SYC": {
     "highlights": [
-      "Blue Economy Expands Sovereign Space",
-      "Maritime Partnerships Multiply"
+      "Blue economy remains the sovereignty strategy",
+      "Strategic location attracts competing partners"
     ],
-    "status": "IMPROVING",
+    "status": "OPTIMAL",
     "frictionVectors": [
       {
-        "title": "Foreign Tuna Fleet Access",
+        "title": "Foreign Security Access",
         "severity": "MEDIUM",
-        "details": "Seychelles relies heavily on foreign fishing fleets and access fees, creating tension between immediate fiscal needs and long-term control of marine resources. Monitoring and enforcement capacity remain limited across its vast maritime zone."
+        "details": "Seychelles must balance maritime-security cooperation with India, France, the United States, and China while preserving control over ports, airfields, and exclusive economic zone surveillance. Competition is usually diplomatic but could intensify around dual-use infrastructure."
       },
       {
-        "title": "Indian Ocean Strategic Competition",
+        "title": "Tourism and Climate Exposure",
         "severity": "MEDIUM",
-        "details": "India, China, France, and other partners seek access and influence through port, surveillance, and maritime-security cooperation. Victoria is balancing these relationships to avoid strategic overdependence."
+        "details": "Heavy dependence on tourism and imported fuel limits strategic autonomy, while climate impacts threaten coastal infrastructure and fisheries. External climate finance is essential but can narrow domestic policy space."
       }
     ]
   },
   "SLE": {
     "highlights": [
-      "Mineral Growth Outpaces State Capacity",
-      "Infrastructure Deals Deepen External Leverage"
+      "Mining investment expands faster than local capture",
+      "Freetown seeks diversified infrastructure partners"
     ],
     "status": "EXTRACTIVE",
     "frictionVectors": [
       {
-        "title": "Mining Concession Dependence",
+        "title": "Iron Ore and Mining Concentration",
         "severity": "HIGH",
-        "details": "Iron ore, rutile, gold, and emerging critical-mineral projects remain dominated by foreign capital and operators. Weak fiscal and regulatory capacity limits Sierra Leone's ability to secure durable value addition and predictable public revenues."
+        "details": "Large-scale iron-ore operations generate export earnings but leave Sierra Leone exposed to commodity cycles, foreign operators, and disputes over taxation, local procurement, and environmental impacts. Limited processing capacity keeps much of the value chain offshore."
       },
       {
-        "title": "Chinese Infrastructure-Mining Linkages",
-        "severity": "HIGH",
-        "details": "Chinese firms are prominent in mining, construction, and related infrastructure, creating leverage through integrated financing and logistics arrangements. The government is attempting to improve local content and transparency without deterring investment."
+        "title": "Port and Corridor Leverage",
+        "severity": "MEDIUM",
+        "details": "Foreign-backed port, road, and mining-logistics projects can improve connectivity while creating long-term commercial and political leverage. Freetown faces pressure to secure transparent concessions and prevent strategic infrastructure from being tied to narrow mineral interests."
       }
     ]
   },
   "SOM": {
     "highlights": [
-      "Maritime Sovereignty Gains Slowly",
-      "Oil Prospects Meet Fragmented Authority"
+      "Sovereignty contested across land and sea",
+      "External security partners remain indispensable"
     ],
     "status": "EXTRACTIVE",
     "frictionVectors": [
       {
-        "title": "Foreign-Led Offshore Oil Development",
+        "title": "Red Sea and Somaliland Competition",
         "severity": "HIGH",
-        "details": "Turkey and other external partners are positioned to provide exploration, security, and technical support in Somalia's offshore sector. Federal-state disputes and weak regulatory institutions could leave the country with limited control over future rents."
+        "details": "The federal government is balancing Turkey, the Gulf states, Egypt, Ethiopia, and Western partners while defending territorial integrity and maritime rights. Port access and competing arrangements with Somaliland and regional powers risk escalating diplomatic and security tensions."
       },
       {
-        "title": "Red Sea and Somaliland Rivalries",
+        "title": "Offshore Resources and Weak Institutions",
         "severity": "HIGH",
-        "details": "Competition involving Ethiopia, Somaliland, Turkey, Gulf states, and other regional actors continues to shape access to ports and maritime infrastructure. These rivalries complicate Somalia's territorial claims and divert resources from domestic institution-building."
+        "details": "Prospective offshore oil and gas assets could strengthen state finances but also intensify disputes over federal-regional authority, licensing, and revenue sharing. Security constraints and limited regulatory capacity leave the sector vulnerable to external capture."
       }
     ]
   },
   "ZAF": {
     "highlights": [
-      "Critical-minerals competition intensifies",
-      "Power and logistics constraints persist"
+      "Critical-minerals balancing act",
+      "Ports and power constrain autonomy"
     ],
     "status": "NEUTRAL",
     "frictionVectors": [
       {
-        "title": "MINERAL VALUE-CHAIN CONTROL",
+        "title": "Mineral investment competition",
         "severity": "MEDIUM",
-        "details": "South Africa is seeking greater domestic processing of platinum-group metals, manganese and rare minerals while balancing Chinese, Western and Gulf investment. Policy uncertainty and weak infrastructure limit Pretoria's leverage over downstream value chains."
+        "details": "South Africa is seeking greater domestic beneficiation of platinum, manganese and rare-earth resources while balancing Chinese, Western and Gulf investment. Regulatory uncertainty and infrastructure bottlenecks limit Pretoria's leverage."
       },
       {
-        "title": "GRID AND PORT DEPENDENCE",
+        "title": "Rail, port and electricity strain",
         "severity": "HIGH",
-        "details": "Electricity reliability and port inefficiency continue to constrain sovereign economic capacity. Private-sector participation and foreign financing are expanding, but implementation remains politically contested."
+        "details": "Eskom reliability problems and Transnet logistics failures continue to reduce export capacity and weaken sovereign control over strategic supply chains. Public-private concessions may improve performance but increase foreign influence over infrastructure."
       }
     ]
   },
   "SSD": {
     "highlights": [
-      "Oil lifeline remains vulnerable",
-      "Peace implementation stays fragile"
+      "Oil revenue hostage to Sudan war",
+      "Fragile sovereignty over producing zones"
     ],
     "status": "EXTRACTIVE",
     "frictionVectors": [
       {
-        "title": "PIPELINE DEPENDENCE THROUGH SUDAN",
+        "title": "Pipeline dependence through Sudan",
         "severity": "HIGH",
-        "details": "South Sudan's export oil must transit conflict-affected Sudan, leaving production, revenue and basic fiscal stability exposed to pipeline outages and rival external actors. Chinese-linked oil interests remain important, while Juba has limited bargaining power."
+        "details": "South Sudan's oil exports depend on pipelines and terminals in Sudan, leaving revenue flows exposed to Sudanese conflict, sabotage and political bargaining. Foreign operators and neighboring states retain substantial leverage over production and transit."
       },
       {
-        "title": "ARMS, SECURITY AND RESOURCE RENT-SEEKING",
+        "title": "Oil-sector opacity and armed patronage",
         "severity": "HIGH",
-        "details": "Elite competition over oil revenues and security patronage continues to weaken state institutions. Regional mediation and foreign security relationships can stabilize corridors but also reinforce fragmented sovereignty."
+        "details": "Production-sharing arrangements, security payments and opaque revenue management allow external firms and domestic elites to capture much of the sector's value. Weak institutions limit the government's ability to convert oil into broad-based sovereignty or development."
       }
     ]
   },
   "SDN": {
     "highlights": [
-      "War fragments resource sovereignty",
-      "Gold corridors fuel external leverage"
+      "Civil war fragments resource sovereignty",
+      "Gold and Red Sea assets draw outside powers"
     ],
     "status": "EXTRACTIVE",
     "frictionVectors": [
       {
-        "title": "GOLD AND WAR ECONOMIES",
+        "title": "Gold smuggling and external sponsorship",
         "severity": "HIGH",
-        "details": "Gold production and smuggling networks provide financing to armed actors and create openings for foreign commercial and political sponsors. The state has limited ability to regulate extraction or capture revenues transparently."
+        "details": "Competing military networks and cross-border traders continue to channel gold outside formal state systems. Gulf, Russian and regional actors pursue access and influence, deepening the link between mineral extraction and wartime finance."
       },
       {
-        "title": "PORT, PIPELINE AND HUMANITARIAN ACCESS",
+        "title": "Red Sea infrastructure contest",
         "severity": "HIGH",
-        "details": "Control of transport corridors, Port Sudan and oil infrastructure is contested amid the civil war. External diplomatic, military and logistical involvement increasingly shapes access to strategic infrastructure."
+        "details": "Ports, naval access and transport corridors on the Red Sea remain strategic prizes amid rivalry involving Gulf states, Russia and other external powers. Conflict-related fragmentation makes long-term control of these assets unstable and vulnerable to concessionary deals."
       }
     ]
   },
   "TZA": {
     "highlights": [
-      "Resource nationalism becomes more pragmatic",
-      "Ports and LNG define strategic leverage"
+      "Resource nationalism meets investment pragmatism",
+      "LNG and corridor projects reshape leverage"
     ],
     "status": "IMPROVING",
     "frictionVectors": [
       {
-        "title": "LNG PROJECT SOVEREIGNTY",
+        "title": "Delayed offshore gas development",
         "severity": "MEDIUM",
-        "details": "Tanzania is advancing negotiations to monetize offshore gas while seeking stronger domestic benefits and regulatory control. Delays, fiscal disputes and investor demands remain the main risks to sovereign value capture."
+        "details": "Tanzania is negotiating to retain greater fiscal and local-development benefits from major LNG projects while attracting international capital and technology. Delays and contract uncertainty risk reducing bargaining power against global energy firms."
       },
       {
-        "title": "PORT CORRIDOR COMPETITION",
+        "title": "Port and rail influence competition",
         "severity": "MEDIUM",
-        "details": "Dar es Salaam's role in serving landlocked neighbors attracts Gulf, Chinese and Western-linked infrastructure interest. The government is using this competition to expand capacity while guarding against excessive dependence on any single partner."
+        "details": "Chinese-backed and Gulf-linked infrastructure interests compete with Western and regional partners around Dar es Salaam, Bagamoyo and transport corridors. Tanzania is using this rivalry to diversify options, but debt, concession and access terms require careful management."
       }
     ]
   },
   "TGO": {
     "highlights": [
       "Lomé remains a regional trade gateway",
-      "Phosphate control faces capacity limits"
+      "Phosphate and logistics value face external leverage"
     ],
-    "status": "EXTRACTIVE",
+    "status": "NEUTRAL",
     "frictionVectors": [
       {
-        "title": "PORT AND LOGISTICS INFLUENCE",
+        "title": "Port dependence and concession politics",
         "severity": "MEDIUM",
-        "details": "The Port of Lomé remains central to Togo's revenue and regional trade strategy, with foreign operators and financiers retaining substantial influence over logistics infrastructure. This supports growth but constrains full national control of strategic corridors."
+        "details": "The Port of Lomé is central to Togo's revenue and regional influence, but foreign operators, lenders and shipping networks shape its commercial autonomy. Competition from other Gulf of Guinea ports could increase pressure for favorable concessions."
       },
       {
-        "title": "PHOSPHATE AND SECURITY PRESSURES",
+        "title": "Phosphate-sector modernization gap",
         "severity": "MEDIUM",
-        "details": "Phosphate remains a core sovereign resource, yet financing, technology and management constraints limit domestic value addition. Spillover insecurity from the Sahel also raises dependence on external security cooperation and threatens northern transport links."
+        "details": "Togo is trying to expand and modernize phosphate production while retaining more value domestically. Financing, technology and export access remain dependent on external partners, limiting the state's ability to fully control the sector."
       }
     ]
   },
   "TUN": {
     "highlights": [
-      "EU migration leverage deepens",
-      "Phosphate and energy strains persist"
+      "EU-Linked Migration and Energy Bargaining",
+      "Phosphate Sector Under Strain"
     ],
-    "status": "EXTRACTIVE",
+    "status": "NEUTRAL",
     "frictionVectors": [
       {
-        "title": "EU migration and financing leverage",
+        "title": "European Migration Leverage",
         "severity": "HIGH",
-        "details": "European financial and political support remains closely tied to migration control, giving Brussels substantial influence over Tunisian policy. Domestic opposition to externally conditioned assistance is rising amid economic stagnation."
+        "details": "European financial and political support remains closely tied to Tunisia’s management of migration routes, creating sovereignty concerns over border policy and domestic accountability."
       },
       {
-        "title": "Energy and phosphate vulnerability",
+        "title": "Energy Dependence and Phosphate Decline",
         "severity": "MEDIUM",
-        "details": "Tunisia remains exposed to imported energy and weak phosphate production, limiting fiscal autonomy. Foreign investment is needed for infrastructure, but constrained public finances reduce negotiating power."
+        "details": "Tunisia remains exposed to imported energy and aging infrastructure, while disruptions in phosphate production weaken one of its few major strategic export sectors."
       }
     ]
   },
   "UGA": {
     "highlights": [
-      "EACOP advances under pressure",
-      "Oil wealth meets sovereignty risks"
+      "Oil Corridor Nears Strategic Test",
+      "Chinese Infrastructure Footprint Deepens"
     ],
     "status": "EXTRACTIVE",
     "frictionVectors": [
       {
-        "title": "EACOP financing and sanctions pressure",
+        "title": "EACOP Financing and Transit Risk",
         "severity": "HIGH",
-        "details": "The Uganda-Tanzania oil pipeline remains strategically important but faces sustained criticism from environmental groups, Western institutions, and some financiers. Chinese and Gulf-linked capital helps preserve momentum while increasing external influence over the project."
+        "details": "The Uganda-Tanzania oil pipeline faces sustained environmental, legal, and financing pressure, while reliance on external partners limits Kampala’s control over project execution and export logistics."
       },
       {
-        "title": "Critical minerals and infrastructure competition",
+        "title": "Infrastructure Debt Exposure",
         "severity": "MEDIUM",
-        "details": "Uganda is courting foreign partners for minerals, transport, and energy infrastructure, balancing Chinese commercial engagement against Western governance concerns. Limited domestic processing keeps much of the value chain externally controlled."
+        "details": "Chinese-backed transport and energy projects expand national capacity but increase repayment obligations and dependence on foreign contractors, lenders, and operating expertise."
       }
     ]
   },
   "ZMB": {
     "highlights": [
-      "Copper strategy gains leverage",
-      "Debt relief expands policy space"
+      "Copper Sovereignty Returns to Center Stage",
+      "Debt Restructuring Opens Policy Space"
     ],
     "status": "IMPROVING",
     "frictionVectors": [
       {
-        "title": "Copper ownership and value-addition contest",
+        "title": "Foreign Control of Copper Value Chains",
         "severity": "HIGH",
-        "details": "Lusaka is seeking greater domestic processing and revenue capture from copper while competing Chinese, Western, and Gulf investors pursue long-term mining positions. Power shortages and transport bottlenecks weaken Zambia's bargaining position."
+        "details": "Zambia is seeking more domestic processing and stronger fiscal returns from copper, but foreign ownership, trading networks, and technology dependence still constrain sovereign value capture."
       },
       {
-        "title": "Debt restructuring constraints",
-        "severity": "MEDIUM",
-        "details": "Debt relief and IMF-linked reforms have improved fiscal room but continue to constrain public investment and industrial policy. Creditors and mining investors retain significant influence over the pace and terms of resource-sector reform."
+        "title": "Power Shortages Threaten Mining Control",
+        "severity": "HIGH",
+        "details": "Electricity deficits and drought-driven hydropower weakness undermine copper production and increase reliance on imported power, emergency generation, and external investment."
       }
     ]
   },
   "ZWE": {
     "highlights": [
-      "Lithium boom tests sovereignty",
-      "Currency instability limits autonomy"
+      "Critical Minerals Draw Global Competition",
+      "Resource Nationalism Meets Fiscal Pressure"
     ],
     "status": "EXTRACTIVE",
     "frictionVectors": [
       {
-        "title": "Foreign control of critical minerals",
+        "title": "Lithium and Critical-Mineral Dependence",
         "severity": "HIGH",
-        "details": "Chinese firms remain deeply embedded in lithium and other mineral projects, while Western and regional investors seek access to Zimbabwe's resource base. Weak local processing and regulatory uncertainty limit domestic value capture."
+        "details": "Zimbabwe is tightening controls on unprocessed mineral exports, but Chinese-linked capital, technology, and offtake arrangements continue to shape the country’s ability to capture value from lithium and other strategic minerals."
       },
       {
-        "title": "Sanctions, currency, and infrastructure pressure",
+        "title": "Sanctions, Currency, and Infrastructure Constraints",
         "severity": "HIGH",
-        "details": "Sanctions and restricted financial access complicate investment, payments, and infrastructure renewal, increasing dependence on non-Western partners. Persistent currency instability further reduces the state's ability to negotiate stable, long-term resource contracts."
+        "details": "Western sanctions and restricted financial access complicate investment and infrastructure renewal, while currency instability encourages opaque resource-for-finance arrangements and weakens public oversight."
       }
     ]
   }
